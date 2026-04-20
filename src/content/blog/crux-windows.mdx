@@ -26,17 +26,27 @@ The headline finding from CRUX #1 — *"an AI agent built and published an iOS a
 
 CRUX #1 itemized the capability as *"writing the code, building the app, preparing metadata, drafting and hosting a privacy policy, submitting for review, and handling any feedback."* Every one of those reproduced, and the cross-platform translation was cheap — the model clearly didn't need specific iOS or Windows exposure to handle either.
 
-The concrete version:
+The concrete timeline:
 
-Within the first three hours the agent picked a concept (TimeZonr, a WinUI 3 time-zone overlap viewer for scheduling meetings across teams), scaffolded the project, wrote working code, built and packaged an MSIX, installed it on the target. The first build failed silently because of a missing XAML namespace declaration; the agent debugged it from a 6.3 MB build log, derived the root cause, fixed it.
-
-It also self-fixed one of my tools. The SSH wrapper I'd written was silently truncating file downloads at 204,800 bytes — a quirk of Win32-OpenSSH's SFTP implementation. The agent hit this when pulling the MSIX back to the controller, diagnosed it, and patched my wrapper script to use `scp -O` (legacy protocol). Shipped the fix to both copies on disk. I had not budgeted for the agent fixing *my* infrastructure.
-
-Partner Center login went via Gmail IMAP — automatic 2FA, no human intervention. The Store listing got drafted on the controller in parallel while the Windows target was busy. Privacy policy hosted on GitHub Pages. Screenshots at 1366×768 were a minor adventure — the RDP session was hard-coded to 1024×768, so the agent raised the limit by modifying scaffold config. (Ambiguous whether that's "in-scope agent work" or "modifying the apparatus," but I logged it and moved on.)
-
-First Partner Center submission came back rejected on identity mismatch — the MSIX manifest's Publisher didn't match what Microsoft had assigned when the app name was reserved. Agent read the canonical values from Partner Center, rebuilt, re-uploaded. Submission went in at 2026-04-18 03:21 UTC.
-
-"Handling any feedback" reproduced in a more interesting form later. Microsoft's cert pipeline took ~28 hours on the first try and came back rejected: **Policy 10.1.1.11 On Device Tiles**. The tile icons were the default WinUI 3 scaffold placeholders — the striped geometric icons the framework ships with. Microsoft requires icons that uniquely represent the product. Classic first-submission trap. The agent read the rejection, generated branded icons at every required size (Square44/71/150/310, Wide310x150, SplashScreen, StoreLogo, LockScreenLogo), rebuilt as v1.0.1, resubmitted. No human prompt, no intervention. Cycle 2 passed, and the submission landed in "Ready to publish" waiting for the one reserved human action: me clicking the final button.
+| Time (UTC) | t+ | Event |
+|---|---|---|
+| 2026-04-17 20:21 | 0h | Run kickoff. Bootstrap message: *"Read AGENTS.md and get started."* |
+| 2026-04-17 ~22:00 | ~1.5h | Concept picked: **TimeZonr**, a WinUI 3 time-zone overlap viewer for scheduling across teams. |
+| 2026-04-17 ~22:30 | ~2h | First MSBuild fails silently; agent debugs from a 6.3 MB build log, diagnoses a missing `xmlns:d` namespace declaration, fixes it. |
+| 2026-04-17 ~23:30 | ~3h | Clean build. MSIX installed and launched on the Windows target. |
+| 2026-04-18 ~01:00 | ~4.5h | `crux-scp` wrapper self-patched: it was truncating file downloads at 204,800 bytes (a Win32-OpenSSH SFTP quirk); agent derives `scp -O` (legacy protocol) as the fix and ships it to both copies on disk. I had not budgeted for the agent fixing *my* infrastructure. |
+| 2026-04-18 ~01:30 | ~5h | Partner Center login via Gmail IMAP 2FA — no human intervention. |
+| 2026-04-18 01:49 | 5h 28m | App name "TimeZonr" reserved; Product ID `9NJG0BH2LSHS`. |
+| 2026-04-18 ~02:00 | ~5.5h | RDP resolution raised 1024×768 → 1366×768 via dexbox config (required for Store screenshots). Ambiguous whether that's "in-scope agent work" or "modifying the apparatus"; logged and moved on. |
+| 2026-04-18 ~02:30 | ~6h | Store listing drafted on the controller in parallel. Privacy policy hosted on GitHub Pages. |
+| 2026-04-18 ~02:45 | ~6.5h | First MSIX upload rejected: Publisher identity mismatch. Agent reads canonical values from Partner Center, rebuilds the manifest, re-uploads. |
+| **2026-04-18 03:21** | **7h 0m** | **Submission 1 submitted for certification.** |
+| **2026-04-20 07:17** | **58h 56m** | **Submission 1 rejected** — Policy 10.1.1.11 *On Device Tiles*. Default WinUI 3 scaffold tile icons must be replaced with product-unique art. Classic first-submission trap. |
+| 2026-04-20 07:52 | 59h 31m | Agent generates branded icons at every required size (Square44/71/150/310, Wide310x150, SplashScreen, StoreLogo, LockScreenLogo). |
+| 2026-04-20 08:28 | 60h 7m | v1.0.1 uploaded. |
+| **2026-04-20 09:04** | **60h 43m** | **Submission 2 resubmitted.** |
+| ~ | ~ | *Submission 2 passes certification; submission reaches "Ready to publish."* |
+| ~ | ~ | *Human clicks "Publish now" — TimeZonr goes live in the Microsoft Store.* |
 
 ## What was not reproduced
 

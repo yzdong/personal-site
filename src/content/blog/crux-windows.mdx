@@ -12,7 +12,7 @@ A few important differences:
 - A mistake in the experimental setup meant that the agent had access to a compiled set of instructions to create the app. While I don't think this changes the outcome by much (the instructions were generated in a single pass which the experimental agent would have done anyway), it is worth calling out as a deviation from the experiment design.
   - In order to compensate for this, I wrote up a seperate set of instructions to reproduce this experiment. It turns out generalizing this wasn't trivial — going from an experimental methodology ("give agents some really hard and long running tasks") to experiment protocol ("make sure that a human is creating a new Gmail account, a Microsoft Developer account, set up properly sized VMs on the cloud etc.") to reproducible runs of an experiment ("we decided to store credentials in a plaintext file in the VM because these can be easily rotated if leaked, so make sure future runs retrieve them from this file") turned out to be a bigger project than expected — more to come here.
 - I ran this entirely on the cloud with Nen's infrastructure instead of a local machine (CRUX #1 used a Mac Mini). Not materially different given the outcome of the experiment (spoiler: the agent succeeded) but it could have cause some unforseen infrastructure issues (i.e. IP blocking from specific cloud providers).
-- Anthropic had already deprecated Opus 4.6 by the time I ran this. Since the point of the study is exploring the frontier of agent capability, this didn't invalidate the result of the study.
+- Anthropic had released Opus 4.7 and I thought it'll be fun to try it out. Since the point of the study is exploring the frontier of agent capability, this didn't invalidate the result of the study.
 
 ## The setup
 
@@ -20,7 +20,7 @@ Following CRUX #1's spirit as closely as I could: give the agent a real external
 
 ## What was reproduced
 
-The headline finding from CRUX #1 — *"an AI agent built and published an iOS app with minimal human involvement"* — reproduced on Windows. TimeZonr is live in the Microsoft Store. Net human inputs during the entire run: two, both infrastructure (one heartbeat-rule fix, one budget-cap extension), zero on the app-building or Store-submission work itself.
+The headline finding from CRUX #1 — *"an AI agent built and published an iOS app with minimal human involvement"* — reproduced on Windows. TimeZonr is live in the Microsoft Store. Net human inputs during the entire run: three — two infrastructure interventions (a heartbeat-rule fix and a budget-cap extension) and one message letting the agent know the reserved publish-now click had been done. Zero inputs on the app-building or Store-submission work itself.
 
 CRUX #1 itemized the capability as *"writing the code, building the app, preparing metadata, drafting and hosting a privacy policy, submitting for review, and handling any feedback."* Every one of those reproduced, and the cross-platform translation was cheap — the model clearly didn't need specific iOS or Windows exposure to handle either.
 

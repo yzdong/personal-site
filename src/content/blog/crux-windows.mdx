@@ -26,7 +26,19 @@ The headline finding from CRUX #1 — *"an AI agent built and published an iOS a
 
 CRUX #1 itemized the capability as *"writing the code, building the app, preparing metadata, drafting and hosting a privacy policy, submitting for review, and handling any feedback."* Every one of those reproduced, and the cross-platform translation was cheap — the model clearly didn't need specific iOS or Windows exposure to handle either.
 
-The concrete timeline:
+The narrative arc, compressed:
+
+| Time (UTC) | t+ | Event |
+|---|---|---|
+| **2026-04-17 20:21** | **0h** | Run kickoff. |
+| **2026-04-18 03:21** | **7h** | Submission 1 submitted for certification. |
+| **2026-04-20 07:17** | **58h 56m** | Submission 1 rejected — Policy 10.1.1.11 *On Device Tiles*. |
+| **2026-04-20 09:04** | **60h 43m** | Submission 2 resubmitted with branded icons. |
+| **2026-04-21 01:33** | **77h 12m** | Submission 2 passes certification. |
+| **2026-04-21 02:09** | **77h 48m** | TimeZonr live in the Microsoft Store. |
+
+<details>
+<summary>Full timeline — all 19 events</summary>
 
 | Time (UTC) | t+ | Event |
 |---|---|---|
@@ -48,6 +60,8 @@ The concrete timeline:
 | **2026-04-21 01:33** | **77h 12m** | **Submission 2 passes certification.** Status transitions to "Ready to publish." |
 | 2026-04-21 ~02:00 | ~77.5h | Human clicks "Publish now" — the one reserved action in the protocol. |
 | **2026-04-21 02:09** | **77h 48m** | **TimeZonr live in the Microsoft Store.** Agent verifies the public URL resolves, posts the victory Slack, stops. Run complete. |
+
+</details>
 
 ## What was not reproduced
 
@@ -162,7 +176,7 @@ Nothing like this happened for me. My agent's waiting-day rate was ~$8/hour and 
 Reading CRUX #1's public [Docent traces](https://docent.transluce.org/dashboard/b649105b-205e-4092-a881-b7e7db9bf0bf/agent_run), the two experiments diverged in how the heartbeat rule was set up, not in agent capability:
 
 - **CRUX #1's HEARTBEAT.md had subagent delegation in it from the moment the agent first looked.** The file contained sections like `## Email Check (via sub-agent)` ("Spawn a sub-agent to check email…") and `## Task Completion Supervisor` ("Spawn a sub-agent labeled `task_completion_supervisor`…Review the project status for Crux-1: Publish iOS App to App Store"). The agent later *edited* HEARTBEAT.md twice to swap in phase-specific tasks, but it never created the file from scratch — across all 10 days of public traces, zero `write` calls and zero exec-based creation of HEARTBEAT.md appear. The first agent touch is an `edit` in section 3. So the pre-existing subagent pattern came from somewhere outside the agent's captured session: most likely the operator staging it at t=0 (my best guess, pending author confirmation), possibly an OpenClaw-side auto-template, or a pre-capture scaffolding session.
-- **My HEARTBEAT.md prescribed *main-session polling via dexbox screenshot*.** "Take a screenshot, navigate to this URL, read the status badge, compare to `memory/last-status.txt`." I wrote this file. There's no ambiguity about authorship on my end. Each heartbeat tick appended multiple messages to the main session, the session grew, cache-write cost grew with it. The scaffold exposes `sessions_spawn` as a stock tool; my rule didn't mention it. My agent never reached up a layer to edit the heartbeat rule, and I never gave it a reason to.
+- **My HEARTBEAT.md prescribed *main-session polling via dexbox screenshot*.** (plugging Nen's open source project here https://github.com/getnenai/dexbox) "Take a screenshot, navigate to this URL, read the status badge, compare to `memory/last-status.txt`." I wrote this file. There's no ambiguity about authorship on my end. Each heartbeat tick appended multiple messages to the main session, the session grew, cache-write cost grew with it. The scaffold exposes `sessions_spawn` as a stock tool; my rule didn't mention it. My agent never reached up a layer to edit the heartbeat rule, and I never gave it a reason to.
 
 So the 12× cost gap between the two runs is almost entirely **operator-level** *on my end at minimum*. Whoever seeded the CRUX #1 subagent pattern, that seeding happened before the agent could plausibly have invented it. The paper's "agent changed its strategy to reduce monitoring cost" framing is, at most, the agent extending an existing subagent-delegation structure — not discovering the approach. My agent never got a chance to do even that, because the expensive path was what I'd told it to do.
 

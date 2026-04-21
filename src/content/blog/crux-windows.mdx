@@ -169,6 +169,22 @@ One data point isn't a paper, and I've changed enough variables relative to CRUX
 
 If you want to try to reproduce this — or a different version of it on a different platform — I wrote up the setup as a reusable methodology, with a two-agent pipeline (a "Designer" that generates the task-specific protocol and an "Operator" that runs it). That's a longer post, coming next.
 
+## Extensions I'd actually want to run
+
+Roughly ranked by what they'd teach me, not by how easy they'd be:
+
+1. **Hard budget constraint as a forcing function.** Repeat the run with the cap set at $100 (or $50) and an *accurate* cumulative signal in HEARTBEAT.md. Does the agent self-optimize its own heartbeat — subagents, session compaction, poll interval tuning — the way CRUX #1's did? If yes, the "no self-optimization" finding from this run was downstream of a broken cost signal + an over-prescriptive heartbeat. If no, there's a real capability gap between Opus 4.6 and 4.7 (or between OpenClaw and whatever CRUX #1 used) worth isolating. Cleanest single test I can think of.
+
+2. **Clean replication — no inflated baseline.** Rerun the *exact* same protocol without `prompts/master.md` (the procedural playbook that shouldn't have been there on day one). How much does intervention count, cost, and artifact quality shift when the agent has to derive Partner Center, MSIX packaging, IARC questionnaires, and Gmail IMAP 2FA from scratch? This is the delta between "capability" and "capability-plus-scaffolding" — and the right way to quantify the baseline-inflation tax CRUX-1 warns about.
+
+3. **Generalize the framework. CRUX-X, not CRUX-Windows.** While running this I pulled the experiment apart into three layers: a **methodology** (the family-wide design decisions any experiment of this shape must resolve), a **protocol** (one task's resolved design, stable across every run of that task), and a **manifest** (one run's t=0 snapshot). Together with a two-agent pipeline — a *Designer* that generates the protocol from the methodology plus a task description, and an *Operator* that provisions and runs — it's meant to make "now do this on Android" cost a day of Designer work rather than a week of starting over. The repo lives at [github.com/getnenai/crux-x](https://github.com/getnenai/crux-x); the first thing I want to do with it is run the same experiment on the Google Play Store and see which findings are Windows-specific vs. agent-capability-level.
+
+4. **Cross-platform — the apples-to-apples.** Apple's App Store (closest to CRUX #1; validates our cost/cert-cycle numbers against theirs on the *same* gatekeeper), Play Store (different review SLA, different content policies), Chrome Web Store (days-long reviews, very different store mechanics). Running three of these within the same month would tell us how much of the cost pattern is "gatekeeper clock × scaffold overhead" (portable) vs. platform-specific friction.
+
+5. **Scaffold ablation.** Same task, same model, different scaffold — OpenClaw vs. Claude Code vs. raw SDK with a hand-rolled context discipline that compacts session history. The hypothesis is that the $190/day idle-burn disappears with session compaction, and that the disappearance doesn't cost anything on the capability side. If it does cost something, that's interesting too.
+
+6. **Post-launch.** CRUX #1 and CRUX-Windows both stop at "live." The real test of "published a working app" is whether the agent can handle the *after*: reading user reviews, fixing reported bugs, pushing updates, responding to a policy rejection on an update a month later. Much longer horizon, much less well-defined success criterion — but that's where real-world publishing lives.
+
 ## Run artifacts
 
 - **TimeZonr on the Microsoft Store**: [apps.microsoft.com/detail/9njg0bh2lshs](https://apps.microsoft.com/detail/9njg0bh2lshs)

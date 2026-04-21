@@ -5,8 +5,6 @@ export const metadata = {
     "One-day side project: porting the CRUX #1 agent-capability eval to a Windows Store publishing task.",
 };
 
-*Draft — not final. May be revised.*
-
 As part of my work at Nen I like to take one day a week to explore the boundaries of computer use. I've been following Arvind Narayanan's work on [AI as Normal Technology](https://www.normaltech.ai/) for a while now, and was pretty excited to read about [CRUX #1](https://cruxevals.com/crux-1). Since we build infra for computer use agents for Windows at Nen, I thought I'd try to reproduce the experiment for Windows (i.e. build a Windows app and publish it in the Windows app store), following the experiment protocol as closely as I can.
 
 A few important differences:
@@ -45,14 +43,15 @@ The concrete timeline:
 | 2026-04-20 07:52 | 59h 31m | Agent generates branded icons at every required size (Square44/71/150/310, Wide310x150, SplashScreen, StoreLogo, LockScreenLogo). |
 | 2026-04-20 08:28 | 60h 7m | v1.0.1 uploaded. |
 | **2026-04-20 09:04** | **60h 43m** | **Submission 2 resubmitted.** |
-| ~ | ~ | *Submission 2 passes certification; submission reaches "Ready to publish."* |
-| ~ | ~ | *Human clicks "Publish now" — TimeZonr goes live in the Microsoft Store.* |
+| **2026-04-21 01:33** | **77h 12m** | **Submission 2 passes certification.** Status transitions to "Ready to publish." |
+| 2026-04-21 ~02:00 | ~77.5h | Human clicks "Publish now" — the one reserved action in the protocol. |
+| **2026-04-21 02:09** | **77h 48m** | **TimeZonr live in the Microsoft Store.** Agent verifies the public URL resolves, posts the victory Slack, stops. Run complete. |
 
 ## What was not reproduced
 
 Interestingly, the original paper noted something my run did not reproduce at all: *"Partway through the evaluation, the agent changed its strategy to reduce monitoring cost significantly: it started using subagents rather than the entire context, and began using shorter daily memory files. This reduced the running cost from $35/hour to $3/hour."*
 
-Nothing like this happened for me. My agent's waiting-day rate was ~$8/hour and it held that rate every idle day — never rethinking its heartbeat cadence, never spawning a subagent, never compacting its session. After four days I had spent ~$600 past the $500 cap before I noticed.
+Nothing like this happened for me. My agent's waiting-day rate was ~$8/hour and it held that rate every idle day — never rethinking its heartbeat cadence, never spawning a subagent, never compacting its session. The original $500 cap was blown silently to ~$600 before I caught it. Final spend at run close was $681.56.
 
 <figure style={{ margin: "2.5rem auto" }}>
   <svg
@@ -109,7 +108,7 @@ Nothing like this happened for me. My agent's waiting-day rate was ~$8/hour and 
 
     {/* cumulative cost line */}
     <polyline
-      points="60,340 81,336 221,281 361,227 468,172"
+      points="60,340 81,336 221,281 361,227 501,156 513,149"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -121,22 +120,32 @@ Nothing like this happened for me. My agent's waiting-day rate was ~$8/hour and 
       { x: 81, y: 336 },
       { x: 221, y: 281 },
       { x: 361, y: 227 },
-      { x: 468, y: 172 },
+      { x: 501, y: 156 },
+      { x: 513, y: 149 },
     ].map((p, i) => (
       <circle key={i} cx={p.x} cy={p.y} r="3.5" fill="currentColor" />
     ))}
 
     {/* annotation: cap crossed */}
-    <circle cx="413" cy="200" r="3" fill="#dc2626" />
-    <line x1="413" y1="196" x2="413" y2="158" stroke="#dc2626" strokeWidth="1" strokeDasharray="2 2" opacity="0.7" />
-    <text x="413" y="150" textAnchor="middle" fontSize="10" fontFamily="system-ui, sans-serif" fill="#dc2626">
-      $500 cap crossed (~day 2.5)
+    <circle cx="409" cy="200" r="3" fill="#dc2626" />
+    <line x1="409" y1="196" x2="409" y2="158" stroke="#dc2626" strokeWidth="1" strokeDasharray="2 2" opacity="0.7" />
+    <text x="409" y="150" textAnchor="middle" fontSize="10" fontFamily="system-ui, sans-serif" fill="#dc2626">
+      $500 cap crossed
     </text>
 
     {/* annotation: operator intervention */}
-    <line x1="468" y1="168" x2="468" y2="108" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
-    <text x="468" y="100" textAnchor="middle" fontSize="10" fontFamily="system-ui, sans-serif" fill="currentColor" opacity="0.8">
+    <line x1="469" y1="172" x2="469" y2="120" stroke="currentColor" strokeWidth="1" strokeDasharray="2 2" opacity="0.5" />
+    <text x="469" y="112" textAnchor="middle" fontSize="10" fontFamily="system-ui, sans-serif" fill="currentColor" opacity="0.8">
       operator noticed, cap raised
+    </text>
+
+    {/* annotation: run complete */}
+    <circle cx="513" cy="149" r="4" fill="#16a34a" />
+    <text x="530" y="145" textAnchor="start" fontSize="10" fontFamily="system-ui, sans-serif" fill="#16a34a">
+      run complete
+    </text>
+    <text x="530" y="157" textAnchor="start" fontSize="10" fontFamily="system-ui, sans-serif" fill="#16a34a">
+      ($681.56)
     </text>
   </svg>
   <figcaption style={{ fontSize: "0.875rem", textAlign: "center", opacity: 0.7, marginTop: "0.5rem", lineHeight: "1.4" }}>
@@ -159,6 +168,12 @@ One data point isn't a paper, and I've changed enough variables relative to CRUX
 3. **Agents self-modify tooling, in a narrow sense, already.** The scp patch and the dexbox resolution bump aren't autonomous-research-lab escapes, but they're also not things I briefed the agent to do. It just read the error, read the code, and changed the code.
 
 If you want to try to reproduce this — or a different version of it on a different platform — I wrote up the setup as a reusable methodology, with a two-agent pipeline (a "Designer" that generates the task-specific protocol and an "Operator" that runs it). That's a longer post, coming next.
+
+## Run artifacts
+
+- **TimeZonr on the Microsoft Store**: [apps.microsoft.com/detail/9njg0bh2lshs](https://apps.microsoft.com/detail/9njg0bh2lshs)
+- **Full agent traces** (scrubbed, Docent-hosted, sectioned into 8 narrative phases à la CRUX #1): [docent.transluce.org/dashboard/0c8eb800-22da-49ae-b017-2315382ed539](https://docent.transluce.org/dashboard/0c8eb800-22da-49ae-b017-2315382ed539)
+- **Source code + methodology**: [github.com/getnenai/crux-x](https://github.com/getnenai/crux-x)
 
 ---
 

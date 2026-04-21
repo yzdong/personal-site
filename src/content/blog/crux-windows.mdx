@@ -159,7 +159,7 @@ Nothing like this happened for me. My agent's waiting-day rate was ~$8/hour and 
 
 The first hypothesis I reached for was my own: maybe my HEARTBEAT.md hid the budget signal. The rule I wrote said "sum `totalCost` for today, budget is $500 hard" — which the agent read literally, summing per-day instead of cumulative. Every day it saw $195 / $500 (≈39% of the cap) and reported all clear, every day the cumulative crept higher. No cost pressure → no reason to self-optimize. One-word bug, four-day consequence.
 
-Reading the CRUX #1 page back more carefully undermines this neatly. They do not appear to have given their agent an explicit dollar cap at all — the agent self-optimized *without* budget awareness instruction, just from noticing the running cost was out of proportion to the work. So "my HEARTBEAT.md broke the signal" explains why *my* agent didn't react; it doesn't explain why *their* agent reacted without any signal.
+Reading the CRUX #1 page back more carefully undermines this neatly. They do not appear to have given their agent an explicit dollar cap at all — the agent self-optimized *without* budget awareness instruction, just from noticing the running cost was out of proportion to the work. *[Awaiting feedback from the CRUX #1 authors — it's not clear to me how their OpenClaw agent decided on a subagent tactic; the page reports the outcome but not the mechanism. The next two paragraphs are hypotheses pending their response.]* So "my HEARTBEAT.md broke the signal" explains why *my* agent didn't react; it doesn't explain why *their* agent reacted without any signal.
 
 ## What I learned
 

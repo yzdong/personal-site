@@ -40,7 +40,7 @@ export default async function Home() {
       <section>
         <h2 className="mb-3 font-semibold">Get in touch</h2>
         <p>
-          <a href="mailto:zi@getnen.ai">zi@getnen.ai</a> ·{" "}
+          <a href="mailto:yangzi@yzdong.me">Email</a> ·{" "}
           <a href="https://github.com/yzdong">GitHub</a> ·{" "}
           <a href="https://www.linkedin.com/in/yzdong/">LinkedIn</a> ·{" "}
           <a href="https://x.com/dongyangzi">X</a>

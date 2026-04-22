@@ -35,6 +35,15 @@ just signaling sophistication, cut it.
 - ✗ "Richer retrieval primitives turn discovery into a constant-time operation when filename conventions hold."
 - ✓ "With `read_file` available and predictable paths, the agent skips the walk entirely."
 
+**Avoid inflated metaphors and sophistication-signaling phrases.** These
+usually stand in for a plain word that would do the same job. When you
+catch one, ask what it means literally and say that instead.
+- ✗ "becomes load-bearing" → ✓ "becomes necessary," "starts mattering"
+- ✗ "first-class" → ✓ "supported directly," "built in"
+- ✗ "non-trivial" → ✓ "hard," "takes real work"
+- ✗ "blast radius" → ✓ "what it affects when it breaks"
+- ✗ "orthogonal" (as a vague "not the same as") → ✓ "unrelated," "separate concern"
+
 **Hedge extrapolations explicitly.** If it wasn't measured, say so.
 - ✗ "At n=10,000, Arm A likely fails."
 - ✓ "At n=10,000, I didn't run this, but Arm A probably falls over."

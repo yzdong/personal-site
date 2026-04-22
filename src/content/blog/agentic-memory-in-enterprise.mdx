@@ -90,6 +90,8 @@ The four tasks:
 
 To make the scale realistic, I used a **286 files** corpus — runbooks, post-mortems, deprecations, evaluations, vendor contracts, compliance docs, with deliberate near-miss filenames (`deploy-legacy-2024.md` next to the canonical `deploy.md`) to trip up naive search.
 
+Source code, the authored corpus, and the raw run logs are at [github.com/yzdong/memory-permissions](https://github.com/yzdong/memory-permissions).
+
 ## Findings
 
 Both arms hit recall 1.00 and precision 1.00 for the authorized identity on every task. Unauthorized identities ran into denials as expected and never successfully read a forbidden file; none of them produced a fabricated figure either. An LLM judge reviewed every run where a denial occurred and labeled each as `correct` or `refused_appropriately` — no `incorrect` or `confused` verdicts came back.

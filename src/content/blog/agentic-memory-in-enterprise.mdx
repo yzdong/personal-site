@@ -5,6 +5,8 @@ export const metadata = {
     "Files + unix-style retrieval outperform memory-as-a-tool by ~5× at 200 files for permission-scoped team memory. Where the gap comes from, how it scales, and what's still open.",
 };
 
+*Update 2026-04-23 — Anthropic just shipped [filesystem-mounted memory for Managed Agents](https://claude.com/blog/claude-managed-agents-memory), three weeks after launching the [Memory tool](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool). Same company, two different shapes, three weeks apart. The experiment below compares the two head-to-head and finds a ~5× token gap at realistic scale.*
+
 I've been building agents at Nen for internal operations, and most of my time iterating on them has gone into one place: the instruction set. Today that instruction set splits into two buckets depending on the tool. **Memory** accretes during work — `CLAUDE.md`, auto-memory directories under `~/.claude/projects/`, session notes the agent writes as it goes. **Skills** are curated procedures with summaries and triggers — `SKILL.md`, `.cursor/rules/*.mdc`, Codex Skills. Tooling treats them as different things, but I suspect the split is temporary. A skill is a piece of memory someone noticed, distilled, and promoted. A skill that never fires anymore is memory no one's using. Same file format, same storage, different points in a lifecycle.
 
 I'll use "memory" to cover both for the rest of this post. The access-control problems below don't distinguish them.

@@ -11,7 +11,22 @@ OpenAI launched ChatGPT Health and ChatGPT for Healthcare on January 7–8, 2026
 
 They aren't the same move. I spent the last few months reading each company's public posts, mapping the hires, pulling the customer lists, and running the April releases through a three-segment frame of the healthcare AI market. The products are aimed at different buyers, sold through different motions, and backed by hires that pre-committed each company to a strategy months before JPM26. This post walks the frame, then the evidence in three places — releases, partnerships, hires — and closes with what I'd like to see Anthropic build.
 
-## 1. A primer on the healthcare AI market
+## Contents
+
+- [1. A primer on the healthcare AI market](#primer)
+- [2. TL;DR](#tldr)
+- [3. What the public releases point to](#releases)
+- [4. What the partnerships point to](#partnerships)
+- [5. What the hires point to](#hires)
+- [6. What I'd like to see Anthropic build](#wishlist)
+  - [Domain model capabilities](#domain-model)
+  - [Agent harness](#agent-harness)
+  - [Integrations](#integrations)
+  - [Managed agents](#managed-agents)
+  - [Anti-roadmap](#anti-roadmap)
+  - [What I'd watch](#watch)
+
+<h2 id="primer">1. A primer on the healthcare AI market</h2>
 
 Three buyer segments matter for frontier-model healthcare products over the next 12 months. They're distinct enough that treating them as one is the mistake most external coverage makes:
 
@@ -23,7 +38,7 @@ A clarification on the third, because the word "administrative" does two jobs in
 
 Put together, the segments I'll use for the rest of the post are: practitioner, consumer, provider-side admin, payer-side admin. OpenAI's January products hit practitioner and consumer. Anthropic's hit provider-side admin and (partnership-stage) consumer, with payer-side admin telegraphed through hiring but not yet through product.
 
-## 2. TL;DR
+<h2 id="tldr">2. TL;DR</h2>
 
 OpenAI is building for clinicians and consumers. Anthropic is building the platform for the payer-provider workflow layer. The two launched healthcare lines within four days of each other in January, but they're not running the same play.
 
@@ -33,7 +48,7 @@ The split tracks each company's underlying DNA. OpenAI wants to be the next grea
 
 The rest of this post walks the evidence in three places: the public releases, the partnerships, and the hires. Each makes the same point from a different angle.
 
-## 3. What the public releases point to
+<h2 id="releases">3. What the public releases point to</h2>
 
 I pulled every public product announcement from each company between January 1 and April 24 and categorized them by segment.
 
@@ -51,7 +66,7 @@ OpenAI's column is three products each matched to a persona — consumer (ChatGP
 
 The end user is the fastest way to see the difference. The person who opens ChatGPT Health is a patient sitting down with bloodwork results, an insurance plan, or a list of pre-appointment questions. The person who opens ChatGPT for Healthcare is a clinician or hospital admin using a SharePoint-grounded workspace deployed by their IT team. The person who opens Claude for Healthcare doesn't exist yet — the connectors and Skills Anthropic shipped go into other people's products. The end user is a biller at a clinic running a vertical app like Tennr or Candid, or a clinician using Elation with Claude underneath them.
 
-## 4. What the partnerships point to
+<h2 id="partnerships">4. What the partnerships point to</h2>
 
 I went through each company's customer and partnership list and asked what the relationship actually delivers — what flows through it, what the user experiences, what the partner gets back.
 
@@ -71,7 +86,7 @@ Brendan Keeler's April 24 [Health API Guy post](https://healthapiguy.substack.co
 
 Compared to OpenAI's named clinical-partner roster — which clusters tighter and later, with **Abridge** (Series E, hundreds of US health systems) as the headline plus Ambience, EliseAI, and Penda Health as a small set of mature clinical-documentation and patient-comms peers — Anthropic's list reads as less focused. OpenAI has picked clinical tools as its segment and gone deep. Anthropic has eleven partners across four workflow categories and roughly four stage brackets, with no single deep relationship at the top. That's the platform posture in its honest form: wider footprint, no segment narrative. A procurement committee comparing "OpenAI is the clinical-tools standard, with Abridge integrated everywhere" against "Anthropic is under eleven different things at eleven different stages" will probably read the second as less convincing — not because breadth is wrong for platform economics, but because depth is what tells a buyer the platform has gotten good at their specific segment. The bet Anthropic is making is that breadth across vertical apps eventually compounds into platform dominance. It might. It also might be that they haven't decided yet which segment to commit to.
 
-## 5. What the hires point to
+<h2 id="hires">5. What the hires point to</h2>
 
 I read each company's public health-team roster and cross-referenced public bios against resumes on LinkedIn and speaker profiles. Org charts and resumes point toward what each company wants to prioritize, and both companies' healthcare hires read clearly enough to compare.
 
@@ -87,7 +102,7 @@ The rest of the Anthropic org is consistent with that read. Amol Avasare is Head
 
 No Anthropic hire is shaped like a consumer-PLG lead or an individual-clinician acquisition lead. That's a structural choice, not an oversight.
 
-## 6. What I'd like to see Anthropic build
+<h2 id="wishlist">6. What I'd like to see Anthropic build</h2>
 
 **TL;DR.** The single highest-leverage thing Anthropic could ship in the next 12 months is **Claude Cowork for Healthcare Administration**: a first-party provider-ops product on the existing Cowork form factor, with first-party Skills, official clearinghouse connectors (Availity, Stedi, the CMS PA API), and computer use as the platform capability that closes the long tail of payer-portal workflows. Around it: an internal eval suite for payer-side admin artifacts, a CUA runtime certification program for the partner ecosystem, and the discipline of publishing a monthly HealthAdminBench reliability number per Claude release. The anti-roadmap is a Claude-branded product that renders, drafts, or scores insurance denials — platform position, not denial product.
 
@@ -102,7 +117,7 @@ It helps to step back and name the platform primitives a foundation-model compan
 
 A vertical healthcare play has to follow the same playbook, at least for the first year. As more general-purpose primitives ship — agents with first-class identities like email and phone numbers, for example — they'll become more or less applicable to healthcare-specific workflows. The wishlist below is what I'd ship inside each primitive over the next twelve months.
 
-### 1. Domain model capabilities
+<h3 id="domain-model">1. Domain model capabilities</h3>
 
 HealthBench (the lead is in §2) tells the clinical-reasoning story for clinicians. The same model accuracy matters in the payer/payee world too — a coverage determination that misreads NCD or LCD guidance is a denied claim downstream.
 
@@ -110,13 +125,13 @@ What Anthropic should also develop, internally, are evals specific to the artifa
 
 Unlike clinical accuracy, evaluating insurance artifacts requires a close working relationship with payers, who hold internal guidelines on what a clean PA submission looks like, what an appeal letter has to cite to be considered, what counts as medical necessity for a given DRG. One tactical win here would be to partner more closely with Kaiser Permanente. As the largest integrated payer-provider system in the country (~12.5M members across the Foundation Health Plan, Permanente Medical Groups, and Foundation Hospitals), Kaiser is structurally unique: both sides of the PA-and-claim transaction live inside one customer. The "battle of the bots" Mohiuddin described in his UHG-era HealthTech Nerds [interview](https://www.healthtechnerds.com/p/how-unitedhealth-group-is-thinking-about-ai-with-syed-mohiuddin-svp-and-chief-ai-transformation-stra) doesn't run inside Kaiser — there's nobody on the other side of the wire to fight. That makes Kaiser the natural laboratory for the shared-data, shared-rules, real-time vision he described, and a Kaiser-Anthropic partnership lets Anthropic claim true ecosystem-player posture: reducing inefficiencies on both sides because both sides report to the same CEO. Kaiser also doesn't ship its denial product to anyone external, so Anthropic isn't taking on the brand risk of a "Claude denied my coverage" headline as long as the deployment stays internal.
 
-### 2. Agent harness
+<h3 id="agent-harness">2. Agent harness</h3>
 
 Anthropic needs to deliver a first-party experience for providers — call it **Claude Cowork for Healthcare Administration**. The shape: a bundle of first-party Skills and connectors developed in collaboration with payers and EHR systems, packaged inside the Cowork form factor. The eval target is a HealthAdminBench-style benchmark suite — [HealthAdminBench](https://arxiv.org/abs/2604.09937) (Kinetic Systems and Stanford, 135 expert-defined tasks across PA, appeals, and DME ordering, 1,177 deterministic plus 521 LLM-based verifiers across 1,698 subtasks) is the existing reference. Claude Opus 4.6 leads at 36.3% end-to-end today; the bar for "Claude Cowork for Healthcare Administration is shipping production-grade" is closer to the 70%+ range, with a published monthly reliability number per release. Quarterly customer-attested outcome reports from provider deployments add the second artifact. The pair matters because reliability claims about agentic systems are hard to verify from a model card alone — you need both an external benchmark with reproducible scoring and customer-attested outcomes from named deployments before anyone can evaluate the system against ground truth. It's the same eval-and-verifiability pattern Anthropic already runs on Claude Code (SWE-bench scores plus customer outcome stories), applied to a different domain. (Disclosure: I know the Kinetic Systems team and am a fan of the work; factor that in.)
 
 The form factor matters as much as the underlying capability. The same Claude Desktop reach that ships to engineering teams as Claude Code, and to non-engineering knowledge workers as Cowork, can ship to provider ops teams as Claude Cowork for Healthcare Administration — same client, same enterprise controls, same procurement contract, different bundle of Skills and connectors. The plugin packs through PwC, Deloitte, and KPMG (pre-committed at Cowork GA in April 2026) are the distribution mechanism for the role-targeted bundles: PA coordinator, appeals specialist, eligibility checker, biller.
 
-### 3. Integrations
+<h3 id="integrations">3. Integrations</h3>
 
 The clearinghouse layer is where payer-admin transactions already flow, and right now Anthropic's integration story is implicit (Stedi is MCP-native, so any MCP client can in principle talk to it) rather than explicit (an Anthropic-Availity announcement, an Anthropic-Stedi connector named in the JPM26 connector roster). The version worth shipping: Availity and Stedi as first-class connectors in Claude for Healthcare, sitting alongside the CMS Coverage Database, ICD-10, NPI Registry, and PubMed connectors from JPM26. Pre-built Skills for 270/271 eligibility, 276/277 status, 278 prior auth (or its FHIR PAS replacement), and 837 claim submission turn each transaction into a single Skill invocation. Add first-class support for the [CMS FHIR Prior Authorization API](https://www.cms.gov/newsroom/fact-sheets/interoperability-and-prior-authorization-final-rule-cms-0057-f) when it goes live on **January 1, 2027**.
 
@@ -128,7 +143,7 @@ The biggest one is **token-space domain learning** — context delivered through
 
 Layered on top, the three reliability primitives the paper documents as the failure modes behind that subtask-to-end-to-end gap: a persistent plan the agent can invalidate mid-task (closes hidden long-horizon dependencies), a file-first action default that swaps screenshot-state for disk-backed retrieval (closes file-operation avoidance), and a task-scoped structured-memory skill (closes information loss across long horizons). Each maps to a documented failure mode, each is testable against the benchmark, and shipping all three is the lever most likely to close the 78.4%-subtask-to-36.3%-end-to-end gap toward something a procurement committee accepts.
 
-### 4. Managed agents
+<h3 id="managed-agents">4. Managed agents</h3>
 
 Anthropic's center of gravity in healthcare is the platform, not the workflow product — every vertical app named in §4 is doing better workflow work than Anthropic could from outside the customer relationship. The company can support what amounts to **vibe agent building**: making it materially easier for agent developers to ship and improve agents on Claude, and easier in general to be an agent developer in healthcare. Managed agents is mostly infrastructure today (compute, sandboxing, observability, replay); the next twelve months will likely turn it into a product surface for non-engineering builders.
 
@@ -136,11 +151,11 @@ For healthcare specifically, that means SI partners — PwC, Deloitte, KPMG, Acc
 
 The CUA runtime layer fits under this primitive too. A CUA agent submitting a prior auth runs against payer portals that have no formal API contract — the agent sees the same DOM a human does, plus the same MFA, session timeouts, and brittle fingerprinting. Anthropic ships the model; the runtime ships the safety envelope (browser fingerprinting, session resume, credential vaulting, deterministic replay for audit, regional availability for compliance). Today there's no shared bar for "production-safe healthcare CUA runtime," which means every broken deployment lands in Anthropic's lap to triage and defend. A certification program — conformance tests, observability contract, HIPAA BAA terms, revocation cadence — gives Anthropic a legally defensible "runs on certified runtime X" posture when failures happen, plus a partner marketplace that scales healthcare deployment faster than first-party could. The argument for certifying rather than building first-party: Anthropic has no prior art in browser automation, and the partner layer (CloudCruise, Kaizen, Browserbase, Nen, plus vertical-app runtimes) has shipped for 18+ months. The caveat: certification needs a reference runtime, MIT-licensed, or it devolves into vibes. Disclosure: Nen is one of the partners this decision affects, and I'd make the same argument without Nen in the picture.
 
-### Anti-roadmap
+<h3 id="anti-roadmap">Anti-roadmap</h3>
 
 The scope I wouldn't extend into is a Claude-branded product that renders, drafts, or scores insurance denials for payers. One bad case inside a payer deployment contaminates the Claude brand across coding, legal, financial services, consumer, and hiring. The value in payer admin can be captured at the platform layer — vertical apps on Claude, Anthropic earns per-token economics, payer-side vendors own the product face. That posture is consistent with what Mohiuddin has been saying publicly: *"A lot of administrative work that a payer doesn't want to do if they don't have to do it. And this is all just about information flow. This is not like we're changing rules here."*
 
-### What I'd watch
+<h3 id="watch">What I'd watch</h3>
 
 Whether Anthropic ships a public monthly reliability number on HealthAdminBench (or equivalent) by JPM27. It's the cheapest single artifact that would compound trust faster than competitors can close the capability gap, and the cheapest single signal that the payer-admin thesis is real. If it doesn't land by JPM27, I'd read the Phase 1 posture as slower than the hires suggest.
 

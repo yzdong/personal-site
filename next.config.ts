@@ -8,11 +8,12 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Pass remarkPlugins as a string-identifier tuple instead of an imported
-// function so Turbopack can serialize the loader options.
+// Pass plugins as string-identifier tuples instead of imported functions
+// so Turbopack can serialize the loader options.
 const withMDX = createMDX({
   options: {
     remarkPlugins: [["remark-gfm", {}]],
+    rehypePlugins: [["rehype-slug", {}]],
   },
 });
 

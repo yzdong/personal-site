@@ -1,0 +1,56 @@
+export const metadata = {
+  title: "Healthcare agents need an identity spec, not just better browsers",
+  date: "2026-04-27",
+  description:
+    "Every healthcare agent shop is rebuilding the same password-manager + authenticator + email-inbox + SMS-inbox stack. A proposal for what an agent-identity spec should cover, and why a foundation-model lab is the right place to publish it.",
+};
+
+*Draft — not yet published. See [`drafts/README.md`](./README.md).*
+
+The most under-discussed failure mode for production healthcare agents has nothing to do with model intelligence. It's that **every healthcare agent in production dies on MFA**, and every team building one is rebuilding the same identity-and-credential stack from scratch.
+
+Ayo Ademoye has been writing about this from the inside. His [authentication post](https://writing.kunle.app/p/authentication-for-the-era-of-bots) makes the structural case: every password manager treats developer access as an afterthought; the UiPath-era solution to MFA is to turn it off, which no hospital IT team will sign; the standard IDP postures (Okta, Azure AD, Auth0) all assume the principal is a human at a keyboard. Healthcare's compliance posture rules out every shortcut RPA used to take.
+
+The result is that the same stack — password manager, TOTP authenticator, dedicated OTP inbox, SMS-receive number, audit trail, delegation lineage — gets rebuilt by every team running healthcare agents at scale. CloudCruise has one. Kaizen has one. Tennr has one. Candid has one. Nen has one. Each is good enough for its own deployment and not interoperable with anyone else's. None of them is a published spec.
+
+This is the wrong layer to leave to startups. Compliance review for "this credential vault is HIPAA-safe and the agent-side handling is auditable" runs at every customer; if every vendor passes the review with a slightly different stack, the compliance cost compounds. A foundation-model lab publishing the spec — or better, the spec plus a reference implementation — gives the ecosystem a Schelling point and the lab a defensible answer to the trust question that gets asked first in every healthcare procurement conversation: *who is the agent, and how do we know it's the agent?*
+
+## What the spec should cover
+
+Five surfaces, in roughly the order they break in production:
+
+1. **Programmatic MFA without disabling MFA.** The agent has a TOTP secret it shares with the IDP, generates the code at request time, and submits it. The human operator does not. Hardware-backed key storage on the runtime side; rotation on a documented cadence.
+2. **Dedicated OTP inboxes per agent.** Each agent has its own email address (or alias) and SMS-receive number that no human reads. The inbox supports retrieval-by-context-window — the agent should not be reading a human's inbox and should not be sharing one with another agent on the same task.
+3. **A per-credential audit trail.** Every read, every use, every rotation, every share, with a signed timestamp and the named-human delegator. Per-credential, not per-vault — the unit of audit is *which secret was used by which agent on which task at which time*, not "the vault was opened."
+4. **Delegation lineage from a named human.** No agent's credentials originate with the agent. They're delegated from a named operator, with a documented expiration and a documented revocation path. Procurement reads this section first; without it, every healthcare deployment turns into a custom legal review.
+5. **A verifier endpoint** the deploying customer can hit to confirm the lineage: "this agent's session is currently authorized by this human operator, expires at this timestamp, last rotated at that one." The verifier is the artifact a payer's compliance team requests when an incident happens; without it, every incident is a forensic exercise.
+
+The spec is small enough to fit on a long blog post. The reference implementation is the bigger lift — and it's where most of the value is.
+
+## What the reference implementation should look like
+
+I'd build it as a wrapper, not a replacement. 1Password and Bitwarden already have most of the primitives the spec needs (item-level audit, scoped service accounts, rotation hooks); what neither one has is the agent-shaped abstraction on top — *this credential is delegated to this agent, by this human, for this task, with this expiration.* Wrapping one of them with that abstraction, MIT-licensed, gets the ecosystem most of the way to interoperability without anybody having to abandon the vault they already use.
+
+The wrapper has roughly three things in it: (a) a service-account model that maps 1:1 to the agent identity, with rotation tied to the agent's session lifecycle; (b) the OTP inbox primitive, including email and SMS, with TOTP-secret storage as a first-class item type; (c) the verifier endpoint and per-credential audit log, exposed as an API the deploying customer can poll.
+
+Nothing in that list is research-grade. All of it is the kind of work every healthcare agent shop is already doing, badly, in private. A reference implementation of the spec would save the ecosystem a combined seven-figure year of duplicated build, and would give the foundation-model lab that publishes it the canonical answer to the auth question without having to compete on it.
+
+## Why a frontier lab should publish this
+
+Three reasons.
+
+**One:** the BAA-and-attestation work that healthcare requires is the same work the lab is already doing for the model itself. Pulling identity into that scope adds incremental cost; pulling identity into a startup's scope adds a fixed cost the startup amortizes over a much smaller customer base. Lab-side compliance is more efficient per dollar.
+
+**Two:** the spec compounds across deployments. Every customer that procures Claude on the back of a clean identity story carries that story into the next procurement conversation, which is increasingly procurement teams comparing the trust postures of competing labs. A published spec is much easier to trust than a private one.
+
+**Three:** the reference implementation locks in the lab as the default identity surface, which means the lab also gets the audit and observability data that comes through it — first-party signal on how agents are actually being used in healthcare, in shape that the lab can use to improve the model. That's not the reason to ship; it's the reason it's not a giveaway.
+
+## What I'm not arguing
+
+I'm not arguing for the lab to ship a hosted credential vault as a commercial product. The reference implementation is a spec in code, not a SKU. Customers should be able to point it at their own 1Password, their own Bitwarden, their own HashiCorp Vault, and have it work. The commercial product is Claude plus the BAA; the spec is what makes Claude buyable in healthcare without every customer rebuilding the auth layer.
+
+I'm also not arguing this is a healthcare-only problem. Identity is the binding constraint on production agents in finance, legal, and government too. Healthcare just happens to be where the procurement bar makes it visible first.
+
+---
+
+*Disclosure: I run [Nen](https://getnen.ai), which is one of the picks-and-shovels vendors that has built a version of this stack internally. A published spec from a foundation-model lab makes that internal work less defensible as a moat — I'd argue for it anyway, but read the conflict.*

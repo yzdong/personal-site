@@ -1,0 +1,54 @@
+export const metadata = {
+  title: "A trust-gated rollout for Claude for Healthcare",
+  date: "2026-04-27",
+  description:
+    "Phases gate on artifacts, not quarters. A proposal for sequencing Claude for Healthcare from verifiable payer-admin tasks through informed consumer decisions to a research data ecosystem.",
+};
+
+*Draft — not yet published. See [`drafts/README.md`](./README.md).*
+
+In my [OpenAI-vs-Anthropic post](/blog/openai-vs-anthropic-healthcare) I argued for what Anthropic should ship next inside each platform primitive: domain capabilities, agent harness, integrations, managed agents. That post is about the *what*. This post is about the *when*.
+
+The thesis: **trust is the binding constraint on Claude for Healthcare's expansion, not capability**. Every GPT-class model can *attempt* prior authorization. None can be trusted with it at the rate a payer needs to replace an FTE. The product question is how you compound trust faster than competitors compound capability — and how you sequence expansion so each new product surface inherits the trust the prior surface earned.
+
+Trust here has a precise operational meaning: a published reliability number against real ground truth, an attestation a procurement committee will accept, and a failure mode a regulator will recognize. None of those compound from feature releases. They compound from artifacts.
+
+## Three phases, gated by trust maturity
+
+1. **Verifiable enterprise tasks.** Admin work with unambiguous ground truth — prior auth decisions, eligibility responses, claim statuses, appeal outcomes, coverage determinations. Both process-correct and outcome-correct are measurable. No medical-necessity judgment, no clinical decision support.
+2. **Informed consumer decisions.** A consumer product on top of HealthEx-like identity and consent rails. Gated on Phase 1 producing trust artifacts a regulator and a user would both recognize.
+3. **A data ecosystem for research.** A trusted orchestration layer for consented clinical data access. Gated on Phase 2 demonstrating the consent/identity stack works at population scale.
+
+The phases gate on artifacts, not quarters. Phase 2 doesn't begin because Phase 1 is "done"; it begins because the benchmarks, the audit trail, and the customer outcomes exist to make it defensible.
+
+## Phase 1 — what to actually ship
+
+Seven workflows clear the verifiability bar today: prior authorization submission, eligibility verification (270/271), claim status tracking (276/277), denial appeals, coverage determination, benefit verification, and claim submission completeness. Each one has ground truth the customer already owns — a payer decision record, an X12 response, a clean-claim metric.
+
+CMS-0057-F forces a hard date on this. Impacted payers must meet 72-hour expedited and 7-day standard PA turnarounds starting **January 1, 2026**, and must publicly report PA metrics by **March 31, 2026** covering CY2025. The FHIR Prior Authorization API goes live **January 1, 2027**. That's the procurement window — an agent that demonstrably meets the decision-time SLA with a published accuracy number has a concrete buyer conversation.
+
+The trust artifacts that come out of Phase 1, by my read, are: a public monthly reliability number on a HealthAdminBench-equivalent suite per Claude release; quarterly customer-attested outcome reports from named payer and provider deployments; and a published incident log for the deployment surface. The pair-of-artifacts pattern (external benchmark + customer-attested outcomes) is what Claude Code already runs on; payer admin needs the same shape applied to a different domain.
+
+## Phase 2 — gated on Phase 1 artifacts
+
+The HealthEx consumer-records partnership announced at JPM26 is the natural Phase 2 surface. A consumer product that helps a patient understand their bloodwork, walk through an insurance plan before open enrollment, or assemble pre-appointment questions does not need a clinician in the loop — but it does need the consent stack, the identity layer, and the audit trail that Phase 1 will have stress-tested at the enterprise scale.
+
+The reason to gate this on Phase 1 rather than ship it in parallel is that consumer-side errors are louder than enterprise-side errors. A misread NCD inside a vertical app is a denied claim the vertical app handles; a misread NCD inside a Claude-branded consumer product is a screenshot circulating on consumer-health Twitter. Phase 1 buys the institutional trust the consumer surface inherits at launch, including the BAA terms, the PHI-handling posture, and the regulator-recognizable failure-mode taxonomy.
+
+Two artifacts I'd expect Phase 2 to produce: a consent ledger architecture that's externally auditable (not just self-reported), and a consumer-side incident-disclosure cadence that matches the enterprise-side one.
+
+## Phase 3 — gated on Phase 2 consent stack
+
+A trusted orchestration layer for consented clinical-data access for research is the most ambitious Phase, and the one that's hardest to argue for without the prior two phases established. The reason it's at the end is that the consent and identity infrastructure required to do this defensibly *is* the consent and identity infrastructure built and stress-tested in Phase 2. The research data ecosystem inherits it; it doesn't replace it.
+
+I have less direct visibility into how academic medical centers and pharma research orgs would consume this surface, so I'll leave the Phase 3 specifics light. The argument is that it should exist on the roadmap as the long-horizon consequence of getting Phases 1 and 2 right, not as a parallel bet.
+
+## What I'm not arguing
+
+I'm not arguing for slow. The Phase 1 surface alone is large enough — seven distinct workflows, two clearinghouses, a few dozen named payer portals — to absorb significant build for the next 12–18 months. The phasing is sequencing, not throttling.
+
+I'm also not arguing that the phases are the only frame. A capability-driven roadmap (build the agent harness, then ship verticals on top) is the alternative, and it's the one most platform-shaped companies default to. The trust-driven phasing here is meant to be the *additional* discipline on top of capability planning — what gets shipped under the Claude brand vs. what ships under a customer's brand on the Claude API.
+
+---
+
+*Disclosure: I run [Nen](https://getnen.ai), which builds computer-use infrastructure for healthcare and other verticals. The Phase 1 workflows are ones our customers run on our runtime, so the failure modes I describe are ones I see directly.*

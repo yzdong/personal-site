@@ -1,0 +1,127 @@
+export const metadata = {
+  title: "What Claude for Healthcare should be",
+  date: "2026-04-22",
+  description:
+    "A look at the healthcare agent ecosystem, what the current reliability research tells us, and a positive proposal for what Claude for Healthcare's strategy should be.",
+};
+
+*Draft — not final. May be revised.*
+
+Anthropic launched [Claude for Healthcare](https://www.anthropic.com/news/healthcare-life-sciences) at J.P. Morgan Healthcare in January. The announcement named 13 enterprise customers, shipped a starter library of medical connectors (CMS Coverage Database, ICD-10, NPI registry, PubMed) and two agent skills (FHIR, prior-auth review), plus a consumer integration with HealthEx for personal records. A few days later [the EM posting](https://job-boards.greenhouse.io/anthropic/jobs/5140492008) went live: *"standing up a team to build 0→1, focused initially on payer workflows (claims, prior authorization, utilization management, member communications), with groundwork for clinical applications over time."*
+
+This post walks through four things: the ecosystem as it sits today, what the current agent-reliability research shows, what each group of stakeholders actually wants out of a foundation-model healthcare play, and a proposal for what Claude for Healthcare Administration should be.
+
+Claude for Healthcare splits into two enterprise products — administration and clinical applications. I'm going to focus on healthcare administration, because that's the part of the ecosystem I'm most familiar with. Clinical has a different regulatory surface (FDA SaMD, clinician liability), different customers, and a different reliability bar; I don't have the vantage to recommend what that product should be.
+
+**Disclosure.** I run [Nen](https://getnen.ai), which builds computer-use infrastructure. Many of our customers are healthcare companies running agents in production on top of our runtime, so the failure modes I describe below are ones I see directly — not ones I'm extrapolating from the paper. That same relationship means what I argue about CUA runtimes affects my own company's product category. Factor both in.
+
+## 1. The ecosystem
+
+Seven layers are worth naming. Compact map, then the roadmap builds on this.
+
+| Layer | Who | Representative names |
+|---|---|---|
+| Individuals | Patients, families | Records scattered across 50,000+ health systems |
+| Providers | Clinics, hospitals, specialty groups | Banner Health, Intermountain, Kaiser, plus long tail |
+| Vertical apps (seed–Series B) | Admin/RCM automation on top of Claude-class models | Amperos, Substrate AI, Trellis, Tennr, Candid Health, Pair Team — full market map in [Menlo VC's 2025 state of AI in healthcare](https://menlovc.com/perspective/2025-the-state-of-ai-in-healthcare/) |
+| EDI / clearinghouses | Transaction rails between providers and payers | Availity (13B transactions/year, dual-sided), Stedi (API-first, MCP-native, 3,400 payers) |
+| Payers | Health insurers | UnitedHealth, Elevance, Aetna/CVS, Cigna, Humana, BCBS plans, Medicare Advantage plans |
+| Foundation models | The layer Anthropic sits in | Anthropic, OpenAI, Google, Microsoft (as Azure distribution) |
+
+A subpoint under the vertical app layer: healthcare is massive enough to sustain a sub-ecosystem of startups selling to other startups that sell to providers. CloudCruise and Kaizen Automation provide browser automation and credentialing; Stedi (also in the clearinghouse row above) primarily serves the health-tech startup cohort — Adonis, Nirvana, Pair Team, Tennr, Candid — rather than payers or large health systems directly.
+
+Two structural observations worth pulling forward into the rest of the post.
+
+The value chain is bifurcated by how transactions happen. EDI (270/271 eligibility, 276/277 status, 278 prior auth, 835 ERAs, 837 claims) rides on clearinghouse rails — Availity and Stedi own this. But a significant share of prior-auth, appeals, and DME work is still browser-against-payer-portals, which is why the picks-and-shovels layer exists. [HealthAdminBench](https://kineticsystems.ai/blog/healthadminbench-automating-healthcare-administration-with-computer-use-agents)'s 95-action average task lives in the browser gap, not on EDI.
+
+The vertical-app layer is fragmenting by specialty and workflow, not consolidating yet. Amperos and Substrate own post-submission (denials, appeals, collections). Trellis owns pre-treatment (referral → PA → enrollment). Commure, Elation, and Heidi live at-the-visit. This will consolidate, but not in 2026.
+
+## 2. What the reliability research shows
+
+[HealthAdminBench](https://kineticsystems.ai/blog/healthadminbench-automating-healthcare-administration-with-computer-use-agents) — Kinetic Systems with Stanford Hospital's Chief Data Scientist — is the reference point. 135 expert-designed tasks across prior authorization, denial appeals, and durable medical equipment ordering. 1,698 evaluation criteria. Average task: 95 actions against external systems. End-to-end success rates:
+
+| Model | End-to-end |
+|---|---|
+| Claude Opus 4.6 | 36.3% |
+| GPT-5.4 CUA | 26.7% |
+| Kimi K2.5 | 15.6% |
+| Qwen 3.5 | 13.3% |
+| Gemini 3.1 Pro | 11.9% |
+| Qwen 3.5 + domain SFT | 40% |
+
+The detail that matters more than the ranking: GPT-5.4's *per-subtask* success is 82.8%; its *end-to-end* is 26.7%. The gap is where the failure lives — not inside a step, across them. The authors put it plainly: *"82% is failure"* in healthcare, because a partially-correct prior auth is a denied claim, a delayed procedure, or a compliance incident.
+
+Three reproducible failure modes in the paper:
+
+1. **Hidden long-term dependencies** — the agent can't backtrack when it realizes on step 70 it needed something from step 4.
+2. **File-operation avoidance** — agents skip file reads and writes even when the tools are wired up; they re-screenshot or re-ask instead.
+3. **Information loss across long horizons** — the context that mattered at step 10 is gone by step 80.
+
+Ayo Ademoye has been writing about a fourth the paper doesn't cover, because the tasks were scaffolded around it: [authentication](https://writing.kunle.app/p/authentication-for-the-era-of-bots). Every healthcare agent in production dies on MFA; every password manager treats developer access as an afterthought; the UiPath-era solution is to turn MFA off, which no hospital IT team will sign. Ayo also makes a sharper observation in [a companion post](https://writing.kunle.app/p/deep-research-for-healthcare-claims) — machine interfaces to payers are systematically degraded versus human portals. United Healthcare's 277 EDI response exposes 15 fields; the portal exposes 37 for the same claim. 83% of insurers don't support automated claim-status checks.
+
+Both pictures say the same thing: the gap between Claude-quality demos and Claude-quality production is an infrastructure gap, not an intelligence gap. I see this at Nen every week. The model is usually fine. The run around the model is where things break.
+
+**Disclosure.** I know both Ayo and Michael (authors of the cited posts).
+
+## 3. What each stakeholder wants
+
+Not every group here has equal weight in this argument. I'll go in order of how much direct visibility I have.
+
+**Vertical app startups** (Amperos, Substrate, Trellis, Tennr, Candid, Pair Team). They're all re-solving the same hard problems: identity and credential management, payer portal automation, HIPAA-ready infra, domain post-training, eval harnesses for high-cost errors. They don't want to be an AI research lab; they want to be the *workflow* company. What they want from Anthropic is (a) a frontier model with healthcare-specific post-training, (b) connectors to the grounding sources they all need (CMS, ICD-10, NPI, PubMed — already shipped; next wave is Availity, Stedi, the CMS PA API, and the payer portal catalog), (c) first-party agent skills they can build on rather than rewrite, (d) the BAA and audit posture that shortens their own procurement cycle. What they don't want is Anthropic competing with their product surface.
+
+**Picks-and-shovels** (CloudCruise, Kaizen Automation, Nen). Disclosure applies loudly here. We all operate on the bet that CUA runtime is a hard operational problem — browser fingerprinting, session resume, credential vaulting, observability, regional availability — that foundation-model companies will buy rather than build. What we want is clarity: is Anthropic going to ship its own healthcare CUA runtime, or certify partners? The answer shapes whether this layer is a market or a fought-over slice. I'll argue for certification in section 4. I'd argue the same without Nen in the picture; discount accordingly.
+
+**Clearinghouses** (Availity, Stedi). Different asks. Availity's moat — dual-sided bilateral network, 13B transactions a year — is eroding under Stedi's API-first, MCP-native posture; Availity has an incentive to partner deeply with Anthropic to defend against Stedi. Stedi is already integrated at the MCP level; what Stedi wants is for Anthropic to not pick Availity as an exclusive partner. The right answer for Anthropic is to support both and not take sides.
+
+**Payers, providers, individuals** — I have less direct visibility here and will hedge accordingly. Payers want anything that lets them hit the [CMS-0057-F](https://www.cms.gov/newsroom/fact-sheets/interoperability-and-prior-authorization-final-rule-cms-0057-f) turnaround requirements (72-hour expedited, 7-day standard, public metrics reporting due March 31, 2026 for CY2025). Providers in aggregate want less administrative burden, but their actual buying decisions run through the vertical apps, not directly through Anthropic. Individuals want help understanding their records and navigating care; this is what HealthEx is for on the consumer side, and I think it's a separate product from the enterprise one. None of that is insider knowledge; it's the public surface.
+
+## 4. A proposal: Claude as the most trusted agent in healthcare
+
+Trust is the binding constraint, not capability. Every GPT-class model can *attempt* prior authorization. None can be trusted with it at the rate a payer would need to replace an FTE. The product question is how you compound trust faster than competitors compound capability — and how you gate expansion on trust maturity rather than feature parity.
+
+Trust here has a precise operational meaning: a published reliability number against real ground truth, an attestation a procurement committee will accept, and a failure mode a regulator will recognize.
+
+### Three phases, gated by trust maturity
+
+1. **Verifiable enterprise tasks.** Admin work with unambiguous ground truth — prior auth decisions, eligibility responses, claim statuses, appeal outcomes, coverage determinations. Both process-correct and outcome-correct are measurable. No medical-necessity judgment, no clinical decision support.
+2. **Informed consumer decisions.** A consumer product on top of HealthEx-like identity and consent rails. Gated on Phase 1 producing trust artifacts a regulator and a user would both recognize.
+3. **A data ecosystem for research.** A trusted orchestration layer for consented clinical data access. Gated on Phase 2 demonstrating the consent/identity stack works at population scale.
+
+The phases gate on artifacts, not quarters. Phase 2 doesn't begin because Phase 1 is "done"; it begins because the benchmarks, the audit trail, and the customer outcomes exist to make it defensible.
+
+### Phase 1 — what to actually ship
+
+Seven workflows clear the verifiability bar today: prior authorization submission, eligibility verification (270/271), claim status tracking (276/277), denial appeals, coverage determination, benefit verification, and claim submission completeness. Each one has ground truth the customer already owns (a payer decision record, an X12 response, a clean-claim metric).
+
+CMS-0057-F forces a hard date on this. Impacted payers must meet 72-hour expedited and 7-day standard PA turnarounds starting **January 1, 2026**, and must publicly report PA metrics by **March 31, 2026** covering calendar year 2025. The FHIR Prior Authorization API goes live **January 1, 2027**. That's the procurement window — an agent that demonstrably meets the decision-time SLA with a published accuracy number has a concrete buyer conversation.
+
+Each of the three HealthAdminBench failure modes maps to a concrete agent primitive on the other side. A persistent plan artifact the agent maintains and is trained to invalidate mid-task closes long-horizon dependencies. A file-first action primitive (disk-backed state, predictable paths, retrieval through reads) closes file-op avoidance and gives auditors a path-and-offset for every claim. A task-scoped memory skill with an explicit schema closes information loss. The Qwen 3.5 + domain SFT result (+23 points over base) is evidence that structured domain knowledge is a bigger lever than model size at this stage. I haven't measured whether these primitives actually move the end-to-end number on the benchmark — somebody should.
+
+### Primitive over product
+
+The highest-leverage version of Claude for Healthcare ships primitives, not products. Skills. Connectors. Specs. Benchmarks. Attestations. The commercial product is Claude plus the primitives plus the BAA. The vertical apps keep owning the workflow UX; Claude lives underneath them.
+
+A primitive I think is especially underweighted: an agent-identity spec. Every healthcare agent shop is rebuilding the same password-manager-plus-authenticator-plus-email-inbox-plus-SMS-inbox stack. Nobody wants to own it. A spec — programmatic MFA without disabling it, dedicated OTP inboxes per agent, per-credential audit trail, delegation from a named human operator — plus a reference implementation that wraps 1Password or Bitwarden saves the ecosystem a combined seven-figure year of work and binds those teams to Claude as the reference integration.
+
+The primitive-over-product posture extends to the CUA runtime — the most consequential architectural choice in Phase 1, and where my conflict is loudest. **Disclosure again:** Nen is one of the partner runtimes this decision affects. Two options. **(A)** Anthropic ships a first-party healthcare CUA sandbox — single throat to choke, safety envelope end-to-end. **(B)** Anthropic defines a certification and certifies partner runtimes that pass. I'd argue (B), with one caveat — Anthropic has to ship a reference runtime, MIT-licensed, or the certification devolves into vibes. The reference runtime isn't a commercial product; it's a spec in code. I'd make the same argument without Nen in the picture, but discount accordingly.
+
+### Anti-roadmap — seven things to not build
+
+1. **No first-party ambient clinical documentation product.** Abridge, Ambience, Nuance DAX, Heidi, Suki own it. Customer-led deployments on Claude API are the right level.
+2. **No first-party CUA runtime beyond the reference implementation.** Certify partners. (Conflict acknowledged above.)
+3. **No EHR replacement or first-party chart.** Epic, Oracle Health, Athena are the systems of record.
+4. **No RCM-vendor offering.** Amperos, Substrate, Trellis, Tennr, Candid own this layer and are Claude customers. Launching a Claude-branded RCM offering converts customers into competitors.
+5. **No branded persona surfaces** — "Claude for Doctors," "Claude for Nurses," "Claude for Billers." Packaging lives in Cowork plugin packs. Fragmenting the model line by persona is forever-maintenance.
+6. **No healthcare-specific model tier beyond standard post-training.** Separate SKUs per sub-persona are a trap.
+7. **No moves that displace the vertical healthcare startups that own provider distribution.** The one I feel most strongly about. Sales cycles there are 12–24 months, relationship-heavy, specialty-specific. Anthropic cannot replicate that distribution in any useful timeframe. Competing products, exclusive co-sell deals, pricing that squeezes vertical-app margins, model-access gating by vertical, or training on their customers' data each convert a customer into an adversary and give up distribution Anthropic cannot rebuild. The posture to hold: Anthropic's healthcare footprint is a function of vertical startups succeeding with Claude as their model.
+
+## What I don't know
+
+Writing from outside Anthropic and outside the healthcare operator seat. The things I'm least sure about:
+
+- **Whether the long-horizon plan artifact, file-first primitive, and task-scoped memory skill actually move the HealthAdminBench number.** The argument is they should close the 82.8% → 36.3% gap. I haven't run the experiment.
+- **The Availity question.** If Anthropic could convert Availity into a distribution partner (not just a connector target), it would change the unit economics for every downstream vertical app. That's a CEO-to-CEO conversation.
+- **Whether the CUA runtime market actually stays plural** through 2027. I think it does — healthcare procurement is too slow for one runtime to sweep — but I have a conflict on this question and have not built a real model of it.
+- **How to handle the "clinical documentation" case studies already on [`claude.com/solutions/healthcare`](https://claude.com/solutions/healthcare).** Reposition them as customer workflows on Claude API, or leave as-is and stop investing? Neither is obviously right.
+
+Happy to be wrong about any of this.

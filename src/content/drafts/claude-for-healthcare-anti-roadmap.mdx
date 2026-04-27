@@ -1,0 +1,54 @@
+export const metadata = {
+  title: "Six things Claude for Healthcare shouldn't build",
+  date: "2026-04-27",
+  description:
+    "The anti-roadmap counterpart to my OpenAI-vs-Anthropic post. The platform posture only works if Anthropic stays out of the layers its customers occupy.",
+};
+
+*Draft — not yet published. See [`drafts/README.md`](./README.md).*
+
+My [OpenAI-vs-Anthropic post](/blog/openai-vs-anthropic-healthcare) argues for what Anthropic should ship in healthcare over the next 12 months — Claude Cowork for Healthcare Administration, an internal eval suite for payer-admin artifacts, Availity and Stedi as first-class connectors, a first-party secure CUA runtime. That post had a single anti-roadmap line ("no Claude-branded denial product"). This is the longer version.
+
+The platform posture I argued for in that post only works if Anthropic stays out of the layers its customers occupy. The vertical apps named in §4 of that post — Tennr, Candid, Amperos, Substrate, Trellis, Pair Team, Heidi, Qualified Health, Commure, Carta Healthcare, Tomorrow Health, Brellium, Elation — are running on Claude *because* Anthropic isn't shipping a competing product. Each of the items below is a category where Anthropic could plausibly ship something, the launch press would land cleanly, and the long-term position would be worse for it.
+
+## 1. No first-party ambient clinical documentation product
+
+Abridge, Ambience, Nuance DAX, Heidi, Suki own this layer. Customer-led deployments on Claude API are the right level — Abridge has gone on the record as a GPT-5.5 launch partner and reports model-quality numbers back; that's the shape of trust a frontier lab gets from the tier of partner that runs against hundreds of US health systems. Anthropic shipping a Claude-branded ambient scribe converts every one of those companies from a customer who picks Claude into a competitor evaluating which lab to switch to.
+
+## 2. No EHR replacement or first-party chart
+
+Epic, Oracle Health, athenahealth, eClinicalWorks, and the long tail of specialty EHRs are the systems of record. The procurement cycle to displace any of them is measured in decades, not years. The version of this Anthropic could plausibly ship — a "lightweight EHR for AI-native practices" — collides with Elation Health, which is already a named partner and the only direct surface Anthropic has into the sub-10-provider segment.
+
+## 3. No first-party RCM-vendor offering
+
+Amperos, Substrate, Trellis, Tennr, Candid own the revenue-cycle layer and are visible Claude customers. A Claude-branded RCM offering — even narrowly scoped to denials triage or eligibility — converts each of them into a vendor evaluating model-switching every quarter. The per-token economics from those companies aggregated across their customer bases is a multiple of what a direct RCM offering could earn in the same window, and it doesn't carry the brand risk of "Claude denied my coverage" headlines from the payer-side deployments their customers run.
+
+## 4. No branded persona surfaces
+
+"Claude for Doctors," "Claude for Nurses," "Claude for Billers." Each one looks reasonable in isolation; together they fragment the model line by persona, which is forever-maintenance and a permanent discount on the unified-platform story. The right packaging surface is Cowork plugin packs through the SI partners (PwC, Deloitte, KPMG, Accenture) and through the vertical apps. Plugin packs are bundles, not SKUs — they don't fork the product line.
+
+## 5. No healthcare-specific model tier beyond standard post-training
+
+Med-PaLM-shaped specialization (separate model line, separate API endpoint, separate training data, separate eval) is a trap. The capability gap between general-frontier and healthcare-specialized closed sometime in the GPT-4 era; the customer signal is that procurement teams want the *general* frontier model under a healthcare BAA, not a separate specialized SKU. Healthcare-specific post-training is fine; a separate tier with its own pricing and version cadence is overhead the customer base does not want.
+
+## 6. No moves that displace the vertical healthcare startups that own provider distribution
+
+The one I feel most strongly about. Provider-side sales cycles are 12–24 months, relationship-heavy, specialty-specific, and often gated on existing trust with the local IDN. Anthropic cannot replicate that distribution in any useful timeframe. The class of moves that breaks the platform posture here:
+
+- Competing products in the same workflow segment a Claude customer occupies.
+- Exclusive co-sell deals with one vertical app that crowd out the rest.
+- Pricing that squeezes vertical-app margins below the level the segment needs to survive.
+- Model-access gating by vertical (e.g., "Claude Opus only available through certified partners in cardiology") in ways that pick winners.
+- Training on customers' data in ways that improve a future Anthropic-branded competitor.
+
+Each of those converts a customer into an adversary and gives up distribution Anthropic cannot rebuild. The posture to hold is the same one I argued for in the published post: **Anthropic's healthcare footprint is a function of vertical startups succeeding with Claude as their model.** Any move that makes those startups' lives harder is a move against Anthropic's own market share, even when the launch press reads positively in the week of the announcement.
+
+## What's missing from this list
+
+The anti-roadmap in the original draft of the OpenAI-vs-Anthropic post had a seventh item — *no first-party CUA runtime beyond a reference implementation* — that I dropped after working through the runtime question more carefully. The published version argues the opposite: Anthropic should ship a first-party secure CUA runtime, because the BAA-and-attestation work is lab-shaped rather than startup-shaped, and the customer-side trust diagram collapses materially when the runtime is first-party. That's a real reversal of position, and it's one of the harder calls in the published post — see §6.4 there for the full argument and the explicit Nen disclosure.
+
+The pattern that distinguishes the six anti-roadmap items above from the CUA runtime decision: each of the six is a workflow layer the customer or partner ecosystem already does well. The CUA runtime is a security-and-compliance layer that nobody in the customer or partner ecosystem can do as well as the lab can. *Build what the ecosystem can't; don't build what the ecosystem already does.* That's the principle the anti-roadmap is enforcing, applied case by case.
+
+---
+
+*Disclosure: I run [Nen](https://getnen.ai), which builds computer-use infrastructure that several of the vertical apps named above use. The argument that Anthropic shouldn't displace those apps is therefore aligned with my commercial interest. I'd make the same argument without Nen in the picture; discount accordingly.*

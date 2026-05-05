@@ -1,0 +1,148 @@
+export const metadata = {
+  title: "What CRUX-Land taught me about agents and AGI (Part 3 of 3)",
+  date: "2026-05-19",
+  description:
+    "Synthesis on where today's agents actually hit walls in real-world transactions, vs. where the benchmark narrative claims they hit walls.",
+};
+
+*Draft — not final. May be revised.*
+
+*[← Part 1: CRUX-X, CRUX-Vault-Zero, and the path to AGI](/blog/crux-x) · [← Part 2: CRUX-Land run report](/drafts/crux-land)*
+
+## Setup
+
+Part 1 set up the project; Part 2 told you what happened during the run. This part is why — what CRUX-Land actually says about today's agent class, and what walls it hit at each layer of the stack.
+
+The headline finding, after six days of running it: the current agent class — Opus 4.7 driving the scaffolds we know how to build — isn't general enough yet to drive a real-world transaction end-to-end, and the gaps are mostly outside the model. The model itself was fine on the hard reasoning. The gaps are in how the scaffold meters cost, how it handles multimodal context, what it's allowed to do at counterparty surfaces, and — most consequentially for CRUX-Land — how the Designer's first-pass success criteria hold up against a domain the model's priors barely cover.
+
+Four of those gaps showed up as walls. This post walks each one and what it'd take to close it: some at the model layer, some at the scaffold layer, some at the legal-identity layer, and one squarely at the methodology layer.
+
+## Wall 1 — KYC, and why identity isn't binary
+
+"Agents can't do KYC" is true and a little boring. KYC counterparties — Bid4Assets bidder registration, SoFi wire forms, the eventual settlement wire, account-settings changes that gate on the registered email — require the operator's legal identity at the transaction surface, and no amount of policy tweaking moves that line. CRUX-Land hit five such surfaces in the first three days.
+
+One nuance worth flagging: those five surfaces aren't all bounded by the same thing. Some are bounded by federal KYC law — submitting my SSN to register as a bidder isn't something any agent can do without committing identity fraud. Some are bounded by Claude's safety policy specifically — Claude declined to navigate SoFi at all as soon as it recognized the page as a bank, even just to copy a wire confirmation number. A less restrictive agent would have clicked through. From the outside the result looks identical (the agent didn't do it; I did), but the first ceiling is a feature of the legal system and won't lift, while the second varies by lab and is already a policy choice today. CRUX-Land's run is partly a study of what Claude in particular will and won't do, not a universal claim about agents.
+
+The more interesting finding is that legal identity at the transaction surface doesn't propagate to all the other surfaces the same account touches. The Bid4Assets bidder account is registered to me with my SSN, but its email-of-record is `crux@getnen.ai`, an agent-controlled mailbox. Bid4Assets sends every inbound notification — deposit-cleared, qualified-to-bid, won/lost, settlement instructions — to an inbox the agent polls and triages without me in the loop. Same account, different actors on different axes.
+
+An account has at least six axes that can be owned independently:
+
+- **Legal identity** — who the law says owns it
+- **Operational control** — who clicks the buttons
+- **Read access** — who sees the state
+- **Alert routing** — who gets paged when something changes
+- **Transaction authorization** — who can spend money
+- **Audit-trail attribution** — whose name is on the record
+
+They don't move in lockstep. CRUX-Land's Bid4Assets account ended up: legal identity = me, operational control = mostly agent, read access = mostly agent, alert routing = agent → me via cron, transaction authorization = always me, audit trail = me.
+
+The argument from this: the right unit isn't "is this account agent-owned or human-owned." It's "for each axis on each account, who is it." A methodology that doesn't model that distinction will undercount what agents can do at KYC counterparties.
+
+## Wall 2 — Multi-day duration, scaffold cost, and the fragility of hand-crafted monitoring
+
+Real-world tasks span days or weeks because of external waits. CRUX-Land's external waits ran roughly:
+
+- 1-2 business days for the wire to clear at Bid4Assets
+- 4 days between deposit deadline (May 4) and auction open (May 8)
+- 3 days between auction close (May 11) and settlement deadline (May 14)
+- Up to 30 days between deed submission and recording confirmation
+
+The OpenClaw scaffold's heartbeat-driven cost model assumes the agent runs continuously. CRUX-Windows lost $1,333 to idle heartbeat ticks on a task-complete agent over 10 days. CRUX-Land hit the same wall on Day 2 in a single 15-minute span ($575). The fix, as covered in the Part 2 writeup: kill the gateway, replace heartbeat-driven monitoring with a $0-cost VM cron + IMAP poll + multi-channel operator alerts.
+
+That fix worked, in the sense that it took API spend during operator-offline windows from $300+/day to $0. It didn't work in the sense that the cron logic itself was hand-prompted, and hand-prompting is fragile. On May 4, Bid4Assets sent me a "Your Deposit Has Cleared:..." email that should have been routed as urgent (action-required: I'm now eligible to bid on the parcel; auction opens in four days). The cron classifier was looking for "deposit posted" / "deposit received" / "qualified to bid" — none of which appear in the actual subject line. The email got classified as low-severity B4A miscellaneous and Slack-pinged me silently while I was offline. I caught it ~30 hours later by accident.
+
+Two takeaways:
+
+1. **Long-running agents need an off-mode primitive at the scaffold layer.** "Park the agent, wake on these signals, pay $0 in the meantime" is something every multi-day agent task needs. Today every operator builds it themselves, badly.
+2. **Some second-order reasoning is missing when agents design their own infrastructure.** When I asked the agent to design the cron monitor on Day 2, it proposed a string-match classifier — fast, $0/call, simple to implement. The first-order reasoning was fine: the agent picked a classification approach that satisfied the literal spec. The second-order reasoning was missing: nothing in the design weighed the fact that this monitor sits on the operator-alert path, where a false negative (missing a deposit-cleared email) is catastrophic and a per-call cost of $0.01 is rounding error. A human infrastructure engineer would have noticed that asymmetry and architected for recall over cost. Today's agents implement specs well but don't reliably reason about the consequences of their own design choices on the system they're embedded in. That's a model-layer gap.
+
+## Wall 3 — Today's agents are optimized for code; everything else is second-class
+
+The agent harnesses we know how to build today are descended from coding agents. They assume the working set is text, that text is decomposable (`import { foo } from './bar'` pulls in `foo` and ignores the rest of `bar.js`), and that the cost of dragging the wrong stuff into context is bounded by the size of source files. Those assumptions are wrong for the kind of context CRUX-Land had to read.
+
+A real-world transaction agent reads PDFs (200-page county Terms-of-Sale documents), scanned plat maps, GIS polygon layers, screenshot-driven web forms, and the occasional faxed-and-rescanned property assessment. Each browser tool call comes back as 100-500 KB of bytes that aren't decomposable on the next turn — there's no `import` for "the paragraph on page 47 of this PDF." The Modoc cost-explosion tick (paragraph 11 of a 200-page county Terms of Sale, $575 in fifteen minutes, working set bloating from ~6 MB to 8.5 MB across 46 browser calls) is the canonical instance. The model found the right paragraph. The scaffold paid full input pricing on a multi-megabyte working set every turn while it looked.
+
+Closing this is a scaffold-layer problem, not a model-layer one — and exactly what the right primitives look like, I'm not sure. The shapes I'd expect to see something like, none of which exist as defaults in the scaffolds I know:
+
+- some form of **tool-result distillation** between fetch and context, so the model sees a summary of the 200-page PDF with retrieval handles, not the raw bytes
+- **lazy, explicitly-addressed retrieval** — bounding-box for maps, page-and-paragraph for PDFs — instead of "give me the whole thing"
+
+Whether those specifically are the right answer or someone smarter has a better one, I don't know. What I'm more confident about: until something at this layer lands as a default, every multimodal-heavy real-world task pays Modoc-shaped tax.
+
+## Wall 4 — The wrong question, answered competently
+
+The wall I expected to hit on a real-world transaction was something model-capability-shaped: the agent fails to read a hard PDF, mis-classifies a counterparty signal, makes a calculation error on closing fees. The wall I actually hit was methodology-shaped, and it kept the run alive on a parcel that was structurally wrong from the start.
+
+The headline story is parcel APN 035-015-010 in Siskiyou County, CA. By Day 6 it was the only live candidate in the inventory: 0.22 acres, R-R zoning ("Rural Residential"), $1,200 minimum bid, $11.52/yr in property tax, and the agent had cleared every protocol criterion it could find. I authorized a $1,220 Auto Bid pre-bid via Bid4Assets and a $1,035 deposit wire, scheduled to settle if won at the Mon May 11 auction close. I then opened the assessor's plat map for the first time and saw, on the third line of the header: **Macdoel Townsite**.
+
+The parcel is not rural acreage. It is a triangular wedge in a platted residential subdivision, fronting US Highway 97, with an active rail line on the next block over. Septic + well on 0.22 acres in California is foreclosed by setback minimums; off-grid living on this lot is structurally infeasible regardless of what the zoning code calls it. I retracted the pre-bid the same day.
+
+The interesting question is why the agent kept it live in the first place. I went and looked at the session log:
+
+- The agent **had the assessor's plat map**, the same PDF I had. Its diligence note read: *"At 0.22ac the parcel is likely substandard vs. typical R-R 1-5ac minimums. May still be buildable as legal nonconforming pre-existing lot (typical for old Macdoel/Butte Valley subdivisions). This is the gating uncertainty for crit 2."* It saw the townsite character. It explicitly identified the parcel as part of an old subdivision.
+- The agent **had the Bid4Assets listing's structured fields** — "Community: MACDOEL," "Acreage: 0" (literal zero on the assessor record, not even 0.22), "Zoning Type: Rural Residential, Agricultural District."
+- The agent **then designed real diligence to resolve the gating uncertainty** — drafted a Twilio voice call to the Siskiyou County planner asking specifically: *"Under Siskiyou County code section 10-6-1509, the lot of record buildability exception requires the parcel to have been in single ownership on or before June 17, 1974. Can you tell us whether APN 035-015-010 in Macdoel meets that criterion?"* That is sophisticated. The agent identified the relevant statute, framed the question precisely, built a phone-call infrastructure to get a recorded answer.
+
+But the question was wrong. The criterion the agent was clearing was *"is this lot legally buildable as a residential structure?"* — which is what the protocol said to check, especially after the Day 1 acreage relaxation, which lifted the fixed minimum and replaced it with "buildable per zoning + minimum-lot-size." The criterion that mattered for the project was *"is this lot off-grid suitable?"* — a different question, one that turns on septic and well setback feasibility, distance from utility infrastructure, neighbor density, and code-enforcement posture rather than on lot-of-record exception eligibility. A parcel that's residentially buildable can be off-grid-infeasible. A parcel labeled "Macdoel Townsite" on its own assessor's map is the latter regardless of how the lot-of-record argument resolves.
+
+Nothing in the loop — Designer, Agent, Operator — operationalized "rural off-grid suitable" as distinct from "residentially buildable." The Designer wrote criteria that conflated the two. The Operator (me) relaxed the only criterion that even partially captured the distinction (acreage) on Day 1 because the Designer's heuristic was wrong in the other direction. The Agent then reasoned within the relaxed criteria, exhaustively and competently. The agent's failure mode here isn't perception or capability; it's framing. It worked the question it was given.
+
+This is the same shape as the smaller protocol-revision interventions earlier in the run, and those are worth flagging as supporting cases:
+
+- **Acreage minimum, Day 1.** Designer-set Criterion 2 was "≥ 1 acre" as a heuristic for "buildable rural parcel." On 2026-04-29 the agent rejected a Klickitat WA Surplus tax-foreclosed lot (0.76 acres, $200 minimum bid) for failing it. The rule was a Designer assumption I'd never confirmed. I relaxed it. The relaxation later let Siskiyou through.
+- **Quitclaim deeds, Day 3.** Designer-set Criterion 10 banned quitclaim conveyances on a fraud-risk argument. La Paz County AZ killed on the rule. I have no domain knowledge about deed types — I'd never heard the word "quitclaim" before this run. My intervention was literally to repeat the rule back as a question: "is criterion 10 banning quitclaim conveyance a blocker here?" The agent surfaced that in AZ, CA, OR, WA, tax-deed conveyances are *statutorily* quitclaim from a government grantor. I revised the rule to split by grantor type. The fix came from forcing the agent to re-examine a committed parameter, not from operator domain knowledge.
+
+CRUX-Windows didn't run into anything like this. CRUX-Windows was **decision-dense, requirement-light**: the Designer-written protocol set a fixed envelope (publish to Microsoft Store, $X budget, 14 days wall-clock) and the agent picked freely inside it. Software publishing also gave CRUX-Windows a free pass — Microsoft Store submission flow, manifest format, signing-cert mechanics are heavily represented in training data, so the Designer's first-pass protocol was reasonable on the merits. CRUX-Land was **requirement-dense, with much thinner priors**: the Designer was filling in substantive constraints over a niche (sub-$1,500 tax-deed sales, county recorder mechanics, statutory deed variation across western states) that the training data barely covers. The first-pass protocol's mistakes had compounding consequences because operator-driven relaxations (like the acreage one) lifted floors without the Designer re-checking that anything else captured the underlying intent.
+
+Six protocol revisions in the first three days; eight operator interventions total. Zero were creds-fetches or captchas. They were all reasoning about what the original requirement envelope should have been — and the one that mattered most, the one that would have caught Siskiyou before I had to, was never made.
+
+The methodology doesn't currently model this well. A single autonomy-ceiling metric — intervention count, dollar-weighted autonomy delta, whatever — undercounts what an agent did on a requirement-dense task because it scores protocol-revision interventions the same as creds-fetches when they're an entirely different category of work. It also misallocates blame for cases like Siskiyou: the run-time Agent did what it was told; the gap is upstream, at the Designer's first-pass framing of the success criteria.
+
+The fix is three things. First, classify experiments by density at design time and report autonomy within class. Second, require the Designer to do a self-interrogation step before handing the protocol to the Operator: enumerate every criterion it set, label its source ("you told me," "I inferred," "I assumed by default"), and challenge each — especially the ones that might be conflating two different success conditions. Third, treat operator-initiated criterion relaxations as triggers for the Designer to re-derive the criteria envelope, not as local edits. The Day 1 acreage relaxation lifted a floor that was load-bearing for "rural" without anything else picking up the load. The Designer should have noticed and proposed a replacement; nothing in the methodology asked it to.
+
+Real-world transaction tasks — real estate, government applications, regulated submissions, anything with multi-counterparty negotiation — are systematically requirement-dense, and the Designer's priors on them are systematically thinner. CRUX-X has to absorb both.
+
+## Where today's agents are actually fine
+
+Stacking up the walls makes it sound worse than the run actually felt. The model held up on most of the hard reasoning — these are the moments worth flagging on the other side of the ledger.
+
+- **The Modoc kill artifact.** The agent pulled paragraph 11 out of a 200-page county Terms-of-Sale PDF and correctly identified that Modoc County bans every off-grid water and sanitation strategy at the county code level, with criminal enforcement on camping. I would never have thought to look in that document, and if I had, I'd have skimmed past the paragraph. Cross-document inference at that depth is exactly what we want agents for.
+- **The Klickitat strip-parcel kill.** The agent ran a GIS REST query, computed the parcel geometry, and visually confirmed via the county's plat viewer that APN 05-13-2600-0007/00 is a 25 ft × 1,321 ft strip — a road-frontage scrap that's not a buildable parcel in any practical sense. Multi-step tool-use across spatial APIs and visual confirmation, accomplished in a single session, was out of reach for agents two years ago.
+- **The Siskiyou §10-6-1509 phone call.** Even on the parcel that turned out to be wrong for the project, the agent's diligence was technically sophisticated. It identified that California has a statutory lot-of-record exception that would let a substandard 1974-era subdivision lot be buildable as nonconforming, located the specific Siskiyou County code section, drafted a precise voice script to a county planner asking the exception's load-bearing factual question, and built Twilio infrastructure to record the answer. That is genuinely what we want agents for, even when it's pointed at the wrong question.
+- **Session-retirement recovery.** When a long-running session hit token-context limits, I retired it and started a fresh one with a memory file and bootstrap prompt. The new session picked up the run state, recognized the parcel pipeline mid-flight, and continued without re-doing prior diligence. Continuity across model session boundaries is a quiet capability that matters a lot for runs that span weeks.
+
+Each of these is the model doing cognitive work I wouldn't have done as well or as fast. They're the reason the rest of the run was worth attempting at all.
+
+## What this implies about AGI
+
+"AGI" as the term is colloquially deployed usually means "model that can do most cognitive work humans do." Reading the discourse, you'd think the question is mostly whether the next model crosses that bar. From inside CRUX-Land, the question is closer to: what does the rest of the stack around the model have to look like for the model to actually do that cognitive work in the world.
+
+The model in CRUX-Land would have done well on graduate-level research about California tax-deed law, AZ §42-18301 procedure, PA Act 542 Repository sales, AR §22-6-414 limited warranty conveyances — and going by writeup-notes.md, it pretty much did. The same model can't sign up for the Bid4Assets bidder account the research is for, can't authorize a wire from my SoFi checking, can't sign a deed in its own name at a county recorder. Those aren't model-capability gaps. They're identity-and-authority gaps.
+
+Closing identity-and-authority gaps isn't done by training a smarter model. It's done by humans deciding what we're willing to let agents do under whose authority — by writing (or interpreting) the law that grants agents narrow personhood, building agent-scoped banking primitives, defining what "an agent in good faith" means at a counterparty surface. Very little of that work is happening anywhere yet.
+
+So if "the path to AGI" means "the path to agents that can close real-world transactions end-to-end on a human's behalf without needing the human at five different surfaces along the way," it's less a model-capability question than a question of how much identity infrastructure we're willing to build for agents to inhabit. The current answer is: very little. The bottleneck right now lives in the legal-identity layer, not the model layer.
+
+## What I want built
+
+A handful of things would meaningfully move the agent-class generality needle — biased, frankly, toward what I'd build at Nen:
+
+- **Off-mode primitive in the scaffold.** Long-running agents need first-class support for "task is parked, wake me on these external signals, pay me $0 in the meantime." CRUX-Land had to build this ad-hoc on Day 2. It should be a scaffold concern, not an operator concern.
+- **Designer self-interrogation pass.** Before the protocol leaves the Designer's hands, the Designer enumerates every criterion it wrote, labels each by source ("operator told me," "I inferred from brief," "I assumed by default"), and challenges the inferences and assumptions. Re-runs whenever the Operator relaxes or modifies a criterion mid-flight. Most of CRUX-Land's Day 1 thrash, and the Siskiyou framing miss specifically, would have been catchable here.
+- **Ownership-table primitives.** A pre-run mapping of which axes (legal identity, operational control, read access, alert routing, transaction authorization, audit trail) belong to which actor for each counterparty. Mid-run discovery is too late.
+- **Tool-result distillation and lazy retrieval** for browser/PDF/GIS fetches, addressed at the asset level.
+- **LLC-persona-as-a-service** for runs that need an agent-side legal identity at counterparty surfaces. The hard parts here are legal, not technical.
+
+## What's next for CRUX-Vault-Zero
+
+CRUX-Land terminated as primary-failed on 2026-05-04. The agent didn't acquire a parcel; the methodology didn't catch a parcel that was structurally wrong; the operator caught it seven days before auction close and retracted the pre-bid. Real-money net loss after the deposit refund: $30 (the SoFi outbound wire fee). API spend: ~$1,430. Calendar time: six days of active diligence plus the retraction. The methodology is what got better, not the inventory.
+
+Next experiment is **CRUX-Land-2**, with three changes baked in before kickoff:
+
+1. The Designer runs a self-interrogation pass on the first-pass criteria, with operator review per-criterion rather than en bloc.
+2. "Off-grid suitable" gets operationalized into testable sub-criteria — septic feasibility, well feasibility, neighbor density, code-enforcement posture, distance from major infrastructure — rather than being collapsed into "rural-zoned and buildable."
+3. Geographic scope widens beyond the cheap-rural-parcel niche the original protocol targeted, since the niche turned out to be dominated by townsite-platted lots that satisfy the buildability criterion without satisfying the project intent.
+
+The umbrella stretch goal — a fully off-grid setup, each step its own CRUX experiment — hasn't moved. The land step still has to happen first. CRUX-Vault-Zero remains a multi-year project; CRUX-Land-2 is the next move.
+
+— Zi

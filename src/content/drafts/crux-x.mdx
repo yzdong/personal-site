@@ -1,0 +1,176 @@
+export const metadata = {
+  title: "CRUX-X, CRUX-Vault-Zero, and the path to AGI (Part 1 of 3)",
+  date: "2026-05-04",
+  description:
+    "Why I'm running a series of CRUX-style real-world agent experiments under one umbrella project, starting with buying a piece of off-grid land.",
+};
+
+*Draft — not final. May be revised.*
+
+*Part 1 of 3 · [Part 2: CRUX-Land run report →](/drafts/crux-land) · [Part 3: the synthesis →](/drafts/path-to-agi)*
+
+## Background
+
+A couple of weeks ago I [reproduced CRUX #1 on Windows](/blog/crux-windows) — a one-day side project porting the original CRUX agent-capability eval to a Windows Store publishing task. The reproduction worked: the agent shipped TimeZonr to the Microsoft Store in 77h 48m wall-clock, with three net human inputs total. As an experiment that was basically a success.
+
+The thing I didn't expect was how much of that experiment was *plumbing*. The agent doing the actual app-publishing work was a small slice of the calendar. Most of the run-up was provisioning the controller VM, wiring up the agent harness, building the credential vault, plumbing the Slack channel, writing the kill switch, the telemetry hooks, the dry-run smokes. None of that was task-specific. I'd build all of it the same way for any externally-gatekept real-world task.
+
+Which suggests there's a methodology in there.
+
+## CRUX-X
+
+I started thinking about CRUX-Windows as the *first instance* of a class, not the experiment itself. What's left after you abstract over the task is a process — a way to take an externally-gatekept real-world objective and walk through:
+
+- generating the protocol (success criteria, scope, constraints, agent instructions, kill-switch design)
+- provisioning the infrastructure (controller VM, agent harness, credential vault, comms channel, telemetry)
+- running the experiment (kickoff, heartbeats, intervention logging)
+- evaluating it
+- writing it up
+
+I'm calling that CRUX-X. The shape:
+
+```text
+Legend:  ┌─ doc ─┐ artifact     « actor »  agent     ──verb──►  execution
+
+
+┌──────────────────────────────────────┐
+│  CRUX-X Methodology                  │   artifact: ~39 KB markdown spec
+│  (methodology.md)                    │   defines [SLOT]s the Designer fills:
+│    §1  Hypothesis            [SLOT]  │
+│    §3  Inputs / pre-staged   [SLOT]  │
+│    §5  Comms + kill switch   [SLOT]  │
+│    §7  Budget / constraints  [SLOT]  │
+│    §8  Writeup template      [SLOT]  │
+│    Operator review gate              │
+└──────────────────┬───────────────────┘
+                   │
+            reads + fills
+                   │
+                   ▼
+            « Designer »      agent — an LLM session, one shot per task
+                   │
+                drafts
+                   │
+                   ▼
+┌──────────────────────────────────────┐
+│  CRUX-Windows Protocol               │   artifact: task-specific instance
+│  (experiments/windows/protocol.md)   │   each [SLOT] resolved concretely:
+│    §1 → "Publish a Windows app       │
+│          to the Microsoft Store"     │
+│    §3 → Partner Center dev account,  │
+│          Gmail, GitHub PAT, signing  │
+│          cert, controller VM         │
+│    §5 → Slack #crux-windows, kill    │
+│          switch via gateway-stop     │
+│    §7 → $500 Anthropic API cap,      │
+│          14-day wall-clock cap       │
+└──────────────────┬───────────────────┘
+                   │
+         reviews + approves
+                   │
+                   ▼
+            « Operator »      agent — the human (me)
+                   │
+              kicks off
+                   │
+                   ▼
+┌──────────────────────────────────────┐
+│  Manifest                            │   artifact: per-run binding
+│  (runs/2026-04-13/manifest.json)     │
+│    run-id, t=0 timestamp, model id,  │
+│    budget caps snapshot, vault refs  │
+└──────────────────┬───────────────────┘
+                   │
+                 binds
+                   │
+                   ▼
+             « Agent »        agent — autonomous LLM, long-running session
+                   │
+         executes against
+        (protocol + manifest)
+                   │
+                   ▼
+        ════ The Run ════           execution — wall-clock window
+                                    (CRUX-Windows: 77h 48m, 3 net inputs)
+                   │
+            interacts with
+                   │
+                   ▼
+         Counterparty(ies)          external real-world gatekeeper
+         (CRUX-Windows: Microsoft
+          Partner Center reviewers)
+```
+
+The Manifest is a separate artifact from the Protocol on purpose. The Protocol is the task spec — the same across runs of the same experiment. The Manifest snapshots runtime state: which model was used, what the budget caps were at t=0, which credential vault, which controller VM, the t=0 timestamp itself. To re-run CRUX-Windows six months from now against a newer model, I draft a fresh Manifest against the same Protocol. Reproducibility lives in the Manifest.
+
+CRUX-X v1 is at [github.com/yzdong/crux-x](https://github.com/yzdong/crux-x).
+
+I'm sharing CRUX-X partly so other people can bootstrap CRUX-style experiments without rebuilding the plumbing from scratch, and partly because the methodology itself is a useful frame for talking about what agents can and can't do today. Today's agents can execute against a well-defined task — fixed inputs, fixed success criteria, a counterparty that already exists — and run it to completion. Today's agents can't dynamically modify their own inputs or define what counts as success in the first place. CRUX-X bakes that division in: the Designer and Operator define the parameters of success, and the Agent executes against them. As models get more capable, the Operator's role shrinks and the Agent's grows.
+
+## What I want to validate
+
+CRUX-Windows had a high likelihood of success going in. CRUX #1 had already validated the basic shape, and the task itself was software-contained: every action happened in a browser or a terminal, and Microsoft Store publishing is well-documented enough that a careful human could follow the path in a weekend. I wanted the next experiment to be more ambitious along axes CRUX-Windows didn't stress. Something that touches the physical world, where the counterparties aren't in Silicon Valley and haven't heard of agents, where the task runs for weeks instead of days, and where the requirements aren't fully specified up front — they emerge during execution and have to be reconciled between agent and operator in real time.
+
+This project is also heavily inspired by Evan Ratliff's [*Shell Game*](https://shellgame.co/), which I've been following since 2025. Ratliff builds agents, sends them out into the world to do real things, and reports back — often hilariously. The shape of his experiments is what I wanted CRUX-X to support: a real-world task, a real agent, a real outcome, observed honestly even when the agent fails ridiculously.
+
+So: a sequence of CRUX experiments rather than just one.
+
+## CRUX-Vault-Zero
+
+I needed a goal to organize the sequence around. Something that decomposes into a handful of distinct CRUX experiments, each with its own externally-gatekept counterparty class. I picked: **prepare for off-grid living, end-to-end, with agents doing as much of the work as they can.**
+
+This is half-joking. The bull case for AI rolls quickly into the doomer case, and either way I'd like to know there's a place to go that has reliable water. The Fallout reference in the project name is intentional.
+
+It's also a deliberate naivety test. With CRUX-Windows I had a software background to fall back on — I know how to build software, so I could read the agent's calls and spot when something looked off. With off-grid living I know almost nothing. I'd never heard the word "quitclaim" before this run, I can't tell a county recorder from a state water board, and I don't know what a "minimum-lot-size" zoning rule actually constrains. That's the point. I want to see what an agent can do when the operator can't second-guess substantive task-shape decisions on the merits and has to lean on the agent for the actual reasoning.
+
+And it's methodologically clean. The standard off-grid decomposition — Carla Emery codified it in *The Encyclopedia of Country Living* in the 1970s, and most subsequent handbooks reproduce some version of it — runs roughly:
+
+- acquire raw land suitable for off-grid use
+- put a structure on it
+- water solution (well, spring, rainwater catchment)
+- energy solution (typically solar + battery)
+- sanitation solution (septic, composting, greywater)
+- food solution (gardens, livestock, preservation, storage)
+
+Each goal decomposes into one or more CRUX experiments, each with its own real-world gatekeeper class — county recorder, state-licensed contractor, regional drilling firm, county building department, state water board, county health office. Each stress-tests CRUX-X against a different counterparty.
+
+Working name for the umbrella project: CRUX-Vault-Zero. Each individual experiment is its own CRUX run with its own protocol, infra, and writeup.
+
+## CRUX-Land
+
+The first run is **CRUX-Land**. The agent autonomously searches, evaluates, contracts, escrows, and closes on a piece of raw rural land suitable for off-grid living. Real money — $1,500 cap on the parcel, $2,500 all-in including closing fees. Real recording at a real US county recorder. Real deed in my name.
+
+The constraint stack is tight on purpose. A $1,500 parcel cap forces the agent into the actual cheap-rural-parcel market — county tax-deed sales, regional title companies, state-bar real estate attorneys, small recorder offices. That's the segment where the gap between benchmark performance and real-world completion gets ugly. It's also the segment where, if you were actually buying off-grid land, you'd actually shop.
+
+CRUX-Land kicked off 2026-04-29 and terminated as primary-failed on 2026-05-04 — six days, twelve evaluated channels, twelve dead candidates. Net real-money loss after the deposit refund: $30.
+
+### What I imagined I would get
+
+![What I imagined I was getting: a lush rural setting in Siskiyou County with Mt. Shasta in the background](/images/crux-land/imagined-shasta-rural.jpg)
+*Photo: Marina M / [Pexels](https://www.pexels.com/photo/cow-in-pasture-with-mountain-in-background-8201746/)*
+
+### What I actually almost bought
+
+![What I was actually getting: Google Streetview of parcel APN 035-015-010, corner of Mt Shasta Street and US Highway 97, Macdoel CA](/images/crux-land/actual-streetview-035-015-010.jpg)
+
+Spoiler: this experiment wasn't as successful as CRUX-Windows. The agent got all the way to placing a pre-bid on a "rural" lot in Siskiyou County (home to Shasta) and I was so close. A manual check a week before the auction led me to withdraw the bid. Read on to find out why.
+
+## Why this is a 3-part series
+
+There's enough material from the run already that one post can't hold it.
+
+Part 2 is the CRUX-Land run report. Some of the cast: a 200-page county PDF that ate $575 in fifteen minutes, eleven dead candidates that died eleven distinct deaths, an agent that drew a hard line at typing a password but would happily reuse the session cookie I'd already typed in, a Bid4Assets email subject ("Your Deposit Has Cleared:...") that thwarted my naive string-match classifier, and a twelfth candidate the agent successfully cleared by answering the wrong question.
+
+Part 3 is the synthesis. The question: how general is the current agent class — Opus 4.7 inside the scaffolds we currently know how to build — when you let it try a real-world transaction with real money and a real counterparty? My short answer after six days of running CRUX-Land: not yet, and the gaps are mostly outside the model. The interesting work is figuring out which gaps are model-shaped, which are scaffold-shaped, which are legal-system-shaped, and which are methodology-shaped. The Macdoel near-miss is mostly the fourth. More when Part 3 lands.
+
+## Reading list
+
+If you want to follow along:
+
+- Methodology (CRUX-X v1): [github.com/yzdong/crux-x](https://github.com/yzdong/crux-x)
+- CRUX-Land protocol: [github.com/yzdong/crux-x/blob/main/experiments/land/protocol.md](https://github.com/yzdong/crux-x/blob/main/experiments/land/protocol.md)
+- Original CRUX project: [cruxevals.com/crux-1](https://cruxevals.com/crux-1)
+- Evan Ratliff's *Shell Game*: [shellgame.co](https://shellgame.co/)
+- My CRUX-Windows reproduction: [/blog/crux-windows](/blog/crux-windows)
+
+— Zi

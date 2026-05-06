@@ -52,6 +52,28 @@ catch one, ask what it means literally and say that instead.
 date. A metaphor ("bites", "compounds", "tax") is borrowing pathos it didn't
 earn.
 
+**Section headings name the section's content, not its takeaway.** Punchy
+three-word titles read like slide headers. Prefer descriptive headings a
+reader can skim to locate the content. The ✗ version is fine as a sentence
+inside the section, not as the heading.
+- ✗ `## The hires reveal the strategy`
+- ✓ `## Who each company hired`
+- ✗ `## The absence is the signal`
+- ✓ `## What's missing from the org chart`
+
+**Don't re-list a cast of named people across sections.** Once you've
+introduced four people in §3 with specific roles, refer back to the *roles*
+in §6, not the names. Re-rolling the same names reads like filler.
+- ✗ "Gross is the Doximity architect, Alexander is the consumer-product weight, Singhal provides benchmark credibility, Hairston handles the regulator."
+- ✓ "The hires I walked through in §3 line up with this motion 1:1: a clinician-PLG operator at the top, a consumer-PLG product chief, a clinical-AI research lead, a regulatory lead."
+
+**Contrast-pair one-liners read markety.** Two short symmetric sentences
+that pivot on a single contrast ("X shipped A. Y shipped B.") are headline
+copy, not analysis. Unpack them into a paragraph with the concrete end
+users or mechanisms behind each side.
+- ✗ "OpenAI shipped apps. Anthropic shipped primitives."
+- ✓ "The person who opens ChatGPT Health is a patient sitting down with bloodwork results. The person who opens Claude for Healthcare doesn't exist yet — the connectors and Skills Anthropic shipped go into other people's products..."
+
 **Avoid the passive voice.** Even when the actor seems obvious, prefer the
 active verb. This identifies who's responsible for each claim and keeps the
 reader tracking who did what.
@@ -61,6 +83,23 @@ reader tracking who did what.
 - ✓ "I wanted to isolate the comparison to the access check."
 - ✗ "Memory today is split into two scopes."
 - ✓ "Today's conventions give you two scopes." / "Memory today has two scopes."
+
+**Don't dress up arbitrary choices as principled ones.** Many decisions in
+any project — a numerical threshold, a time budget, a hire, a tool, an
+approach taken — are picked for convenience, comfort, or gut. Reverse-
+engineering a principled rationale after the fact reads as confidence but
+obscures what actually drove the call. Often the more interesting story
+is the discovered consequence: name the choice as arbitrary, then describe
+what it ended up forcing.
+- ✗ "The constraint stack is tight on purpose. A $1,500 parcel cap forces the agent into the cheap-rural-parcel market — that's the segment where benchmark performance and real-world completion gets ugly."
+- ✓ "The $1,500 cap was an arbitrary pick — I just wanted something not too expensive. It forced the agent to be aggressively selective."
+
+**Don't gild credentials in the service of a setup.** Tempting to dress up
+qualifications because they make a contrast land cleaner, but the contrast
+lands fine without overclaim — and getting it wrong erodes trust in
+everything else in the post. State only what you actually have or know.
+- ✗ "I had a software background — I knew what code-signing certificates were and what the WACK validator complains about, even if I'd never personally shipped a Windows Store app."
+- ✓ "I had a software background to fall back on — I know how to build software."
 
 ## Patterns to use
 
@@ -74,6 +113,37 @@ Center — real names a reader can grep for. Avoid "a scaffold," "a harness,"
 
 **Narrate discovery when it's honest.** "I had not budgeted for the agent
 fixing *my* infrastructure" beats "Unexpected agent behavior emerged."
+
+**Make the analyst visible.** For research or analysis posts, signal how
+the work was done. "I read each company's public health-team roster and
+cross-referenced public bios against LinkedIn" grounds the claim in
+verifiable effort. Passive "The hires reveal..." hides the analyst and
+reads like marketing.
+- ✗ "Three buyer segments matter for frontier-model healthcare products."
+- ✓ "I spent the last few months reading each company's public posts,
+  mapping the hires, pulling the customer lists, and running the April
+  releases through a three-segment frame."
+
+**Name the end user for product-shape claims.** "Who opens this app, and
+what are they doing in that moment?" is usually more legible than a
+category label. Ground the product shape in a specific person's context.
+- ✗ "ChatGPT Health is a consumer product."
+- ✓ "The person who opens ChatGPT Health is a patient sitting down with
+  bloodwork results, an insurance plan, or a list of pre-appointment
+  questions."
+
+**Partnership and customer lists need per-partner depth.** Listing names
+and asserting they "matter" reads as market-map copy. Each named partner
+gets one concrete sentence on what flows through the relationship, what
+the user experiences, or what each side gets back. If you can't name a
+public use case, say so explicitly ("named partner, use case not publicly
+detailed") rather than implying one.
+- ✗ "The vertical-AI-app list (X, Y, Z, W) is structurally important."
+- ✓ "Qualified Health built on Claude Sonnet 4.5 to identify patients
+  across the University of Texas System (2M+ population) who qualify for
+  evidence-based interventions. Carta Healthcare uses Claude for clinical
+  data abstraction: 66% reduction in data processing time at 99%
+  accuracy..."
 
 **Acknowledge apparatus issues.** When the setup was off, say so and flag it
 plainly: "Ambiguous whether that's in-scope agent work or modifying the

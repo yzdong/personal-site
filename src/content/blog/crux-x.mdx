@@ -5,7 +5,7 @@ export const metadata = {
     "Why I'm running a series of CRUX-style real-world agent experiments under one umbrella project, starting with buying a piece of off-grid land.",
 };
 
-*Part 1 of 3 · [Part 2: CRUX-Land run report →](/drafts/crux-land) · [Part 3: the synthesis →](/drafts/path-to-agi)*
+*Part 1 of 3. Parts 2 and 3 forthcoming.*
 
 ## Background
 
@@ -28,78 +28,37 @@ I started thinking about CRUX-Windows as the *first instance* of a class, not th
 I'm calling that CRUX-X. The shape:
 
 ```text
-Legend:  ┌─ doc ─┐ artifact     « actor »  agent     ──verb──►  execution
+Legend:  [doc] artifact     « actor » agent     ──verb──►  execution
 
 
-┌──────────────────────────────────────┐
-│  CRUX-X Methodology                  │   artifact: ~39 KB markdown spec
-│  (methodology.md)                    │   defines [SLOT]s the Designer fills:
-│    §1  Hypothesis            [SLOT]  │
-│    §3  Inputs / pre-staged   [SLOT]  │
-│    §5  Comms + kill switch   [SLOT]  │
-│    §7  Budget / constraints  [SLOT]  │
-│    §8  Writeup template      [SLOT]  │
-│    Operator review gate              │
-└──────────────────┬───────────────────┘
-                   │
-            reads + fills
-                   │
-                   ▼
-            « Designer »      agent — an LLM session, one shot per task
-                   │
-                drafts
-                   │
-                   ▼
-┌──────────────────────────────────────┐
-│  CRUX-Windows Protocol               │   artifact: task-specific instance
-│  (experiments/windows/protocol.md)   │   each [SLOT] resolved concretely:
-│    §1 → "Publish a Windows app       │
-│          to the Microsoft Store"     │
-│    §3 → Partner Center dev account,  │
-│          Gmail, GitHub PAT, signing  │
-│          cert, controller VM         │
-│    §5 → Slack #crux-windows, kill    │
-│          switch via gateway-stop     │
-│    §7 → $500 Anthropic API cap,      │
-│          14-day wall-clock cap       │
-└──────────────────┬───────────────────┘
-                   │
-         reviews + approves
-                   │
-                   ▼
-            « Operator »      agent — the human (me)
-                   │
-              kicks off
-                   │
-                   ▼
-┌──────────────────────────────────────┐
-│  Manifest                            │   artifact: per-run binding
-│  (runs/2026-04-13/manifest.json)     │
-│    run-id, t=0 timestamp, model id,  │
-│    budget caps snapshot, vault refs  │
-└──────────────────┬───────────────────┘
-                   │
-                 binds
-                   │
-                   ▼
-             « Agent »        agent — autonomous LLM, long-running session
-                   │
-         executes against
-        (protocol + manifest)
-                   │
-                   ▼
-        ════ The Run ════           execution — wall-clock window
-                                    (CRUX-Windows: 77h 48m, 3 net inputs)
-                   │
-            interacts with
-                   │
-                   ▼
-         Counterparty(ies)          external real-world gatekeeper
-         (CRUX-Windows: Microsoft
-          Partner Center reviewers)
+  [Methodology]                         artifact — markdown spec with [SLOT]s
+       │
+       │  « Designer » drafts
+       ▼
+   [Protocol]                           artifact — task-specific instance
+       │
+       │  « Operator » drafts a fresh
+       │    Manifest per run, kicks off
+       ▼
+   [Manifest]                           artifact — per-run binding;
+       │                                           one Protocol → many Runs,
+       │                                           each with its own Manifest
+       │  binds
+       ▼
+    « Agent »                           autonomous LLM session
+       │
+       │  executes against
+       ▼
+  ══ The Run ══                         execution — wall-clock window
+       │
+       │  interacts with
+       ▼
+ Counterparty(ies)                      external real-world gatekeepers
 ```
 
-The Manifest is a separate artifact from the Protocol on purpose. The Protocol is the task spec — the same across runs of the same experiment. The Manifest snapshots runtime state: which model was used, what the budget caps were at t=0, which credential vault, which controller VM, the t=0 timestamp itself. To re-run CRUX-Windows six months from now against a newer model, I draft a fresh Manifest against the same Protocol. Reproducibility lives in the Manifest.
+For CRUX-Windows specifically, the Protocol resolved §1 ("hypothesis") to "Publish a Windows app to the Microsoft Store"; §3 ("inputs") to a Partner Center developer account, Gmail, GitHub PAT, signing cert, and controller VM; §5 ("comms + kill switch") to a Slack channel and a gateway-stop kill switch; and §7 ("budget / constraints") to a $500 Anthropic API cap and 14-day wall-clock cap. The Run itself took 77h 48m with three net human inputs.
+
+Reproducibility lives in the Manifest. The Protocol is the task spec; the Manifest is per-run state — model id, budget caps at t=0, credential vault, controller VM, the t=0 timestamp itself. To re-run CRUX-Windows six months from now against a newer model, I draft a fresh Manifest against the same Protocol.
 
 CRUX-X v1 is at [github.com/yzdong/crux-x](https://github.com/yzdong/crux-x).
 
@@ -141,9 +100,7 @@ Working name for the umbrella project: CRUX-Vault-Zero. Each individual experime
 
 The first run is **CRUX-Land**. The agent autonomously searches, evaluates, contracts, escrows, and closes on a piece of raw rural land suitable for off-grid living. Real money — $1,500 cap on the parcel, $2,500 all-in including closing fees. Real recording at a real US county recorder. Real deed in my name.
 
-The constraint stack is tight on purpose. A $1,500 parcel cap forces the agent into the actual cheap-rural-parcel market — county tax-deed sales, regional title companies, state-bar real estate attorneys, small recorder offices. That's the segment where the gap between benchmark performance and real-world completion gets ugly. It's also the segment where, if you were actually buying off-grid land, you'd actually shop.
-
-CRUX-Land kicked off 2026-04-29 and terminated as primary-failed on 2026-05-04 — six days, twelve evaluated channels, twelve dead candidates. Net real-money loss after the deposit refund: $30.
+The $1,500 cap was an arbitrary pick — I just wanted something not too expensive. It forced the agent to be aggressively selective: at that cap there are very few viable parcels, so most of the run was the agent evaluating candidates and rejecting them for structural reasons. A looser cap would have meant fewer kills and probably a less interesting run.
 
 ### What I imagined I would get
 
@@ -162,7 +119,7 @@ There's enough material from the run already that one post can't hold it.
 
 Part 2 is the CRUX-Land run report. Some of the cast: a 200-page county PDF that ate $575 in fifteen minutes, eleven dead candidates that died eleven distinct deaths, an agent that drew a hard line at typing a password but would happily reuse the session cookie I'd already typed in, a Bid4Assets email subject ("Your Deposit Has Cleared:...") that thwarted my naive string-match classifier, and a twelfth candidate the agent successfully cleared by answering the wrong question.
 
-Part 3 is the synthesis. The question: how general is the current agent class — Opus 4.7 inside the scaffolds we currently know how to build — when you let it try a real-world transaction with real money and a real counterparty? My short answer after six days of running CRUX-Land: not yet, and the gaps are mostly outside the model. The interesting work is figuring out which gaps are model-shaped, which are scaffold-shaped, which are legal-system-shaped, and which are methodology-shaped. The Macdoel near-miss is mostly the fourth. More when Part 3 lands.
+Part 3 is the synthesis. The question: how general is the current agent class — Opus 4.7 inside the scaffolds we currently know how to build — when you let it try a real-world transaction with real money and a real counterparty? My short answer after six days of running CRUX-Land: not yet, and the gaps are mostly outside the model. The interesting work is figuring out which gaps are model-shaped, which are scaffold-shaped, which are legal-identity-shaped, and which are methodology-shaped. The Macdoel near-miss is mostly the fourth. Part 3 has the long version.
 
 ## Reading list
 

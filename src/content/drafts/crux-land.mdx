@@ -9,7 +9,7 @@ export const metadata = {
 
 *[← Part 1: CRUX-X, CRUX-Vault-Zero, and the path to AGI](/blog/crux-x) · [Part 3: the synthesis →](/drafts/path-to-agi)*
 
-CRUX-Land terminated on Day 6 when I retracted the only live pre-bid I'd authorized. The parcel was a town lot in Macdoel, structurally wrong for off-grid use; the agent's diligence had been clearing it under California's lot-of-record buildability exception, which answered a different question than "is this off-grid suitable." I caught the mistake when I finally opened the assessor's plat map and read the words *"Macdoel Townsite"* in the third line of the header.
+I terminated CRUX-Land on Day 6 by retracting the only live pre-bid I'd authorized. The parcel was a town lot in Macdoel, structurally wrong for off-grid use; the agent's diligence had been clearing it under California's lot-of-record buildability exception, which answered a different question than "is this off-grid suitable." I caught the mistake when I finally opened the assessor's plat map and read the words *"Macdoel Townsite"* in the third line of the header.
 
 The rest of this post is the buildup — the cap table, the eleven other channels that died first, the $575 fifteen-minute cost spike on a county PDF, the safety policy hitting real-world edges, the cron classifier that almost missed a deposit-cleared email, and the Macdoel section itself with everything I dug out of the session log about why the agent kept the parcel live.
 
@@ -26,7 +26,7 @@ CRUX-Land's protocol caps at run start:
 
 Pre-staged inputs: a GCP project (`<gcp-project>`), a Slack workspace with an alerts channel, a Bid4Assets bidder account (registered mid-run rather than pre-staged — flag this), Twilio for §10 wire-verification voice calls and Deepgram for transcription, and a dedicated Gmail at `crux@getnen.ai` as the agent's mailbox.
 
-t=0: 2026-04-29 01:19:05 UTC. Day-21 active phase nominally ended 2026-05-19. The run actually terminated as primary-failed on 2026-05-04 (Day 6) when I retracted the only live pre-bid; details in "The Macdoel near-miss" below.
+t=0: 2026-04-29 01:19:05 UTC. Day-21 active phase nominally ended 2026-05-19. I terminated the run as primary-failed on 2026-05-04 (Day 6) by retracting the only live pre-bid; details in "The Macdoel near-miss" below.
 
 ## The candidates I won't be telling you about much
 
@@ -54,13 +54,13 @@ The most expensive single span in the run. The agent was doing deep diligence on
 
 > "The following methods are not allowed for parcel development in Modoc County: Septic Holding Tanks, Water hauling/storage as a potable water system, Composting toilets, Incinerator toilets, Rainwater collection systems as a potable water source. No development or power (permitting) will be allowed unless a county approved septic and water can be demonstrated. Camping restrictions apply. Staying on the property past time restrictions could result in criminal enforcement."
 
-All four Modoc lots dead, plus Modoc County itself on the do-not-pursue list for the rest of the run. The kill is correct: this is the canonical off-grid playbook (composting toilet, rainwater catchment, water hauling) banned at the county level with criminal enforcement on camping. A real artifact, not a hallucination.
+I killed all four Modoc lots and added Modoc County to the do-not-pursue list for the rest of the run. The kill is correct: this is the canonical off-grid playbook (composting toilet, rainwater catchment, water hauling) banned at the county level with criminal enforcement on camping. A real artifact, not a hallucination.
 
 The cost: $575.50 over 15 minutes wall-clock. 121 tool calls, 46 of them browser calls returning 100-500 KB each. Session JSONL bloated from ~6 MB to 8.5 MB. Anthropic's prompt-cache TTL is 5 min; tool calls arriving faster than that invalidate the window, so every subsequent turn paid full input pricing on a multi-megabyte working set.
 
-The structural finding: scaffold cost vs. real-world task duration mismatch. Most real-world tasks span days or weeks of external waits, and the heartbeat-driven cost model breaks across them. Came up later that CRUX-Windows had been quietly burning ~$140-200/day for ten days post-task-completion — $1,333 over budget on heartbeat-only ticks on a task-done agent. Same shape.
+The structural finding: scaffold cost vs. real-world task duration mismatch. Most real-world tasks span days or weeks of external waits, and the heartbeat-driven cost model breaks across them. I noticed later that CRUX-Windows had been quietly burning ~$140-200/day for ten days post-task-completion — $1,333 over budget on heartbeat-only ticks on a task-done agent. Same shape.
 
-The fix, on Day 2: kill the openclaw gateway, replace heartbeat-driven monitoring with a $0-cost VM cron + IMAP poll + multi-channel operator alerts (email, SMS via Google Fi email-to-SMS gateway, Slack). Built ad-hoc; should be a scaffold-layer primitive.
+The fix, on Day 2: I killed the openclaw gateway and replaced heartbeat-driven monitoring with a $0-cost VM cron + IMAP poll + multi-channel operator alerts (email, SMS via Google Fi email-to-SMS gateway, Slack). I built it ad-hoc; it should be a scaffold-layer primitive.
 
 ## Where the safety policy met the real world
 
@@ -76,7 +76,7 @@ The framing that emerged: "agent vs. human persona" isn't a binary. There are si
 
 Methodology note for Part 3: real-world CRUX-X experiments need a per-account ownership table at design time, not a binary agent/human flag.
 
-## Operator-availability as a load-bearing input
+## How I handled operator-offline windows
 
 Real-world tasks have operator-required windows. CRUX-Land's was May 11-14 (settlement wire if won). Identifying that window pre-run rather than discovering it mid-run would have been valuable.
 
@@ -87,7 +87,7 @@ What I built to handle being offline outside that window:
 - SMS via Google Fi email-to-SMS gateway because Twilio direct-SMS is blocked by US A2P 10DLC for unregistered numbers (carrier returned error 30034). Gateway costs $0.
 - Confirmed working end-to-end on Day 2.
 
-The cron + alerting kept the gateway killed from Day 2 through the Day 6 retraction — about four days of operator-offline / cron-only operation. $0 API spend during that window. Heartbeat-driven monitoring would have burned ~$300+ over the same period at the bloated session size.
+The cron + alerting let me leave the gateway off from Day 2 through the Day 6 retraction — about four days of operator-offline / cron-only operation. $0 API spend during that window. Heartbeat-driven monitoring would have burned ~$300+ over the same period at the bloated session size.
 
 ## The classifier brittleness moment
 
@@ -96,8 +96,6 @@ The deposit-posted email arrived 2026-05-04 at 10:58 EDT with subject "Your Depo
 Fix: broadened the classifier patterns. But that's whack-a-mole — the right fix is LLM-based classification, ~$0.01 per email vs. ~$0 per email for string-match. I'd knee-jerk excluded LLM-in-cron as "too expensive for auxiliary infra." Wrong: $0.01 × 50 fires/day = $0.50, which is less than the SMS budget I'd already accepted. Cost case for "no LLM in auxiliary infra" doesn't survive when the auxiliary infra has operator-impact failure modes.
 
 ## The Macdoel near-miss
-
-This is the section the run actually pivots on.
 
 By Day 6 (2026-05-04), Siskiyou CA parcel APN 035-015-010 was the only live candidate. The agent had cleared every protocol criterion it could find. Numbers at the moment of pre-bid:
 
@@ -115,7 +113,7 @@ By Day 6 (2026-05-04), Siskiyou CA parcel APN 035-015-010 was the only live cand
 | Auction close | 2026-05-11 14:15 ET |
 | Pre-bid placed | $1,220 max via Bid4Assets Auto Bid |
 
-I authorized the deposit wire on 2026-05-01. It cleared 2026-05-04. I placed the auto-bid the same day — Bid4Assets requires authentication to bid, and per Wall 1 the agent's safety policy declines to log into KYC counterparties, so this was a human moment. Then I opened the assessor's plat map for the first time and read, on the third line of the header: **Macdoel Townsite**.
+I authorized the deposit wire on 2026-05-01. It cleared 2026-05-04. I placed the auto-bid the same day — Bid4Assets requires authentication to bid, and the agent's safety policy declines to log into KYC counterparties (Part 3's "KYC-bound identity at counterparty surfaces" has the long version), so this was a human moment. Then I opened the assessor's plat map for the first time and read, on the third line of the header: **Macdoel Townsite**.
 
 ![What I imagined I was getting: a lush rural setting in Siskiyou County with Mt. Shasta in the background](/images/crux-land/imagined-shasta-rural.jpg)
 *Photo: Marina M / [Pexels](https://www.pexels.com/photo/cow-in-pasture-with-mountain-in-background-8201746/)*
@@ -136,13 +134,13 @@ The agent then designed real diligence to resolve the gating uncertainty: it ide
 
 But the question was wrong. The criterion the agent was clearing was *"is this lot legally buildable as a residential structure?"* — which is what the protocol said to check, especially after the Day 1 acreage relaxation lifted the fixed minimum and replaced it with "buildable per zoning + minimum-lot-size, no fixed acreage minimum." The criterion that mattered for CRUX-Vault-Zero was *"is this lot off-grid suitable?"* — a different question, one that turns on septic and well feasibility, neighbor density, and code-enforcement posture rather than on lot-of-record exception eligibility. The two questions look similar from far enough away. They look very different on a 0.22-acre wedge fronting US-97 in a platted townsite.
 
-Nothing in the loop — Designer, Agent, Operator — operationalized "rural off-grid suitable" as distinct from "residentially buildable." Part 3's Wall 4 is the long version of why.
+Nothing in the loop — Designer, Agent, Operator — operationalized "rural off-grid suitable" as distinct from "residentially buildable." Part 3 walks through the protocol and methodology changes that resulted from this.
 
 ## Where the safety policy *would* have met the real world
 
-The settlement wire to Bid4Assets was the next KYC surface the agent was going to hit if Siskiyou had won at the May 11 auction. Per Wall 1 of Part 3, this would have been the fifth KYC moment of the run: I'd have logged into SoFi, drafted the wire to Bid4Assets's escrow account ($1,200 + $35 admin + $18 buyer's premium = $1,253), called Bid4Assets at the published number to verify the wiring instructions weren't an injection, and approved the transfer. The agent would have read confirmation emails from the agent-controlled inbox and routed status alerts to me. Six axes, three different actors, one account.
+The settlement wire to Bid4Assets was the next KYC surface the agent was going to hit if Siskiyou had won at the May 11 auction. This would have been the fifth KYC moment of the run: I'd have logged into SoFi, drafted the wire to Bid4Assets's escrow account ($1,200 + $35 admin + $18 buyer's premium = $1,253), called Bid4Assets at the published number to verify the wiring instructions weren't an injection, and approved the transfer. The agent would have read confirmation emails from the agent-controlled inbox and routed status alerts to me. Six axes, three different actors, one account.
 
-The retraction made all of that hypothetical, but the structure is worth recording for CRUX-Land-2's pre-run ownership-table mapping.
+The retraction made all of that hypothetical, but the structure is worth recording for the next run's pre-run ownership-table mapping.
 
 ## The bill
 
@@ -182,9 +180,9 @@ Twelve methodology findings accumulated in `writeup-notes.md` over the run. Comp
 1. **Operationalize "off-grid suitable" before kickoff, separately from "buildable."** The single most consequential miss. The Siskiyou near-miss happens to no run that has a sub-criterion for septic/well setback feasibility, neighbor density, or code-enforcement posture. The protocol had none of those, so the agent had nothing to fail Siskiyou on.
 2. **Designer self-interrogation pass before Operator hand-off.** Enumerate every criterion, label by source ("operator told me," "I inferred," "I assumed by default"), and challenge each. The acreage-floor and quitclaim-blanket criteria both die here. The Siskiyou framing miss probably dies here too once "rural" is interrogated as a separate concept from "buildable."
 3. **Treat operator-initiated criterion relaxations as triggers for Designer re-derivation, not local edits.** The Day 1 acreage relaxation lifted the only criterion that even partially captured "rural." Nothing else picked up the load. The Designer should have flagged that and proposed a replacement; nothing in the methodology asked it to.
-4. **Off-mode primitive in the scaffold layer.** Day-2 cron-and-IMAP infrastructure should not be ad-hoc operator-built. Long-running agents need first-class "park, wake on these signals, $0 in the meantime" support.
+4. **Off-mode primitive in the scaffold layer.** Day-2 cron-and-IMAP infrastructure should not be ad-hoc operator-built. Long-running agents need built-in "park, wake on these signals, $0 in the meantime" support.
 5. **LLM classifier for cron-style auxiliary infra by default.** The string-match classifier missed the deposit-cleared email by 30 hours. $0.01/email is rounding error; treat per-call inference cost as a non-issue when the alternative is operator-impact failure modes.
-6. **Per-account ownership table as a methodology artifact.** Six axes (legal identity, operational control, read access, alert routing, transaction authorization, audit trail), mapped per counterparty, at design time. CRUX-Land discovered this mid-run; CRUX-Land-2 declares it pre-kickoff.
+6. **Per-account ownership table as a methodology artifact.** Six axes (legal identity, operational control, read access, alert routing, transaction authorization, audit trail), mapped per counterparty, at design time. Run 1 discovered this mid-run; the next run declares it pre-kickoff.
 
 The other six findings are smaller — KYC-vs-Claude-policy distinctions, prompt-cache TTL surprises, Twilio A2P 10DLC quirks. They go in the methodology repo's running issues file rather than here.
 
@@ -192,7 +190,7 @@ The other six findings are smaller — KYC-vs-Claude-policy distinctions, prompt
 
 CRUX-Land terminated as primary-failed on 2026-05-04. The run didn't acquire a parcel, and the methodology didn't catch the parcel that was structurally wrong; the operator caught it seven days before auction close and retracted.
 
-Next experiment is **CRUX-Land-2**, with the methodology changes from "What I'd do differently" baked in pre-kickoff:
+The next run is CRUX-Land again — same experiment, evolved protocol. The methodology changes from "What I'd do differently" get baked into a new revision of `experiments/land/protocol.md` before the next Manifest kicks off:
 
 - Off-grid suitability operationalized into testable sub-criteria before the Designer writes the protocol
 - Designer self-interrogation pass before Operator hand-off

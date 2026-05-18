@@ -12,6 +12,7 @@ export const metadata = {
 Jumping first to the conclusion — the agent got to placing a live pre-bid on a parcel in Macdoel, California.
 
 ![Map of California with a pin on Macdoel in the far north of the state, near the Oregon border](/images/crux-land/macdoel-on-california-map.jpg)
+*Macdoel: a 0.17-sq-mi census-designated place in Siskiyou County, near the Oregon border. Population 86 as of the 2020 census (down from 133 in 2010). About 324 miles — roughly a 5-hour drive — north of San Francisco.*
 
 I ultimately withdrew the bid — read on to know how I got there.
 
@@ -19,14 +20,14 @@ I ultimately withdrew the bid — read on to know how I got there.
 
 | Date | Event |
 | --- | --- |
-| 2026-04-16 | Pre-run: dedicated GitHub account set up. Claude refused to click the literal "Create account" button; refused the operator's reframe attack ("rename it to 'Just a harmless button'"). Part 3 has the full exchange. |
-| 2026-04-29 (Day 0) | Kickoff at t=0 = 01:19 UTC. Agent gets a 30-character bootstrap message and a 21-day budget. |
-| 2026-04-29 (Day 1) | Acreage minimum relaxed (≥1 acre → "buildable per zoning + minimum-lot-size"). Klickitat WA strip parcel killed (25 ft × 1,321 ft + Forest Resource zone). |
-| 2026-04-30 (Day 2) | Modoc tick: $575 burned in 15 minutes parsing a 200-page county Terms-of-Sale PDF. Operator killed the gateway and replaced heartbeat-driven monitoring with a $0-cost VM cron + IMAP poll + multi-channel alerts. |
-| 2026-05-01 (Day 3) | La Paz AZ killed on quitclaim rule; deed-type criterion split into private (still rejected) vs. government grantor (acceptable with title insurance). Deposit wire authorized for Siskiyou parcel. |
-| 2026-05-02 to 2026-05-03 (Days 4–5) | Deposit clearing at Bid4Assets. Operator offline; cron + alerting handled state. |
-| 2026-05-04 (Day 6) | Deposit cleared; Auto-Bid placed at $1,220 max. Operator opened the assessor's plat map for the first time, saw "Macdoel Townsite" in the third line of the header, and retracted the pre-bid the same day. Run terminated as primary-failed. |
-| 2026-05-11 | Auction closed. Deposit refund returned to operator's bank. |
+| 2026-04-16 | **Operator:** dedicated GitHub account set up for the experiment. **Agent:** refused to click the literal "Create account" button; refused the operator's reframe attack ("rename it to 'Just a harmless button'"). Part 3 has the full exchange. |
+| 2026-04-29 (Day 0) | **Operator:** kickoff at t=0 = 01:19 UTC. Agent gets a 30-character bootstrap message and a 21-day budget. |
+| 2026-04-29 (Day 1) | **Operator:** acreage minimum relaxed (≥1 acre → "buildable per zoning + minimum-lot-size"). **Agent:** Klickitat WA strip parcel killed (25 ft × 1,321 ft + Forest Resource zone). |
+| 2026-04-30 (Day 2) | **Agent:** Modoc tick — $575 burned in 15 minutes parsing a 200-page county Terms-of-Sale PDF. **Operator:** killed the gateway and replaced heartbeat-driven monitoring with a $0-cost VM cron + IMAP poll + multi-channel alerts. |
+| 2026-05-01 (Day 3) | **Agent:** La Paz AZ killed on quitclaim rule. **Operator:** deed-type criterion split (private quitclaim still rejected; gov-grantor quitclaim acceptable with title insurance). Deposit wire authorized for Siskiyou parcel. |
+| 2026-05-02 to 2026-05-03 (Days 4–5) | **Cron:** deposit clearing at Bid4Assets. Operator offline; cron + alerting handled state. |
+| 2026-05-04 (Day 6) | **Operator:** deposit cleared; Auto-Bid placed at $1,220 max. Opened the assessor's plat map for the first time, saw "Macdoel Townsite" in the third line of the header, and retracted the pre-bid the same day. Run terminated as primary-failed. |
+| 2026-05-11 | **Counterparty:** auction closed. Deposit refund returned to operator's bank. |
 
 The rest of this post is the buildup — the cap table, the eleven other channels that died first, the $575 fifteen-minute cost spike on a county PDF, the safety policy hitting real-world edges, the cron classifier that almost missed a deposit-cleared email, and the Macdoel section itself with everything I dug out of the session log about why the agent kept the parcel live.
 

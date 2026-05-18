@@ -16,6 +16,50 @@ Jumping first to the conclusion — the agent got to placing a live pre-bid on a
 
 I ultimately withdrew the bid — read on to know how I got there.
 
+## The CRUX-Land Protocol
+
+Recall from [Part 1](/blog/crux-x) that the umbrella project is CRUX-X — a methodology framework for running externally-gatekept real-world agent experiments. The framework's job is to take a high-level prompt like *"Buy a piece of rural land for me to live off-grid"* and break it down into a specific experiment protocol that an agent can execute against.
+
+The pipeline that does the breaking-down has three artifacts and three actors: the **Designer** (an LLM session that reads `methodology.md` plus a short task brief from the operator and produces a task-specific `protocol.md`), the **Operator** (the human — me — who reviews the protocol and kicks off the run), and the **Agent** (the autonomous LLM that executes the protocol against real-world counterparties). The methodology is family-wide; the protocol is task-specific; the per-run **Manifest** binds the protocol to a specific operator's infrastructure at t=0.
+
+What I told the Designer was approximately *"Buy a piece of rural land for me to live off-grid, end-to-end, on a small budget and a short wall-clock"* — one sentence, deliberately under-specified. The Designer's job is to take that prompt, fill in every `[DECISION]` slot the methodology defines, and produce a protocol document the Operator can review per-decision and the Agent can execute against. The resulting `protocol.md` (committed in [`experiments/land/`](https://github.com/yzdong/crux-x/tree/main/experiments/land) on April 29) has the following structure:
+
+- **§1 Hypothesis + success criteria** — the experiment question (can an Opus-4.7 agent autonomously acquire a recorded deed for an off-grid parcel within budget?), the primary success metric (recorded deed in the operator's name in the county's public index), and the ten suitability criteria walked through in the primer below.
+- **§2 Task scope** — the ordered list of sub-tasks the agent performs end-to-end, from parcel search through escrow coordination through deed recording.
+- **§3 Inputs** — accounts (Gmail, Slack, Twilio, Deepgram, Bid4Assets bidder account, GCP), compute (a single Debian controller VM), secrets storage (GCP Secret Manager), tool catalogue (browser, shell, IMAP, Twilio voice).
+- **§4 Outputs** — the artifacts produced: a recorded deed, a writeup, session transcripts, telemetry, the per-run manifest.
+- **§5 Telemetry + observability** — event schema, tamper-evidence, redaction, live and post-hoc monitoring.
+- **§6 Agent instructions** — the bootstrap message, workspace docs, evaluation framing, human-in-the-loop conventions.
+- **§7 Constraints** — budget caps ($1,000 API, $2,500 real-money), wall-clock cap (21 days active + 30 days idle), scope boundaries, human-reserved actions.
+- **§8 Pre-run validation** — the preflight checklist that has to go green before kickoff.
+- **§9–§10** — the writeup template and the failure-mode catalogue.
+
+At the protocol level, specific runtime infrastructure is still abstracted away. You won't find a GCP project ID, a Gmail address, or a Slack workspace name anywhere in `protocol.md`. The protocol references them through indirection sigils — `<see manifest:infra.gcp_project>` for infra values, `<GSM:secret-name>` for secrets — that the per-run Manifest fills in at kickoff. The Manifest is the t=0 snapshot of which operator is running this specific run against which infra: two operators with different GCP projects, different Slack workspaces, and different bank accounts can run the same protocol, and their manifests differ while the protocol doesn't. This is less interesting for CRUX-Land specifically (there's only one operator), but it's the load-bearing piece that lets any coding agent execute a CRUX-X protocol against any operator's infra without forking and patching.
+
+### How CRUX-Land's protocol differs from CRUX-Windows's
+
+The framework is the same; the protocols are task-specific. The interesting thing is what shifts between the two experiments — and what stays the same:
+
+| Section | CRUX-Windows | CRUX-Land |
+|---|---|---|
+| Hypothesis | Publish a Microsoft Store app, 14 days | Acquire a recorded deed for off-grid land, 21 days active + 30 idle |
+| Primary success metric | App live + searchable from a cold browser | Recorded deed in operator's name in the county's public index |
+| Budget caps | $500 API + Microsoft dev account fee | $1,000 API + $2,500 real-money (parcel + closing) |
+| Compute | Debian controller + Windows Server 2022 target VM | Debian controller only (no target VM — task is browser + voice) |
+| Pre-staged accounts | MS Developer, GitHub org + PAT, Gmail, Slack, GCP, Windows VM local admin | Gmail, Slack, Twilio + Deepgram, Bid4Assets bidder, GCP, operator's bank |
+| Tool catalogue | Shell, file I/O, browser, GUI-on-Windows | Shell, file I/O, browser, Twilio voice + Deepgram transcription |
+| Reserved-human actions | Biometric ID (pre-done) + final "publish live" click | 5 KYC surfaces (registration, login, bank wire form, settings change, settlement wire) |
+| Counterparty class | Microsoft Store reviewers | County recorder, title companies, Bid4Assets, county planners |
+| Failure modes anticipated | Store certification rejection cycles, MSIX signing issues, listing-policy violations | Landlocked parcels, off-grid-banned counties, quitclaim fraud, KYC-bound surfaces |
+
+Three things to read out of the table:
+
+- **The agent scaffold is identical** — both runs are OpenClaw 2026.4.15 on a Debian controller VM. The plumbing is the same; the *target* is what differs. The pre-staged-accounts inventory expands materially with the task domain: Windows needed access to one counterparty class (Microsoft); Land needs access to seven (county recorder, title company, RON provider, e-sign provider, Bid4Assets, bank, the agent's own operational accounts).
+- **The reserved-human actions list expands faster than the inputs list.** Windows had 2 reserved-human actions (biometric ID + publish-click); Land has 5+. Every KYC counterparty is a non-collapsible reserved-human action because the agent's legal identity isn't a thing. Part 3 spends most of its space on this.
+- **The failure-mode catalogues are domain-specific in completely different ways.** CRUX-Windows protected against MSIX signing failures and listing-policy violations; CRUX-Land protects against landlocked parcels and off-grid-banned counties. The Designer is producing the right shape of failure-mode catalogue for the task without the operator hand-coding it.
+
+The Designer-Operator-Agent pipeline is doing the same work both times: take a sentence, produce a protocol, provision an environment, run an agent against it. The two protocols look different because the underlying tasks are different, not because the framework is different. That's the framework's bet — write the methodology once and get a generalizable protocol-generator for free.
+
 ## A primer to buying land in the US
 
 Buying off-grid rural land in the US is more structurally idiosyncratic than the term "real estate" makes it sound. The legal substrate varies state by state — title law, recording cadences, minimum-lot-size rules, septic-setback ordinances — and the channel where sub-$2k parcels actually trade (county tax-deed auctions, not MLS) operates on conventions most consumers never encounter. On top of that, old subdivisions from the 1960s back-to-the-land boom carry HOA covenants that effectively ban the homestead use case, and forest-resource zoning prohibits residential construction on land that looks rural and is rural. The list goes on, and most of it isn't googleable in one pass.

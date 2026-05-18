@@ -80,9 +80,9 @@ Fix: before handing the protocol to the Operator, the Designer enumerates every 
 
 ### Per-account ownership table (§3)
 
-Run 1 evidence: the Bid4Assets bidder account doesn't fit cleanly on either side of an "agent-vs-operator" binary. Legal identity = me (real name + SSN). Operational control = mostly agent (after login). Read access = mostly agent (email-of-record routed to agent inbox). Alert routing = agent → me via cron. Transaction authorization = always me. Audit trail = me. Same account, three different actors across six axes.
+Run 1 evidence: the Bid4Assets bidder account doesn't fit on either side of an "agent-vs-operator" binary. Six axes per account, three different actors across them, all on the same account. Part 2's safety-policy section has the full breakdown for B4A.
 
-Fix: methodology §3 adds `[DECISION] per-account ownership table` as a pre-kickoff artifact. For each counterparty account the experiment uses, map ownership across six axes — legal identity, operational control, read access, alert routing, transaction authorization, audit-trail attribution. Mapping at design time prevents the methodology from systematically underestimating what agents can do at KYC counterparties.
+Fix: methodology §3 adds `[DECISION] per-account ownership table` as a pre-kickoff artifact. For each counterparty account the experiment uses, the Designer maps ownership across the six axes at design time, not mid-run. Mapping at design time prevents the methodology from systematically underestimating what agents can do at KYC counterparties.
 
 ### Cron-and-alerting layer with LLM-classified severity (§5)
 
@@ -126,7 +126,7 @@ These need legal/policy infrastructure I can't write code for.
 
 ### KYC-bound identity at counterparty surfaces
 
-CRUX-Land hit five surfaces requiring the operator's legal identity in the first three days: Bid4Assets bidder registration (SSN per Patriot Act), Bid4Assets login, SoFi wire form, Bid4Assets account-settings change, and the eventual settlement wire if the auction had won. None of these are model-capability gaps. They're identity-and-authority gaps. The agent doesn't have a real-world legal identity; the operator does. KYC binds the transaction to the operator's identity; no protocol or methodology change can lift that ceiling.
+CRUX-Land hit five surfaces requiring the operator's legal identity in the first three days (Part 2's safety-policy section enumerates them). None are model-capability gaps. They're identity-and-authority gaps. The agent doesn't have a real-world legal identity; the operator does. KYC binds the transaction to the operator's identity; no protocol or methodology change can lift that ceiling.
 
 One caveat worth flagging: of the five surfaces above, some are bounded by federal KYC law and won't lift no matter what — the SSN requirement is hard. Some are bounded by Claude's safety policy specifically — Claude declined to navigate SoFi at all once it recognized the page as a bank, even just to copy a wire confirmation number. The first ceiling is structural; the second varies by lab and is already a policy choice today. CRUX-Land's run is partly a study of what Claude in particular will and won't do, not a universal claim about agents.
 
@@ -179,10 +179,10 @@ So if "the path to AGI" means "the path to agents that can close real-world tran
 
 ## What's next for CRUX-Vault-Zero
 
-CRUX-Land run 1 terminated as primary-failed on 2026-05-04. Real-money net loss after the deposit refund: $30 (the SoFi outbound wire fee). API spend: ~$1,430. Calendar time: six days of active diligence plus the retraction. The methodology is what got better, not the inventory.
+CRUX-Vault-Zero is the umbrella project: a sequence of CRUX experiments that, together, get me from "no land" to a working off-grid setup. CRUX-Land is the first step in that sequence. Part 2 walks the run report and the next-run plan; what I want to land here is what the project as a whole is for.
 
-The next run is CRUX-Land again — same experiment, evolved protocol. The four new criteria (no-townsite, septic+well, distance, code-enforcement), the per-account ownership table for the Bid4Assets account, the gateway-default-OFF rule, the cron + LLM-classified alerting layer, and the operator-availability schedule are all committed in `experiments/land/protocol.md` ahead of the next Manifest. The Designer will run a self-interrogation pass on the criteria, with operator review per-criterion rather than en bloc, before run-2 kicks off.
+The argument above frames AGI as an infrastructure problem more than a model problem. CRUX-Vault-Zero is one way to test that claim under sustained pressure. Every subsequent experiment in the sequence — drilling a well, pulling a building permit, sourcing a structure, installing photovoltaics — touches a different counterparty class with its own KYC surface, its own scaffold-cost profile, its own framing pitfalls. Each one is a chance to update CRUX-X. If the argument is right, the methodology and protocol layers will keep absorbing real changes between experiments, the model layer will stay roughly where it is, and the scaffold and legal-identity layers will be where the *interesting* gaps stay open.
 
-The umbrella stretch goal — a fully off-grid setup, each step its own CRUX experiment — hasn't moved. The land step still has to come first. CRUX-Vault-Zero remains a multi-year project.
+That's a multi-year project. Right now it's at step 1 of N, and step 1 didn't acquire a parcel. The next run will, or it'll surface the next class of gap. Either is useful.
 
 — Zi

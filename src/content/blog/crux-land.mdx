@@ -167,37 +167,6 @@ The structural finding: scaffold cost vs. real-world task duration mismatch. Mos
 
 The fix, on Day 2: I killed the openclaw gateway and replaced heartbeat-driven monitoring with a $0-cost VM cron + IMAP poll + multi-channel operator alerts (email, SMS via Google Fi email-to-SMS gateway, Slack). I built it ad-hoc; it should be a scaffold-layer primitive.
 
-## Where the safety policy met the real world
-
-Five distinct moments where the agent declined to act on safety grounds, all on the agent-persona-vs-human-persona continuum:
-
-1. Bid4Assets bidder registration — SSN per Patriot Act, photo ID, full KYC. Agent refused; operator did it manually.
-2. Bid4Assets login (password into form) — refused.
-3. SoFi wire form entry (bank routing + account numbers) — refused.
-4. Bid4Assets account-settings change (email-of-record moved from my personal Gmail to `crux@getnen.ai`) — refused.
-5. The escape hatch: an authenticated session is fine for the agent to use even though authentication isn't. Wrote a methodology note in `writeup-notes.md` arguing that's a credential-axis-vs-identity-axis gap in Anthropic's safety policy. Letter of the rule: don't type passwords. Spirit, presumably: don't operate accounts whose legal identity belongs to a real human. A session cookie is functionally a password under the spirit reading.
-
-The framing that emerged from these five moments is that "agent vs. human persona" isn't a binary — there are six axes that don't move in lockstep, and the Bid4Assets account ended up with three different actors across them. Part 3's "Per-account ownership table" section has the full breakdown plus the methodology fix.
-
-## How I handled operator-offline windows
-
-Real-world tasks have operator-required windows. CRUX-Land's was May 11-14 (settlement wire if won). Identifying that window pre-run rather than discovering it mid-run would have been valuable.
-
-What I built to handle being offline outside that window:
-
-- IMAP poll of `crux@getnen.ai` every 30 min via cron on `crux-land-ctrl`
-- Severity-routing classifier (low → Slack only, high → email + Slack, urgent → email + SMS + Slack)
-- SMS via Google Fi email-to-SMS gateway because Twilio direct-SMS is blocked by US A2P 10DLC for unregistered numbers (carrier returned error 30034). Gateway costs $0.
-- Confirmed working end-to-end on Day 2.
-
-The cron + alerting let me leave the gateway off from Day 2 through the Day 6 retraction — about four days of operator-offline / cron-only operation. $0 API spend during that window. Heartbeat-driven monitoring would have burned ~$300+ over the same period at the bloated session size.
-
-## The classifier brittleness moment
-
-The deposit-posted email arrived 2026-05-04 at 10:58 EDT with subject "Your Deposit Has Cleared: Siskiyou County, CA Tax Defaulted Properties Auction -". The cron classifier was looking for "deposit posted" / "deposit received" / "qualified to bid" / "bidding qualified" — none of which appear in the actual subject. Email got classified as B4A misc (low severity, Slack-only alert). I was offline expecting an SMS for action-required events; got only a Slack ping I happened to notice ~30h later when I checked in.
-
-Fix: broadened the classifier patterns. But that's whack-a-mole — the right fix is LLM-based classification, ~$0.01 per email vs. ~$0 per email for string-match. I'd knee-jerk excluded LLM-in-cron as "too expensive for auxiliary infra." Wrong: $0.01 × 50 fires/day = $0.50, which is less than the SMS budget I'd already accepted. Cost case for "no LLM in auxiliary infra" doesn't survive when the auxiliary infra has operator-impact failure modes.
-
 ## The Macdoel near-miss
 
 By Day 6 (2026-05-04), Siskiyou CA parcel APN 035-015-010 was the only live candidate. The agent had cleared every protocol criterion it could find. Numbers at the moment of pre-bid:

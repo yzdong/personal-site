@@ -51,7 +51,7 @@ Plus mid-run cousins committed during the run: acreage-floor relaxation (Day 1) 
 
 ### Day-2 operator-side infrastructure is now part of the protocol
 
-Run 1 evidence: the agent's heartbeat-driven gateway burned $575 in 15 minutes on a single PDF read while the prompt cache TTL expired faster than tool calls fired (the Modoc tick). On Day 2 the operator killed the gateway entirely and replaced it with a $0-cost VM cron + multi-channel alerting layer that was bespoke and ad-hoc. The cron's hand-written string-match classifier later missed B4A's deposit-cleared email — actual subject was "Your Deposit Has Cleared:..." not "deposit posted" — routing an urgent notification to Slack-only.
+Run 1 evidence: the agent's heartbeat-driven gateway burned $575 in 15 minutes on a single PDF read while the prompt cache TTL expired faster than tool calls fired (the Modoc tick). On Day 2 the operator killed the gateway entirely and replaced it with a $0-cost VM cron + multi-channel alerting layer that was bespoke and ad-hoc. The cron's hand-written string-match classifier later missed B4A's deposit-cleared email — actual subject was "Your Deposit Has Cleared:..." not "deposit posted" — routing an urgent notification to Slack-only. I was offline expecting an SMS for action-required events; caught it ~30 hours later by accident.
 
 Fix: §6.3 and §7 updates, all dated 2026-05-04:
 
@@ -135,7 +135,15 @@ These need legal/policy infrastructure I can't write code for.
 
 ### KYC-bound identity at counterparty surfaces
 
-CRUX-Land hit five surfaces requiring the operator's legal identity in the first three days (Part 2's safety-policy section enumerates them). None are model-capability gaps. They're identity-and-authority gaps. The agent doesn't have a real-world legal identity; the operator does. KYC binds the transaction to the operator's identity; no protocol or methodology change can lift that ceiling.
+CRUX-Land hit five surfaces requiring the operator's legal identity in the first three days, each one the agent declined to act on:
+
+1. **Bid4Assets bidder registration** — SSN per Patriot Act, photo ID, full KYC. Agent refused; I did it manually.
+2. **Bid4Assets login** (password into form). Refused.
+3. **SoFi wire form entry** (bank routing + account numbers). Refused.
+4. **Bid4Assets account-settings change** (email-of-record moved from my personal Gmail to `crux@getnen.ai`). Refused.
+5. **The escape hatch**: an authenticated session is fine for the agent to use even though authentication isn't. Wrote a methodology note arguing that's a credential-axis-vs-identity-axis gap in Anthropic's safety policy. Letter of the rule: don't type passwords. Spirit, presumably: don't operate accounts whose legal identity belongs to a real human. A session cookie is functionally a password under the spirit reading.
+
+None of these are model-capability gaps. They're identity-and-authority gaps. The agent doesn't have a real-world legal identity; the operator does. KYC binds the transaction to the operator's identity; no protocol or methodology change can lift that ceiling.
 
 One caveat worth flagging: of the five surfaces above, some are bounded by federal KYC law and won't lift no matter what — the SSN requirement is hard. Some are bounded by Claude's safety policy specifically — Claude declined to navigate SoFi at all once it recognized the page as a bank, even just to copy a wire confirmation number. The first ceiling is structural; the second varies by lab and is already a policy choice today. CRUX-Land's run is partly a study of what Claude in particular will and won't do, not a universal claim about agents.
 

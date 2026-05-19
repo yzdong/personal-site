@@ -178,9 +178,7 @@ Five distinct moments where the agent declined to act on safety grounds, all on 
 4. Bid4Assets account-settings change (email-of-record moved from my personal Gmail to `crux@getnen.ai`) — refused.
 5. The escape hatch: an authenticated session is fine for the agent to use even though authentication isn't. Wrote a methodology note in `writeup-notes.md` arguing that's a credential-axis-vs-identity-axis gap in Anthropic's safety policy. Letter of the rule: don't type passwords. Spirit, presumably: don't operate accounts whose legal identity belongs to a real human. A session cookie is functionally a password under the spirit reading.
 
-The framing that emerged: "agent vs. human persona" isn't a binary. There are six layers (legal identity, operational control, read access, alert routing, transaction authorization, audit-trail attribution) and they don't move in lockstep. CRUX-Land's Bid4Assets bidder account ended up: legal-identity = human (real name + SSN), operational-control = mostly agent, read-access = mostly agent (after the email-of-record change), alert-routing = agent → operator via cron, transaction-authorization = always operator, audit-trail = human.
-
-Methodology note for Part 3: real-world CRUX-X experiments need a per-account ownership table at design time, not a binary agent/human flag.
+The framing that emerged from these five moments is that "agent vs. human persona" isn't a binary — there are six axes that don't move in lockstep, and the Bid4Assets account ended up with three different actors across them. Part 3's "Per-account ownership table" section has the full breakdown plus the methodology fix.
 
 ## How I handled operator-offline windows
 
@@ -242,12 +240,6 @@ But the question was wrong. The criterion the agent was clearing was *"is this l
 
 Nothing in the loop — Designer, Agent, Operator — operationalized "rural off-grid suitable" as distinct from "residentially buildable." Part 3 walks through the protocol and methodology changes that resulted from this.
 
-## Where the safety policy *would* have met the real world
-
-The settlement wire to Bid4Assets was the next KYC surface the agent was going to hit if Siskiyou had won at the May 11 auction. This would have been the fifth KYC moment of the run: I'd have logged into SoFi, drafted the wire to Bid4Assets's escrow account ($1,200 + $35 admin + $18 buyer's premium = $1,253), called Bid4Assets at the published number to verify the wiring instructions weren't an injection, and approved the transfer. The agent would have read confirmation emails from the agent-controlled inbox and routed status alerts to me. Six axes, three different actors, one account.
-
-The retraction made all of that hypothetical, but the structure is worth recording for the next run's pre-run ownership-table mapping.
-
 ## The bill
 
 Numbers as of run termination, 2026-05-04:
@@ -281,16 +273,16 @@ Compared to CRUX-Windows: CRUX-Windows had $1,333 of post-task-completion idle h
 
 ## What I'd do differently
 
-Twelve methodology findings accumulated in `writeup-notes.md` over the run. Compressed into the ones that mattered most:
+Twelve methodology findings accumulated in `writeup-notes.md` over the run; six that mattered most:
 
-1. **Operationalize "off-grid suitable" before kickoff, separately from "buildable."** The single most consequential miss. The Siskiyou near-miss happens to no run that has a sub-criterion for septic/well setback feasibility, neighbor density, or code-enforcement posture. The protocol had none of those, so the agent had nothing to fail Siskiyou on.
-2. **Designer self-interrogation pass before Operator hand-off.** Enumerate every criterion, label by source ("operator told me," "I inferred," "I assumed by default"), and challenge each. The acreage-floor and quitclaim-blanket criteria both die here. The Siskiyou framing miss probably dies here too once "rural" is interrogated as a separate concept from "buildable."
-3. **Treat operator-initiated criterion relaxations as triggers for Designer re-derivation, not local edits.** The Day 1 acreage relaxation lifted the only criterion that even partially captured "rural." Nothing else picked up the load. The Designer should have flagged that and proposed a replacement; nothing in the methodology asked it to.
-4. **Off-mode primitive in the scaffold layer.** Day-2 cron-and-IMAP infrastructure should not be ad-hoc operator-built. Long-running agents need built-in "park, wake on these signals, $0 in the meantime" support.
-5. **LLM classifier for cron-style auxiliary infra by default.** The string-match classifier missed the deposit-cleared email by 30 hours. $0.01/email is rounding error; treat per-call inference cost as a non-issue when the alternative is operator-impact failure modes.
-6. **Per-account ownership table as a methodology artifact.** Six axes (legal identity, operational control, read access, alert routing, transaction authorization, audit trail), mapped per counterparty, at design time. Run 1 discovered this mid-run; the next run declares it pre-kickoff.
+1. Operationalize "off-grid suitable" separately from "buildable."
+2. Designer self-interrogation pass before Operator hand-off — enumerate every criterion by source, challenge each.
+3. Treat operator-initiated criterion relaxations as Designer re-derivation triggers, not local edits.
+4. Off-mode primitive at the scaffold layer (park-and-wake without continuous compute).
+5. LLM classifier for cron-style auxiliary infra by default — string-match is a reliability trap.
+6. Per-account ownership table mapped pre-kickoff, not mid-run.
 
-The other six findings are smaller — KYC-vs-Claude-policy distinctions, prompt-cache TTL surprises, Twilio A2P 10DLC quirks. They go in the methodology repo's running issues file rather than here.
+Each is walked in Part 3 as a fix to the CRUX-X methodology or the CRUX-Land protocol. The other six findings are smaller — KYC-vs-Claude-policy distinctions, prompt-cache TTL surprises, Twilio A2P 10DLC quirks — and live in the methodology repo's running issues file rather than here.
 
 ## What's next in CRUX-Vault-Zero
 

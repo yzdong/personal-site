@@ -80,9 +80,18 @@ Fix: before handing the protocol to the Operator, the Designer enumerates every 
 
 ### Per-account ownership table (§3)
 
-Run 1 evidence: the Bid4Assets bidder account doesn't fit on either side of an "agent-vs-operator" binary. Six axes per account, three different actors across them, all on the same account. Part 2's safety-policy section has the full breakdown for B4A.
+Run 1 evidence: the Bid4Assets bidder account doesn't fit on either side of an "agent-vs-operator" binary. The framing that emerged from the run is six axes that don't move in lockstep:
 
-Fix: methodology §3 adds `[DECISION] per-account ownership table` as a pre-kickoff artifact. For each counterparty account the experiment uses, the Designer maps ownership across the six axes at design time, not mid-run. Mapping at design time prevents the methodology from systematically underestimating what agents can do at KYC counterparties.
+- **Legal identity** — who the law says owns it
+- **Operational control** — who clicks the buttons
+- **Read access** — who sees the state
+- **Alert routing** — who gets paged when something changes
+- **Transaction authorization** — who can spend money
+- **Audit-trail attribution** — whose name is on the record
+
+CRUX-Land's Bid4Assets account ended up with three different actors across these six: legal identity = me (real name + SSN), operational control = mostly agent (after login), read access = mostly agent (email-of-record routed to the agent inbox), alert routing = agent → me via cron, transaction authorization = always me, audit trail = me.
+
+Fix: methodology §3 adds `[DECISION] per-account ownership table` as a pre-kickoff artifact. For each counterparty account the experiment uses, the Designer maps ownership across these six axes at design time, not mid-run. Mapping at design time prevents the methodology from systematically underestimating what agents can do at KYC counterparties.
 
 ### Cron-and-alerting layer with LLM-classified severity (§5)
 

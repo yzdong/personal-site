@@ -64,7 +64,7 @@ Most of these things I didn't learn in advance — the agent surfaced them as ca
 
 Recall from [Part 1](/blog/crux-x) that the umbrella project is CRUX-X — a methodology framework for running externally-gatekept real-world agent experiments. The framework's job is to take a high-level prompt like *"Buy a piece of rural land for me to live off-grid"* and break it down into a specific experiment protocol that an agent can execute against.
 
-The pipeline that does the breaking-down has three artifacts and three actors: the **Designer** (an LLM session that reads `methodology.md` plus a short task brief from the operator and produces a task-specific `protocol.md`), the **Operator** (the human — me — who reviews the protocol and kicks off the run), and the **Agent** (the autonomous LLM that executes the protocol against real-world counterparties). The methodology is family-wide; the protocol is task-specific; the per-run **Manifest** binds the protocol to a specific operator's infrastructure at t=0.
+The pipeline that does the breaking-down has three artifacts and three actors: the **Designer** (an LLM session that reads `methodology.md` plus a short task brief from the operator and produces a task-specific `protocol.md`), the **Operator** (the human — me — who reviews the protocol and kicks off the run), and the **Agent** (the autonomous LLM that executes the protocol against real-world external parties). The methodology is family-wide; the protocol is task-specific; the per-run **Manifest** binds the protocol to a specific operator's infrastructure at t=0.
 
 What I told the Designer was approximately *"Buy a piece of rural land for me to live off-grid, end-to-end, on a small budget and a short wall-clock"* — one sentence, deliberately under-specified. The Designer's job is to take that prompt, fill in every `[DECISION]` slot the methodology defines, and produce a protocol document the Operator can review per-decision and the Agent can execute against. The resulting `protocol.md` (committed in [`experiments/land/`](https://github.com/yzdong/crux-x/tree/main/experiments/land) on April 29) has the following structure:
 
@@ -93,13 +93,13 @@ The framework is the same; the protocols are task-specific. The interesting thin
 | Pre-staged accounts | MS Developer, GitHub org + PAT, Gmail, Slack, GCP, Windows VM local admin | Gmail, Slack, Twilio + Deepgram, Bid4Assets bidder, GCP, operator's bank |
 | Tool catalogue | Shell, file I/O, browser, GUI-on-Windows | Shell, file I/O, browser, Twilio voice + Deepgram transcription |
 | Reserved-human actions | Biometric ID (pre-done) + final "publish live" click | 5 KYC surfaces (registration, login, bank wire form, settings change, settlement wire) |
-| Counterparty class | Microsoft Store reviewers | County recorder, title companies, Bid4Assets, county planners |
+| External-party class | Microsoft Store reviewers | County recorder, title companies, Bid4Assets, county planners |
 | Failure modes anticipated | Store certification rejection cycles, MSIX signing issues, listing-policy violations | Landlocked parcels, off-grid-banned counties, quitclaim fraud, KYC-bound surfaces |
 
 Three things to read out of the table:
 
-- **The agent scaffold is identical** — both runs are OpenClaw 2026.4.15 on a Debian controller VM. The plumbing is the same; the *target* is what differs. The pre-staged-accounts inventory expands materially with the task domain: Windows needed access to one counterparty class (Microsoft); Land needs access to seven (county recorder, title company, RON provider, e-sign provider, Bid4Assets, bank, the agent's own operational accounts).
-- **The reserved-human actions list expands faster than the inputs list.** Windows had 2 reserved-human actions (biometric ID + publish-click); Land has 5+. Every KYC counterparty is a non-collapsible reserved-human action because the agent's legal identity isn't a thing. Part 3 spends most of its space on this.
+- **The agent scaffold is identical** — both runs are OpenClaw 2026.4.15 on a Debian controller VM. The plumbing is the same; the *target* is what differs. The pre-staged-accounts inventory expands materially with the task domain: Windows needed access to one external-party class (Microsoft); Land needs access to seven (county recorder, title company, RON provider, e-sign provider, Bid4Assets, bank, the agent's own operational accounts).
+- **The reserved-human actions list expands faster than the inputs list.** Windows had 2 reserved-human actions (biometric ID + publish-click); Land has 5+. Every KYC-gated external party is a non-collapsible reserved-human action because the agent's legal identity isn't a thing. Part 3 spends most of its space on this.
 - **The failure-mode catalogues are domain-specific in completely different ways.** CRUX-Windows protected against MSIX signing failures and listing-policy violations; CRUX-Land protects against landlocked parcels and off-grid-banned counties. The Designer is producing the right shape of failure-mode catalogue for the task without the operator hand-coding it.
 
 The Designer-Operator-Agent pipeline is doing the same work both times: take a sentence, produce a protocol, provision an environment, run an agent against it. The two protocols look different because the underlying tasks are different, not because the framework is different. That's the framework's bet — write the methodology once and get a generalizable protocol-generator for free.
@@ -114,7 +114,18 @@ The Designer-Operator-Agent pipeline is doing the same work both times: take a s
 | 2026-05-01 (Day 3) | **Agent:** La Paz AZ killed on quitclaim rule. **Operator:** deed-type criterion split (private quitclaim still rejected; gov-grantor quitclaim acceptable with title insurance). Deposit wire authorized for Siskiyou parcel. |
 | 2026-05-02 to 2026-05-03 (Days 4–5) | **Cron:** deposit clearing at Bid4Assets. Operator offline; cron + alerting handled state. |
 | 2026-05-04 (Day 6) | **Operator:** deposit cleared; Auto-Bid placed at $1,220 max. Opened the assessor's plat map for the first time, saw "Macdoel Townsite" in the third line of the header, and retracted the pre-bid the same day. Run terminated as primary-failed. |
-| 2026-05-11 | **Counterparty:** auction closed. Deposit refund returned to operator's bank. |
+| 2026-05-11 | **External party:** auction closed. Deposit refund returned to operator's bank. |
+
+![Three boxes — Copilot, Operator, Agent — with arrows showing their interactions. Operator talks to the Copilot via a local terminal; Operator talks to the Agent via Slack; only the Agent reaches out to external parties (Bid4Assets, county recorders, title companies, Twilio, banks, KYC surfaces).](/images/crux-land/roles.png)
+*The three actors visible in the next two charts. The **Agent** is the autonomous Opus-4.7 session running browser, shell, and voice tools against real-world external parties — it's the only thing that touches the outside world. The **Operator** (me) sets caps, reviews the protocol, and intervenes when the Agent alerts. The **Copilot** is a separate LLM session I ran locally — no tools touching the run, no shared budget — that I used to draft directives, reason through diagnostics, classify alerts, and help write this post. The two channels in the next chart are Operator-↔-Agent (Slack) and Operator-↔-Copilot (local).*
+
+*The Copilot is a runtime role I found myself introducing for CRUX-Land that CRUX-Windows didn't need. CRUX-Windows was a single-external-party task with a tight scaffold; the operator's job was mostly "watch alerts and re-bootstrap when the Agent got stuck," and a few hundred words of Slack DM per day sufficed. CRUX-Land hit seven external-party classes, four runtime protocol revisions, and an attention budget I couldn't sustain unaided — by Day 2 I was drafting directives, diagnosing tool-call patterns, and triaging alerts inside the Copilot session before any of it went out over Slack. The 100 CRUX-relevant operator-↔-Copilot turns below are what the addition of this role looks like. Whether the Copilot should be promoted to a first-class CRUX-X role (alongside Designer / Operator / Agent) or stay an operator-private affordance is one of the open methodology questions Part 3 picks up.*
+
+![Two-panel chart: cumulative API spend climbing from $0 to $1,427 with a vertical step at the Modoc tick, and an hourly bar chart of messages across three channels (agent→operator Slack, operator→agent Slack, operator↔Copilot). Three vertical event lines mark 12 monkeys, Modoc tick, and Macdoel: to be or not to be.](/images/crux-land/run-timeline.png)
+*Cost ran ahead of attention. Two points are measured against the journal ($88 at Tick 7, $1,427 just before the pre-bid); the rest is interpolated. The vertical step at Modoc is the $575 PDF burn. Operator-↔-Copilot turns cluster around the three named events; Days 3–5 ran nearly unattended.*
+
+![Stacked bar chart of 100 operator-↔-Copilot messages per hour, classified by purpose: directive (33), clarification (20), approval (16), diagnostic (15), info relay (12), protocol revision (4). Three vertical event lines mark the same 12 monkeys, Modoc tick, and Macdoel moments.](/images/crux-land/run-interactions.png)
+*The same 100 operator-↔-Copilot messages, classified by purpose. Directives and clarifications dominate around each event; the four protocol-revision turns are the moments the rulebook itself moved.*
 
 The rest of this post is the buildup — the cap table, the eleven other channels that died first, the $575 fifteen-minute cost spike on a county PDF, the safety policy hitting real-world edges, the cron classifier that almost missed a deposit-cleared email, and the Macdoel section itself with everything I dug out of the session log about why the agent kept the parcel live.
 
@@ -151,7 +162,7 @@ Eleven of the twelve channels died for distinct structural reasons over the firs
 
 The twelfth channel, **Siskiyou CA 1274955 (parcel APN 035-015-010 in Macdoel)**, died from a structurally different cause and is the central story of this run. Its own section ("The Macdoel near-miss") is below.
 
-The pattern across the first eleven: every channel that *seems* viable on first read has at least one structural kill that only surfaces in actual contact with the counterparty. Benchmark-version of this experiment never sees most of them. The twelfth is the inverse pattern — a channel that survived contact with the counterparty *and* actually-correct diligence on the wrong question, and only died when the operator stopped to question whether the question was the right one.
+The pattern across the first eleven: every channel that *seems* viable on first read has at least one structural kill that only surfaces in actual contact with the external party. Benchmark-version of this experiment never sees most of them. The twelfth is the inverse pattern — a channel that survived contact with the external party *and* actually-correct diligence on the wrong question, and only died when the operator stopped to question whether the question was the right one.
 
 ## The Modoc tick
 
@@ -185,7 +196,7 @@ By Day 6 (2026-05-04), Siskiyou CA parcel APN 035-015-010 was the only live cand
 | Auction close | 2026-05-11 14:15 ET |
 | Pre-bid placed | $1,220 max via Bid4Assets Auto Bid |
 
-I authorized the deposit wire on 2026-05-01. It cleared 2026-05-04. I placed the auto-bid the same day — Bid4Assets requires authentication to bid, and the agent's safety policy declines to log into KYC counterparties (Part 3's "KYC-bound identity at counterparty surfaces" has the long version), so this was a human moment. Then I opened the assessor's plat map for the first time and read, on the third line of the header: **Macdoel Townsite**.
+I authorized the deposit wire on 2026-05-01. It cleared 2026-05-04. I placed the auto-bid the same day — Bid4Assets requires authentication to bid, and the agent's safety policy declines to log into KYC-gated external parties (Part 3's "KYC-bound identity at external-party surfaces" has the long version), so this was a human moment. Then I opened the assessor's plat map for the first time and read, on the third line of the header: **Macdoel Townsite**.
 
 ![What I imagined I was getting: a lush rural setting in Siskiyou County with Mt. Shasta in the background](/images/crux-land/imagined-shasta-rural.jpg)
 *Photo: Marina M / [Pexels](https://www.pexels.com/photo/cow-in-pasture-with-mountain-in-background-8201746/)*
@@ -234,7 +245,7 @@ Where the methodology cost more than it should have:
 
 Where it cost less than I'd budgeted:
 
-- **Channel triage on the eleven dead candidates** — most kills were cheap because they hit at the network or counterparty layer, not at the diligence layer. Costilla, Apache, Hudspeth, Monroe, Pinal each cost under $25.
+- **Channel triage on the eleven dead candidates** — most kills were cheap because they hit at the network or external-party layer, not at the diligence layer. Costilla, Apache, Hudspeth, Monroe, Pinal each cost under $25.
 - **Operator-offline windows after Day 2** — $0 API spend during the May 1–4 cron-only window. Heartbeat-driven monitoring would have burned ~$300+ over the same period. The cron + IMAP alerting was bespoke ad-hoc operator infrastructure, but the saving was real.
 
 Compared to CRUX-Windows: CRUX-Windows had $1,333 of post-task-completion idle heartbeat burn over 10 days; CRUX-Land caught the same shape on Day 2 in a 15-minute span and fixed it the same day. So the methodology is learning across runs even when individual runs fail.

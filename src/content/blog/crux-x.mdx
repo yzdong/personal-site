@@ -53,7 +53,7 @@ Legend:  [doc] artifact     « actor » agent     ──verb──►  execution
        │
        │  interacts with
        ▼
- Counterparty(ies)                      external real-world gatekeepers
+ External party(ies)                    real-world institutions, APIs, KYC surfaces
 ```
 
 For CRUX-Windows specifically, the Protocol resolved §1 ("hypothesis") to "Publish a Windows app to the Microsoft Store"; §3 ("inputs") to a Partner Center developer account, Gmail, GitHub PAT, signing cert, and controller VM; §5 ("comms + kill switch") to a Slack channel and a gateway-stop kill switch; and §7 ("budget / constraints") to a $500 Anthropic API cap and 14-day wall-clock cap. The Run itself took 77h 48m with three net human inputs.
@@ -62,11 +62,11 @@ Reproducibility lives in the Manifest. The Protocol is the task spec; the Manife
 
 CRUX-X v1 is at [github.com/yzdong/crux-x](https://github.com/yzdong/crux-x).
 
-I'm sharing CRUX-X partly so other people can bootstrap CRUX-style experiments without rebuilding the plumbing from scratch, and partly because the methodology itself is a useful frame for talking about what agents can and can't do today. Today's agents can execute against a well-defined task — fixed inputs, fixed success criteria, a counterparty that already exists — and run it to completion. Today's agents can't dynamically modify their own inputs or define what counts as success in the first place. CRUX-X bakes that division in: the Designer and Operator define the parameters of success, and the Agent executes against them. As models get more capable, the Operator's role shrinks and the Agent's grows.
+I'm sharing CRUX-X partly so other people can bootstrap CRUX-style experiments without rebuilding the plumbing from scratch, and partly because the methodology itself is a useful frame for talking about what agents can and can't do today. Today's agents can execute against a well-defined task — fixed inputs, fixed success criteria, an external party that already exists — and run it to completion. Today's agents can't dynamically modify their own inputs or define what counts as success in the first place. CRUX-X bakes that division in: the Designer and Operator define the parameters of success, and the Agent executes against them. As models get more capable, the Operator's role shrinks and the Agent's grows.
 
 ## What I want to validate
 
-CRUX-Windows had a high likelihood of success going in. CRUX #1 had already validated the basic shape, and the task itself was software-contained: every action happened in a browser or a terminal, and Microsoft Store publishing is well-documented enough that a careful human could follow the path in a weekend. I wanted the next experiment to be more ambitious along axes CRUX-Windows didn't stress. Something that touches the physical world, where the counterparties aren't in Silicon Valley and haven't heard of agents, where the task runs for weeks instead of days, and where the requirements aren't fully specified up front — they emerge during execution and have to be reconciled between agent and operator in real time.
+CRUX-Windows had a high likelihood of success going in. CRUX #1 had already validated the basic shape, and the task itself was software-contained: every action happened in a browser or a terminal, and Microsoft Store publishing is well-documented enough that a careful human could follow the path in a weekend. I wanted the next experiment to be more ambitious along axes CRUX-Windows didn't stress. Something that touches the physical world, where the external parties aren't in Silicon Valley and haven't heard of agents, where the task runs for weeks instead of days, and where the requirements aren't fully specified up front — they emerge during execution and have to be reconciled between agent and operator in real time.
 
 This project is also heavily inspired by Evan Ratliff's [*Shell Game*](https://shellgame.co/), which I've been following since 2025. Ratliff builds agents, sends them out into the world to do real things, and reports back — often hilariously. The shape of his experiments is what I wanted CRUX-X to support: a real-world task, a real agent, a real outcome, observed honestly even when the agent fails ridiculously.
 
@@ -74,7 +74,7 @@ So: a sequence of CRUX experiments rather than just one.
 
 ## CRUX-Vault-Zero
 
-I needed a goal to organize the sequence around. Something that decomposes into a handful of distinct CRUX experiments, each with its own externally-gatekept counterparty class. I picked: **prepare for off-grid living, end-to-end, with agents doing as much of the work as they can.**
+I needed a goal to organize the sequence around. Something that decomposes into a handful of distinct CRUX experiments, each with its own externally-gatekept external-party class. I picked: **prepare for off-grid living, end-to-end, with agents doing as much of the work as they can.**
 
 This is half-joking. The bull case for AI rolls quickly into the doomer case, and either way I'd like to know there's a place to go that has reliable water. The Fallout reference in the project name is intentional.
 
@@ -92,7 +92,7 @@ And the goal decomposes naturally into the kind of experiments CRUX-X is designe
 - sanitation solution (septic, composting, greywater)
 - food solution (gardens, livestock, preservation, storage)
 
-Each goal decomposes into one or more CRUX experiments, each with its own real-world gatekeeper class — county recorder, state-licensed contractor, regional drilling firm, county building department, state water board, county health office. Each stress-tests CRUX-X against a different counterparty.
+Each goal decomposes into one or more CRUX experiments, each with its own real-world gatekeeper class — county recorder, state-licensed contractor, regional drilling firm, county building department, state water board, county health office. Each stress-tests CRUX-X against a different external party.
 
 Working name for the umbrella project: CRUX-Vault-Zero. Each individual experiment is its own CRUX run with its own protocol, infra, and writeup.
 
@@ -119,7 +119,7 @@ There's enough material from the run already that one post can't hold it.
 
 Part 2 is the CRUX-Land run report. Some of the cast: a 200-page county PDF that ate $575 in fifteen minutes, eleven dead candidates that died eleven distinct deaths, an agent that drew a hard line at typing a password but would happily reuse the session cookie I'd already typed in, a Bid4Assets email subject ("Your Deposit Has Cleared:...") that thwarted my naive string-match classifier, and a twelfth candidate the agent successfully cleared by answering the wrong question.
 
-Part 3 is the synthesis. The question: how general is the current agent class — Opus 4.7 inside the scaffolds we currently know how to build — when you let it try a real-world transaction with real money and a real counterparty? My short answer after six days of running CRUX-Land: not yet, and the gaps are mostly outside the model. The interesting work is figuring out which gaps are model-shaped, which are scaffold-shaped, which are legal-identity-shaped, and which are methodology-shaped. The Macdoel near-miss is mostly the fourth. Part 3 has the long version.
+Part 3 is the synthesis. The question: how general is the current agent class — Opus 4.7 inside the scaffolds we currently know how to build — when you let it try a real-world transaction with real money and a real external party? My short answer after six days of running CRUX-Land: not yet, and the gaps are mostly outside the model. The interesting work is figuring out which gaps are model-shaped, which are scaffold-shaped, which are legal-identity-shaped, and which are methodology-shaped. The Macdoel near-miss is mostly the fourth. Part 3 has the long version.
 
 ## Reading list
 

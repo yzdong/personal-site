@@ -35,3 +35,15 @@ a {
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
+
+.wide-figure {
+  display: block;
+  width: min(95vw, 1100px);
+  max-width: none;
+  height: auto;
+  position: relative;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}

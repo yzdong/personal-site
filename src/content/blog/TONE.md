@@ -136,6 +136,17 @@ underneath it are usually redundant.
 - ✗ "I went into CRUX-Land expecting that ease to transfer. I wanted the next experiment to push harder along axes Windows couldn't reach: physical world rather than software, weeks rather than days, external parties that haven't heard of agents..." → "Buying rural off-grid land seemed right."
 - ✓ "I had grander ambitions." → "Buying rural off-grid land seemed right."
 
+**No "that's X's bet" / "where X earns its keep" framings.** Framing a
+design choice as a "bet" or saying an abstraction "earns its keep"
+borrows confidence from a startup-pitch register. It claims victory
+before showing it. Same family: "the thesis is...", "the win here
+is...", "what this gets you is...". If the design choice did work,
+the table + takeaways above already show it; the pitch-style summary
+is filler and reads as overclaim.
+- ✗ "That's the framework's bet — write the methodology once and get a generalizable protocol-generator for free."
+- ✗ "This is where the abstraction earns its keep."
+- ✓ Lead with what the abstraction *did* (in the table, in the bullets), not what it promises.
+
 **Cut "the interesting thing is..." setup sentences.** Sentences that
 gesture at what's coming next ("The interesting thing is what
 shifts...", "Here's what stood out...", "Let me share what I found...")

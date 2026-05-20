@@ -136,6 +136,17 @@ underneath it are usually redundant.
 - ✗ "I went into CRUX-Land expecting that ease to transfer. I wanted the next experiment to push harder along axes Windows couldn't reach: physical world rather than software, weeks rather than days, external parties that haven't heard of agents..." → "Buying rural off-grid land seemed right."
 - ✓ "I had grander ambitions." → "Buying rural off-grid land seemed right."
 
+**Cut "the interesting thing is..." setup sentences.** Sentences that
+gesture at what's coming next ("The interesting thing is what
+shifts...", "Here's what stood out...", "Let me share what I found...")
+without naming the finding are filler. The element below — table,
+list, blockquote — introduces itself. Trust the reader to read it.
+A setup line only earns its place if it commits to a count or names
+the content ("Three things to read out of this table:" works because
+it sets up three specific takeaways).
+- ✗ "The interesting thing is what shifts between the two experiments — and what stays the same: [table]"
+- ✓ "[table]"
+
 **Lead with the mechanical root cause, not the meta-reflection on it.**
 When you find the actual specific bug, misread, or mistake that drove
 a finding, lead the close of the section with that mechanical cause.

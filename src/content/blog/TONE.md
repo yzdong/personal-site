@@ -109,6 +109,43 @@ let the next heading carry the structure.
 - ✗ "...encoded as criteria the agent would check against each parcel. Walking them."
 - ✓ "...encoded as criteria the agent would check against each parcel. The five follow, in the order the protocol checks them."
 
+**Use the canonical idiom, not a constructed variant.** If a metaphor or
+phrase has a settled idiomatic form, use that form. A constructed variant
+("drunk on how cleanly it had gone") reads as effort and pulls attention
+to the construction. The canonical form ("drunk on success") is what the
+reader's ear expects; the metaphor lands faster and gets out of the way.
+Personal-narrative metaphors are fine when they're idiomatic — the rule
+against "metaphors borrowing pathos" is for analytic claims, not voice.
+- ✗ "I came out of CRUX-Windows a little drunk on how cleanly it had gone"
+- ✓ "I came out of CRUX-Windows a little drunk on success"
+
+**Keep "X rather than Y" parallel.** When contrasting two things with
+"X rather than Y" or "X instead of Y", X and Y have to be the same kind
+of thing. The reader's brain holds both in parallel; if they belong to
+different categories, the sentence reads as a category error and the
+contrast doesn't land.
+- ✗ "the only real surprise was the agent improving my apparatus rather than the Microsoft Store" (action vs place)
+- ✓ "the only real surprise was the agent improving my apparatus rather than hiccups with the approval process at the Microsoft Store"
+
+**Don't pre-explain the next paragraph.** If the next paragraph already
+does the work of motivating a choice, naming a contrast, or setting up
+the next move, the bridge sentence above it is dead weight. Adjacency
+does the connecting work. A short, declarative line ("I had grander
+ambitions.") is often enough to pivot — the explanatory sentences
+underneath it are usually redundant.
+- ✗ "I went into CRUX-Land expecting that ease to transfer. I wanted the next experiment to push harder along axes Windows couldn't reach: physical world rather than software, weeks rather than days, external parties that haven't heard of agents..." → "Buying rural off-grid land seemed right."
+- ✓ "I had grander ambitions." → "Buying rural off-grid land seemed right."
+
+**Lead with the mechanical root cause, not the meta-reflection on it.**
+When you find the actual specific bug, misread, or mistake that drove
+a finding, lead the close of the section with that mechanical cause.
+Don't hedge into "what does this say about methodology" or "there's
+no clean fix" until the literal *what happened* is stated. The bug is
+almost always more interesting than the meta — and the meta reads as
+deflection if the bug isn't named first.
+- ✗ "There's no clean methodology fix. 'Don't contact real humans' is the wrong rule for an experiment that's explicitly testing what an agent can do against real-world external parties..."
+- ✓ "The reason the agent contacted Moira in the first place was an agent error. The Craigslist posting led with $199 in the title, and the agent took that as the cash price..."
+
 ## Patterns to use
 
 **Lead with numbers where possible.** "Net human inputs: three." "Final spend

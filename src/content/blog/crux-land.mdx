@@ -52,7 +52,7 @@ The one-sentence prompt I gave the Designer (quoted above) was deliberately unde
 - **§8 Pre-run validation** — the preflight checklist that has to go green before kickoff.
 - **§9–§10** — the writeup template and the failure-mode catalogue.
 
-At the protocol level, specific runtime infrastructure is still abstracted away. You won't find a GCP project ID, a Gmail address, or a Slack workspace name anywhere in `protocol.md`. The protocol references them through indirection sigils — `<see manifest:infra.gcp_project>` for infra values, `<GSM:secret-name>` for secrets — that the per-run Manifest fills in at kickoff. The Manifest is the t=0 snapshot of which operator is running this specific run against which infra: two operators with different GCP projects, different Slack workspaces, and different bank accounts can run the same protocol, and their manifests differ while the protocol doesn't. This is less interesting for CRUX-Land specifically (there's only one operator), but it's what lets any coding agent execute a CRUX-X protocol against any operator's infra without forking and patching.
+A note on the Manifest: it lets a coding agent execute any CRUX-X protocol against their own infrastructure. If you want to run your own CRUX-Land, [here's the current protocol](https://github.com/yzdong/crux-x/tree/main/experiments/land).
 
 ### How CRUX-Land's protocol differs from CRUX-Windows's
 

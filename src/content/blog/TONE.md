@@ -101,6 +101,14 @@ everything else in the post. State only what you actually have or know.
 - ✗ "I had a software background — I knew what code-signing certificates were and what the WACK validator complains about, even if I'd never personally shipped a Windows Store app."
 - ✓ "I had a software background to fall back on — I know how to build software."
 
+**No contentless transitional fragments.** Sentence fragments that gesture
+at what's coming next without naming anything ("Walking them.", "Onward.",
+"Now the details.") read clipped, not under-stated. Replace with a full
+sentence that previews the content, or cut the transition entirely and
+let the next heading carry the structure.
+- ✗ "...encoded as criteria the agent would check against each parcel. Walking them."
+- ✓ "...encoded as criteria the agent would check against each parcel. The five follow, in the order the protocol checks them."
+
 ## Patterns to use
 
 **Lead with numbers where possible.** "Net human inputs: three." "Final spend

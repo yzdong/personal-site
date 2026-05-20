@@ -26,7 +26,19 @@ Buying rural off-grid land seemed right. I had some real-estate experience from 
 
 [Part 1](/blog/crux-x) introduced CRUX-X — the methodology framework for running real-world agent experiments. The framework takes a high-level prompt like *"Buy a piece of rural land for me to live off-grid"* and breaks it down into a specific experiment protocol that an agent can execute against.
 
-The pipeline has three artifacts and three actors: the **Operator** (me, the human — I review the protocol, kick off the run, and intervene during it); the **Operator's LLM** (a Claude session running locally on the operator's laptop that plays two temporal roles — **Designer** pre-run, reading `methodology.md` plus a short task brief and producing a task-specific `protocol.md`; **Copilot** during the run, drafting directives, diagnosing tool calls, classifying alerts, writing this post — same session, different phases); and the **Agent** (the autonomous LLM that executes the protocol against real-world external parties). The methodology is family-wide; the protocol is task-specific; the per-run **Manifest** binds the protocol to a specific operator's infrastructure at t=0.
+The pipeline has three actors:
+
+- **Operator** — me, the human. I review the protocol, kick off the run, and intervene during it.
+- **Operator's LLM** — a Claude session running locally on my laptop, playing two temporal roles in the same session:
+  - **Designer** (pre-run): reads `methodology.md` plus a short task brief, produces a task-specific `protocol.md`.
+  - **Copilot** (during the run): drafts directives, diagnoses tool calls, classifies alerts, writes this post.
+- **Agent** — the autonomous LLM that executes the protocol against real-world external parties.
+
+And three artifacts:
+
+- **Methodology** — family-wide.
+- **Protocol** — task-specific.
+- **Manifest** — per-run; binds the protocol to a specific operator's infrastructure at t=0.
 
 The one-sentence prompt I gave the Designer (quoted above) was deliberately under-specified. The Designer's job is to take that prompt, fill in every `[DECISION]` slot the methodology defines, and produce a protocol document the Operator can review per-decision and the Agent can execute against. The resulting `protocol.md` (committed in [`experiments/land/`](https://github.com/yzdong/crux-x/tree/main/experiments/land) on April 29) has the following structure:
 

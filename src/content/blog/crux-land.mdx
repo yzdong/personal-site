@@ -42,7 +42,7 @@ And three artifacts:
 
 The one-sentence prompt I gave the Designer (quoted above) was deliberately under-specified. The Designer's job is to take that prompt, fill in every `[DECISION]` slot the methodology defines, and produce a protocol document the Operator can review per-decision and the Agent can execute against. The resulting `protocol.md` (committed in [`experiments/land/`](https://github.com/yzdong/crux-x/tree/main/experiments/land) on April 29) has the following structure:
 
-- **§1 Hypothesis + success criteria** — the experiment question (can an Opus-4.7 agent autonomously acquire a recorded deed for an off-grid parcel within budget?), the primary success metric (recorded deed in the operator's name in the county's public index), and the ten suitability criteria — operationalizing the five categories from the previous section into specific rules the agent can run against a candidate parcel.
+- **§1 Hypothesis + success criteria** — the experiment question (can an Opus-4.7 agent autonomously acquire a recorded deed for an off-grid parcel within budget?), the primary success metric (recorded deed in the operator's name in the county's public index), and the ten suitability criteria that qualify a parcel for off-grid living.
 - **§2 Task scope** — the ordered list of sub-tasks the agent performs end-to-end, from parcel search through escrow coordination through deed recording.
 - **§3 Inputs** — accounts (Gmail, Slack, Twilio, Deepgram, Bid4Assets bidder account, GCP), compute (a single Debian controller VM), secrets storage (GCP Secret Manager), tool catalogue (browser, shell, IMAP, Twilio voice).
 - **§4 Outputs** — the artifacts produced: a recorded deed, a writeup, session transcripts, telemetry, the per-run manifest.

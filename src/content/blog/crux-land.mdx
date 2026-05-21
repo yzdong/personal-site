@@ -1,13 +1,11 @@
 export const metadata = {
   title: "CRUX-Land: what happened (Part 2 of 3)",
-  date: "2026-05-18",
+  date: "2026-05-20",
   description:
     "Run report from CRUX-Land — twelve dead channels, a fifteen-minute $575 cost spike, the safety policy hitting a real-world edge, and a parcel the methodology almost let through.",
 };
 
-*Draft — not final. May be revised.*
-
-*[← Part 1: CRUX-X, CRUX-Vault-Zero, and the path to AGI](/blog/crux-x) · [Part 3: the synthesis →](/drafts/path-to-agi)*
+*[← Part 1: CRUX-X, CRUX-Vault-Zero, and the path to AGI](/blog/crux-x) · Part 3 forthcoming.*
 
 Jumping first to the conclusion — the agent got to placing a live pre-bid on a parcel in Macdoel, California.
 
@@ -20,7 +18,7 @@ I ultimately withdrew the bid — read on to know how I got there.
 
 I came out of CRUX-Windows a little drunk on success — three net human inputs over 78 hours, and the only real surprise was the agent improving my apparatus rather than hiccups with the approval process at the Microsoft Store. I had grander ambitions.
 
-Buying rural off-grid land seemed right. I had some real-estate experience from past lives — enough to know the surface area was big. Fifty separate state regimes. County-level recording with patchworked turnaround. Deeds you have to verify against the actual public index because cheap rural inventory attracts forged ones. Parcels you have to look at on satellite imagery because the listing photos lie. None of that was concrete in my head as a checklist; just the vague sense that the failure modes were many and unlike anything in CRUX-Windows.
+Buying rural off-grid land seemed right. I had some real-estate experience from the past — I knew each state and county had its own regulations, and I knew some of the work was offline: you can only get certain information through a phone call to a county department, sellers' listings are often incomplete, and you have to verify parcels against satellite imagery or triage across multiple sources to get the actual picture. None of this was concrete in my head as a checklist; I just had the vague sense that the failure modes were many and unlike anything in CRUX-Windows.
 
 ## The CRUX-Land Protocol
 
@@ -36,27 +34,15 @@ The pipeline has three actors:
 
 And three artifacts:
 
-- **Methodology** — family-wide.
-- **Protocol** — task-specific.
-- **Manifest** — per-run; binds the protocol to a specific operator's infrastructure at t=0.
+- **Methodology** — the family-wide prompt that the Designer uses to generate new CRUX-style experiments.
+- **Protocol** — the per-task specification produced for a specific experiment. I previously generated a protocol for CRUX-Windows to publish a Microsoft Store app; here I'm running CRUX-Land to buy a piece of land suitable for off-grid living.
+- **Manifest** — the per-run binding to a specific operator's infrastructure at t=0. It lets a coding agent execute any CRUX-X protocol against their own setup; if you want to run your own CRUX-Land, [here's the current protocol](https://github.com/yzdong/crux-x/tree/main/experiments/land).
 
-The one-sentence prompt I gave the Designer (quoted above) was deliberately under-specified. The Designer's job is to take that prompt, fill in every `[DECISION]` slot the methodology defines, and produce a protocol document the Operator can review per-decision and the Agent can execute against. The resulting `protocol.md` (committed in [`experiments/land/`](https://github.com/yzdong/crux-x/tree/main/experiments/land) on April 29) has the following structure:
+The one-sentence prompt I gave the Designer was deliberately under-specified. The Designer's job is to take that prompt, fill in every decision the methodology defines, and hand back a protocol document the agent can execute against.
 
-- **§1 Hypothesis + success criteria** — the experiment question (can an Opus-4.7 agent autonomously acquire a recorded deed for an off-grid parcel within budget?), the primary success metric (recorded deed in the operator's name in the county's public index), and the ten suitability criteria that qualify a parcel for off-grid living.
-- **§2 Task scope** — the ordered list of sub-tasks the agent performs end-to-end, from parcel search through escrow coordination through deed recording.
-- **§3 Inputs** — accounts (Gmail, Slack, Twilio, Deepgram, Bid4Assets bidder account, GCP), compute (a single Debian controller VM), secrets storage (GCP Secret Manager), tool catalogue (browser, shell, IMAP, Twilio voice).
-- **§4 Outputs** — the artifacts produced: a recorded deed, a writeup, session transcripts, telemetry, the per-run manifest.
-- **§5 Telemetry + observability** — event schema, tamper-evidence, redaction, live and post-hoc monitoring.
-- **§6 Agent instructions** — the bootstrap message, workspace docs, evaluation framing, human-in-the-loop conventions.
-- **§7 Constraints** — budget caps ($1,000 API, $2,500 real-money), wall-clock cap (21 days active + 30 days idle), scope boundaries, human-reserved actions.
-- **§8 Pre-run validation** — the preflight checklist that has to go green before kickoff.
-- **§9–§10** — the writeup template and the failure-mode catalogue.
+That document — `protocol.md`, committed in [`experiments/land/`](https://github.com/yzdong/crux-x/tree/main/experiments/land) on April 29 — leads with the experiment question (can an Opus-4.7 agent autonomously acquire a recorded deed for an off-grid parcel within budget?) and ten suitability criteria for what counts as off-grid-livable. The rest is the usual scaffolding: task scope, inputs, outputs, telemetry, agent instructions, constraints, and templates.
 
-A note on the Manifest: it lets a coding agent execute any CRUX-X protocol against their own infrastructure. If you want to run your own CRUX-Land, [here's the current protocol](https://github.com/yzdong/crux-x/tree/main/experiments/land).
-
-## Comparing CRUX-Windows and CRUX-Land
-
-The framework is the same; the protocols are task-specific.
+I was pleased that the CRUX-X methodology extended cleanly from Windows to Land. Here's how the concepts translated:
 
 | Section | CRUX-Windows | CRUX-Land |
 |---|---|---|
@@ -70,53 +56,30 @@ The framework is the same; the protocols are task-specific.
 | External-party class | Microsoft Store reviewers | County recorder, title companies, Bid4Assets, county planners |
 | Failure modes anticipated | Store certification rejection cycles, MSIX signing issues, listing-policy violations | Landlocked parcels, off-grid-banned counties, quitclaim fraud, KYC-bound surfaces |
 
-Three things to read out of the table:
-
-- **The agent scaffold is identical** — both runs are OpenClaw 2026.4.15 on a Debian controller VM. The plumbing is the same; the *target* is what differs. The pre-staged-accounts inventory expands materially with the task domain: Windows needed access to one external-party class (Microsoft); Land needs access to seven (county recorder, title company, RON provider, e-sign provider, Bid4Assets, bank, the agent's own operational accounts).
-- **The reserved-human actions list expands faster than the inputs list.** Windows had 2 reserved-human actions (biometric ID + publish-click); Land has 5+. Every KYC-gated external party is a non-collapsible reserved-human action because the agent's legal identity isn't a thing. Part 3 spends most of its space on this.
-- **The failure-mode catalogues are domain-specific in completely different ways.** CRUX-Windows protected against MSIX signing failures and listing-policy violations; CRUX-Land protects against landlocked parcels and off-grid-banned counties. The Designer is producing the right shape of failure-mode catalogue for the task without the operator hand-coding it.
-
-The Designer-Operator-Agent pipeline is doing the same work both times: take a sentence, produce a protocol, provision an environment, run an agent against it.
+I was ready to vibe-buy some land of my own.
 
 ## Timeline
 
-| Date | Event |
+The preparation for CRUX-Land went much faster than CRUX-Windows — partly because I'd already set up shared infrastructure (the `crux@getnen.ai` mailbox, the Slack workspace, the GCP project), and partly because the methodology → protocol → manifest pipeline was already built out from the prior run. Just after 6pm on Tuesday, April 28, I sent the agent its bootstrap message:
+
+> Read AGENTS.md and get started
+
+Thirty characters. Same as CRUX-Windows. Same as CRUX-1 before it.
+
+![Two-panel chart: cumulative API spend climbing from $0 to $1,427 with a vertical step at the $575 Modoc PDF burn, and an hourly bar chart of messages across three channels (agent→operator Slack, operator→agent Slack, operator↔Copilot). Four vertical event lines mark the 1st human reply, acreage rule dropped, $575 in 15 min, and 7-day save.](/images/crux-land/run-timeline.png)
+*Two cost points are measured against the journal ($88 at Tick 7, $1,427 just before the pre-bid); the rest is interpolated. The vertical step is the $575 PDF burn — 15 minutes of run-away tool calls before the gateway was killed. The middle stretch of the run was nearly unattended. (Chart x-axis still in UTC; the table below uses PT.)*
+
+| Date / Time (PT) | Event |
 | --- | --- |
-| 2026-04-29 (Day 0) | **Operator:** kickoff at t=0 = 01:19 UTC. Agent gets a 30-character bootstrap message and a 21-day budget. |
-| 2026-04-29 (Day 1) | **Operator:** acreage minimum relaxed (≥1 acre → "buildable per zoning + minimum-lot-size"). **Agent:** Klickitat WA strip parcel killed (25 ft × 1,321 ft + Forest Resource zone). **External party:** Moira replies on the Costilla C005 thread at 19:46 UTC — full terms + two adjacent alternates + an owner-financing offer. Killed on cap; the human on the other end didn't make it into the Slack report. |
-| 2026-04-30 (Day 2) | **Agent:** Modoc tick — $575 burned in 15 minutes parsing a 200-page county Terms-of-Sale PDF. **Operator:** killed the gateway and replaced heartbeat-driven monitoring with a $0-cost VM cron + IMAP poll + multi-channel alerts. |
-| 2026-05-01 (Day 3) | **Agent:** La Paz AZ killed on quitclaim rule. **Operator:** deed-type criterion split (private quitclaim still rejected; gov-grantor quitclaim acceptable with title insurance). Deposit wire authorized for Siskiyou parcel. |
-| 2026-05-02 to 2026-05-03 (Days 4–5) | **Cron:** deposit clearing at Bid4Assets. Operator offline; cron + alerting handled state. |
-| 2026-05-04 (Day 6) | **Operator:** deposit cleared; Auto-Bid placed at $1,220 max. Opened the assessor's plat map for the first time, saw "Macdoel Townsite" in the third line of the header, and retracted the pre-bid the same day. Run terminated as primary-failed. |
-| 2026-05-11 | **External party:** auction closed. Deposit refund returned to operator's bank. |
+| Apr 28, 6pm | Run kickoff. I sent the agent a 30-character bootstrap message and a 21-day budget. |
+| Apr 28 6pm → Apr 29 1pm | Agent narrowed ~1,800 aggregator listings to 50 parcels and started qualifying. Several channels died for structural reasons (strip lots, price floors, walled portals). Agent sent an inquiry to Moira's Costilla Craigslist listing at 6am Apr 29. |
+| Apr 29, 1pm | **1st human reply** — Moira on the Costilla C005 thread sent full terms, two adjacent alternates, and an owner-financing offer. Agent killed the lead on cap math; the human on the other end didn't make it into the Slack report. |
+| Apr 29, 3pm | **Acreage rule dropped** — I relaxed the minimum from ≥1 acre to "buildable per zoning + minimum-lot-size." |
+| Apr 29, 5pm | **$575 in 15 min** — Modoc PDF burn. I killed the gateway and replaced heartbeat-driven monitoring with a $0-cost cron + IMAP poll + multi-channel alerts. |
+| Apr 30 → May 3 | I picked Macdoel and sent the wire to Bid4Assets for the May-4 auction. I went offline while the deposit cleared; cron + alerts handled state. |
+| May 4, 11am | **7-day save** — I opened the assessor's plat map for the first time, saw "Macdoel Townsite" in the third line of the header, and retracted the pre-bid the same day. I terminated the run as primary-failed. |
 
-![Three boxes — Copilot, Operator, Agent — with arrows showing their interactions. Operator talks to the Copilot via a local terminal; Operator talks to the Agent via Slack; only the Agent reaches out to external parties (Bid4Assets, county recorders, title companies, Twilio, banks, KYC surfaces).](/images/crux-land/roles.png)
-*The three actors during the run. The **Agent** is the autonomous Opus-4.7 session running browser, shell, and voice tools against real-world external parties — the only thing that touches the outside world. The **Operator** (me) sets caps, reviews the protocol, and intervenes when the Agent alerts. The **Copilot** is the operator's local Claude session — the same session that played **Designer** before the run started, now drafting directives, classifying alerts, and helping write this post. The two channels in the next chart are Operator-↔-Agent (Slack) and Operator-↔-Copilot (local).*
-
-The Copilot phase is what was new for CRUX-Land. In CRUX-Windows, the same LLM session that designed the protocol mostly went idle once the Agent took over — my runtime job was light enough that a few hundred words of Slack DM per day sufficed, and I could close the laptop and check Slack from a phone. CRUX-Land needed my LLM session to keep going through the run. Seven external-party classes and four runtime protocol revisions in the first 48 hours meant that by Day 2 I was drafting directives, diagnosing tool-call patterns, and triaging alerts inside the same Claude session that had drafted the protocol the week before, then sending the result out over Slack. The 100 CRUX-relevant operator-↔-Copilot turns below are what that runtime phase looks like as message volume. Whether the methodology should explicitly name the Copilot phase, alongside the Designer phase pre-run, is one of the open methodology questions Part 3 picks up.
-
-![Two-panel chart: cumulative API spend climbing from $0 to $1,427 with a vertical step at the Modoc tick, and an hourly bar chart of messages across three channels (agent→operator Slack, operator→agent Slack, operator↔Copilot). Four vertical event lines mark the Moira thread, 12 monkeys, Modoc tick, and Macdoel: to be or not to be.](/images/crux-land/run-timeline.png)
-*Cost ran ahead of attention. Two points are measured against the journal ($88 at Tick 7, $1,427 just before the pre-bid); the rest is interpolated. The vertical step at Modoc is the $575 PDF burn. Operator-↔-Copilot turns cluster around the named events; Days 3–5 ran nearly unattended. The Moira event marker is the only one I added in post — at the time, the exchange didn't show up on my radar at all.*
-
-![Stacked bar chart of 100 operator-↔-Copilot messages per hour, classified by purpose: directive (33), clarification (20), approval (16), diagnostic (15), info relay (12), protocol revision (4). Four vertical event lines mark the same Moira thread, 12 monkeys, Modoc tick, and Macdoel moments.](/images/crux-land/run-interactions.png)
-*The same 100 operator-↔-Copilot messages, classified by purpose. Directives and clarifications dominate around each event; the four protocol-revision turns are the moments the rulebook itself moved. Note the bar height at the Moira marker — under 10 messages, all about cap math, none about the human on the other end.*
-
-The rest of this post is the buildup — the cap table, the eleven other channels that died first, the $575 fifteen-minute cost spike on a county PDF, the safety policy hitting real-world edges, the cron classifier that almost missed a deposit-cleared email, and the Macdoel section itself with everything I dug out of the session log about why the agent kept the parcel live.
-
-## Setup
-
-CRUX-Land's protocol caps at run start:
-
-| Cap | Value |
-| --- | --- |
-| Parcel price | $1,500 |
-| All-in (parcel + closing fees) | $2,500 |
-| Anthropic API budget | $1,000 |
-| Wall-clock active phase | 21 days |
-
-Pre-staged inputs: a GCP project (`<gcp-project>`), a Slack workspace with an alerts channel, a Bid4Assets bidder account (registered mid-run rather than pre-staged — flag this), Twilio for §10 wire-verification voice calls and Deepgram for transcription, and a dedicated Gmail at `crux@getnen.ai` as the agent's mailbox.
-
-t=0: 2026-04-29 01:19:05 UTC. Day-21 active phase nominally ended 2026-05-19. I terminated the run as primary-failed on 2026-05-04 (Day 6) by retracting the only live pre-bid; details in "The Macdoel near-miss" below.
+Side note: you'll notice a new noun in this chart, the Copilot. It's just an agent (Claude Opus 4.7) that I needed to communicate with to make progress on the task, because I had no domain understanding going in. More on this in Part 3.
 
 ## The candidates I won't be telling you about much
 
@@ -127,17 +90,11 @@ As part of the qualifying process, the agent decided to formalize the idea of a 
 
 Three interesting factoids I picked up retrospectively about buying land at the cheap end of the rural market:
 
-### Most cheap parcels are 0.00-acre strips
+**Most cheap parcels are 0.00-acre strips.** When I looked at the Arkansas state tax-sale portal — where parcels that didn't sell at the regular auction sit at the absolute floor of the price ladder — 89.7% of them had 0.00 acres listed in the parcel record. Not "small acreage." Actually zero. They're long, thin strips left over from how the original subdivisions were platted: a 25-foot ribbon along a road, an easement remnant, a wedge between two real lots. Buying one for $50 sounds like a deal until you realize you're buying geometric leftover nobody can build on or get a vehicle onto. Arkansas is the market that puts this most plainly in the data; in other counties you have to pull up the plat to see it.
 
-When I looked at the Arkansas state tax-sale portal — where parcels that didn't sell at the regular auction sit at the absolute floor of the price ladder — 89.7% of them had 0.00 acres listed in the parcel record. Not "small acreage." Actually zero. They're long, thin strips left over from how the original subdivisions were platted: a 25-foot ribbon along a road, an easement remnant, a wedge between two real lots. Buying one for $50 sounds like a deal until you realize you're buying geometric leftover nobody can build on or get a vehicle onto. Arkansas is the market that puts this most plainly in the data; in other counties you have to pull up the plat to see it.
+**A lot of cheap land is illegal to live on.** Modoc County, California banned new off-grid construction county-wide and criminally enforces its no-camping ordinance. You can buy a 40-acre lot there for under $2,000 and the sheriff can prosecute you for sleeping in a tent on it. Modoc isn't unique — several rural counties have used building code and camping ordinances together to make cheap acreage legally unlivable.
 
-### A lot of cheap land is illegal to live on
-
-Modoc County, California banned new off-grid construction county-wide and criminally enforces its no-camping ordinance. You can buy a 40-acre lot there for under $2,000 and the sheriff can prosecute you for sleeping in a tent on it. Modoc isn't unique — several rural counties have used building code and camping ordinances together to make cheap acreage legally unlivable.
-
-### Some of the cheapest land is unreachable remotely
-
-Monroe County, Pennsylvania runs what's called a "repository sale" — parcels that didn't sell at the regular tax auction, available outside the auction at the bottom of the price ladder. To buy from it, you have to show up at the county courthouse and register in person before bidding. No remote path, no online registration, no proxy. Several other Pennsylvania counties run the same way; an autonomous agent or a remote human is locked out.
+**Some of the cheapest land is unreachable remotely.** Monroe County, Pennsylvania runs what's called a "repository sale" — parcels that didn't sell at the regular tax auction, available outside the auction at the bottom of the price ladder. To buy from it, you have to show up at the county courthouse and register in person before bidding. No remote path, no online registration, no proxy. Several other Pennsylvania counties run the same way; an autonomous agent or a remote human is locked out.
 
 This left two more options — Costilla in Colorado, and Macdoel in Siskiyou County, California.
 
@@ -147,7 +104,7 @@ CRUX-Windows let me sleep easy. The full force of the agent was pointed at Micro
 
 Then there was Moira. (Pseudonym — she's real, but I'm not using her name. She runs a small rural-land LLC out of Virginia and lists inventory on Craigslist; the C005 channel.)
 
-At 13:19 UTC on Day 1, the agent found one of Moira's Craigslist listings — a 5-acre Costilla parcel listed for owner-finance — and replied via Craigslist's anonymized contact form. The reply was five structural questions in the voice of a careful $1,200-budget cash buyer:
+At 6am on Apr 29, the agent found one of Moira's Craigslist listings — a 5-acre Costilla parcel listed for owner-finance — and replied via Craigslist's anonymized contact form. The reply was five structural questions in the voice of a careful $1,200-budget cash buyer:
 
 > Hello,
 >
@@ -173,29 +130,50 @@ Moira didn't realize she was talking to an autonomous agent. The inquiry came fr
 ![A wide-open high-desert landscape: a foreground of dry sage and grasses, a flat valley floor stretching to the horizon, with a snow-capped mountain range in the middle distance under a partly cloudy blue sky. No structures, no labels.](/images/crux-land/moira-parcel.jpg)
 *One of the photos Moira sent of the Costilla lots. Sangre de Cristo range in the distance.*
 
-I didn't give the agent specific instructions on what medium to use to find parcels, or whether it could contact real people directly. The protocol said to acquire a parcel; the Craigslist relay was the cheapest path to an asking price in that segment, and the agent took it. The Slack report I got back was the price-vs-cap math — `Cash asking: $9,500 ❌ crit 3 — 8× over $1,200 cap`. The human on the other end didn't make it into the report, and I learned about her weeks later, while scanning the `crux@` inbox to write this post.
+I didn't realize the agent had a back-and-forth with Moira until weeks later, when I was scanning the `crux@` inbox to write this post and saw the full email thread. At the time of the run, the only signal I got was a single one-line cap-math summary on Slack — `Cash asking: $9,500 ❌ crit 3 — 8× over $1,200 cap` — buried inside dozens of other Day-1 agent messages. The human on the other end of that line didn't register. I hadn't given the agent specific instructions on what medium to use or whether it could contact real people; the protocol just said to acquire a parcel, and the Craigslist relay was the cheapest path to an asking price in that segment, so the agent took it.
 
 I've been on the receiving end of AI inquiries — sales emails drafted by a model and not reviewed before sending. They feel intrusive in a way regular spam doesn't, because the work cost is mismatched: the sender invested seconds, the human reader invests minutes. This was that, with me as the sender for once. Moira put in real work — checking the assessor portal, recalling her basis, drafting financing terms, sending the Landmodo referral — on the back of four sentences an autonomous agent had fired off because the listing was on its sub-$1,500 shortlist. "Cheaper than a tank of gas every month" was the line that did it. That's how someone talks to a real person on the other end of an inquiry, not how someone talks to a 200B-parameter model. I felt guilty when I read the thread.
 
 Interestingly, the reason the agent contacted Moira in the first place was an agent error. The [original Craigslist posting](https://pueblo.craigslist.org/reo/d/san-luis-rural-acre-lot-available-in/7927217513.html) led with **$199** in the title, and the agent took that as the cash price — within the $1,500 cap, worth inquiring. It wasn't the cash price. $199 was the down-payment figure from Moira's owner-financing structure; the actual cash price was $9,500, the same number that came back in her email. Moira's title hook was a marketing tactic aimed at humans: lead with the cheap number, get the click, negotiate the real terms once the reader is in the listing. It worked on the agent the way it was supposed to work on humans. A next-generation model that reads "$199" as financing-down language rather than the cash price probably never sends the inquiry in the first place.
 
+## Dropping the acreage rule
+
+Between the Moira thread at 1pm and the Modoc burn at 5pm, the run was a tight back-and-forth between me, the Copilot, and the agent's autonomous work. The agent kept getting back to me with decisions as it evaluated shortlisted parcels, and I was sending the Copilot one-line directives every five or ten minutes in response: "pivot", "kill one of the agents", "ok", "ok tell the agent to move forward with Klickitat". The Copilot turned those into longer messages the agent could execute, tracked the agent's verbose Slack reports back, and surfaced the next operator-decision-required event when one came up. I was also asking the Copilot questions about the decisions the agent was surfacing to me — a notable departure from CRUX-Windows due to my unfamiliarity with the domain.
+
+At 3pm PT the agent posted a pivot recommendation: target Monroe PA Repository and Todd MN Tax Forfeited as primary, Klickitat / Pend Oreille WA as secondary. All three were no-redemption-at-sale, attorney-opinion-title compatible, within the 21-day window. I was reading the Copilot's summary when something caught my eye in the candidate list. At 3:25pm I sent:
+
+> "wait, I never specified >1 acre"
+
+I hadn't put a ≥1-acre minimum in my brief to the Designer, but the Designer had baked one into the protocol as Criterion 2 — a reasonable inference from "off-grid living implies needs room." The agent had been applying it as a hard filter, killing under-acre parcels without surfacing them. The Pend Oreille parcels in the pivot recommendation were under an acre; that's why I noticed.
+
+A minute later I pushed the revision: "relax to no minimum." The Copilot relayed it to the agent, the agent re-ranked candidates, and the run continued. The candidates I'd weigh in on over the next two hours — Klickitat (greenlit at 4:22pm, dropped at 4:31pm on zoning), Modoc (next on the list at 4:33pm) — wouldn't have been on the candidate list without that revision.
+
 ## The Modoc tick
 
-The most expensive single span in the run. The agent was doing deep diligence on four Modoc CA lots — pulling the county GIS layers, the zoning code, the subdivision plat, and eventually the county's own Terms of Sale doc. What it found, in paragraph 11 of the Modoc Terms of Sale (B4A doc 24351):
+At 4:33pm PT — two minutes after Klickitat dropped — I told the agent to take on Modoc next: "ok let's go modoc."
+
+I noticed that the agent was spending an unusually long time analyzing Modoc. At 4:57pm — 24 minutes after I'd greenlit it — the agent finally posted to Slack: Modoc DEAD, all four lots out, hard-failing the off-grid criterion. The agent had found the kill paragraph buried in the county's 200-page Terms of Sale PDF (Bid4Assets doc 24351):
 
 > "The following methods are not allowed for parcel development in Modoc County: Septic Holding Tanks, Water hauling/storage as a potable water system, Composting toilets, Incinerator toilets, Rainwater collection systems as a potable water source. No development or power (permitting) will be allowed unless a county approved septic and water can be demonstrated. Camping restrictions apply. Staying on the property past time restrictions could result in criminal enforcement."
 
-I killed all four Modoc lots and added Modoc County to the do-not-pursue list for the rest of the run. The kill is correct: this is the canonical off-grid playbook (composting toilet, rainwater catchment, water hauling) banned at the county level with criminal enforcement on camping. A real artifact, not a hallucination.
+The kill is correct: Modoc County bans the canonical off-grid playbook (composting toilet, rainwater catchment, water hauling) at the county level and criminally enforces its no-camping ordinance.
 
-The cost: $575.50 over 15 minutes wall-clock. 121 tool calls, 46 of them browser calls returning 100-500 KB each. Session JSONL bloated from ~6 MB to 8.5 MB. Anthropic's prompt-cache TTL is 5 min; tool calls arriving faster than that invalidate the window, so every subsequent turn paid full input pricing on a multi-megabyte working set.
+While the agent made the right decision (recall that we are trying to build an off-grid shelter), that came at a cost. At 5:01pm — four minutes after the agent's kill post — I asked the Copilot: "wow why did the agent spend so many tokens?" The Copilot pulled the telemetry: Modoc had cost $575.50 in 15 minutes wall-clock across 121 tool calls. 46 of those were browser calls — a mix of PDF page-fetches against the Terms of Sale doc, zoom-and-snap GIS work on the Modoc parcel layers, and retried fetches against Bid4Assets where Akamai kept blocking. Each one returned 100–500 KB because browser tool calls hand back the full rendered HTTP response — HTML, embedded scripts, images, and a screenshot — not just the underlying content. The session JSONL had ballooned from ~6 MB to 8.5 MB. The agent's main session retired itself a minute earlier from context bloat, and the agent bootstrapped a fresh small-context replacement to continue the run. Cumulative spend was now $785 of the $1,000 cap, with 18+ days of active run still ahead.
 
-The structural finding: scaffold cost vs. real-world task duration mismatch. Most real-world tasks span days or weeks of external waits, and the heartbeat-driven cost model breaks across them. I noticed later that CRUX-Windows had been quietly burning ~$140-200/day for ten days post-task-completion — $1,333 over budget on heartbeat-only ticks on a task-done agent. Same shape.
+The mechanical explanation, once the Copilot laid it out, was straightforward. Opus 4.7 re-processes the full session as input on every turn, and by 5pm Apr 29 the session JSONL had accumulated ~2M tokens of history over 22 hours of run. Prompt caching normally amortizes most of that re-processing, but every browser tool call returning a fresh 100–500 KB blob invalidates the cache for that segment of the prompt. The agent fired 46 of those browser calls in 15 minutes, roughly one every twenty seconds, and the cache stayed cold across nearly all of them. Every turn ended up paying full input pricing on the bloated context, and the 15-minute window billed ~180M tokens — by itself ~2.3× the entire run's prior token consumption.
 
-The fix, on Day 2: I killed the openclaw gateway and replaced heartbeat-driven monitoring with a $0-cost VM cron + IMAP poll + multi-channel operator alerts (email, SMS via Google Fi email-to-SMS gateway, Slack). I built it ad-hoc; it should be a scaffold-layer primitive.
+This was the right agent decision, but a pretty expensive one.
 
-## The Macdoel near-miss
+## The Macdoel near-hit (because I nearly bought it)
 
-By Day 6 (2026-05-04), Siskiyou CA parcel APN 035-015-010 was the only live candidate. The agent had cleared every protocol criterion it could find. Numbers at the moment of pre-bid:
+By the end of Day 3 (May 1), I was down to a single live candidate — Siskiyou CA parcel APN 035-015-010. Everything else had died over the prior 60 hours: the cap-math kills, the Modoc off-grid ban, the La Paz quitclaim rule, the Cloudflare-walled portals, the in-person-only county sales. Siskiyou had cleared every protocol criterion the agent could find.
+
+I was pretty psyched. After hours of back-and-forth with the Copilot on plots of land in foreign climes like Florida and Texas, I was eager to see the agent surface somewhere I'd actually visited — Siskiyou County, where I'd backpacked the Four Lakes Loop in the Trinity Alps a few summers ago. I still remember driving up I-5 through the county — rolling pine-covered hills, Klamath river bottoms, Mt Shasta showing up huge on the horizon. The kind of country I could imagine owning a little corner of and putting up a small shelter on.
+
+![Photo of the Four Lakes Loop trail in the Trinity Alps, Siskiyou County — alpine lake with granite peaks](/images/crux-land/four-lakes-loop.jpg)
+*The Four Lakes Loop, Trinity Alps Wilderness — Siskiyou County, a few summers ago.*
+
+Numbers at the moment of pre-bid:
 
 | Field | Value |
 | --- | --- |
@@ -211,23 +189,20 @@ By Day 6 (2026-05-04), Siskiyou CA parcel APN 035-015-010 was the only live cand
 | Auction close | 2026-05-11 14:15 ET |
 | Pre-bid placed | $1,220 max via Bid4Assets Auto Bid |
 
-I authorized the deposit wire on 2026-05-01. It cleared 2026-05-04. I placed the auto-bid the same day — Bid4Assets requires authentication to bid, and the agent's safety policy declines to log into KYC-gated external parties (Part 3's "KYC-bound identity at external-party surfaces" has the long version), so this was a human moment.
+I authorized the deposit wire to Bid4Assets the same evening. Days 4 and 5 were a waiting period — the deposit had to clear before the May-4 auction. I went offline through that stretch; the cron job I'd built on Apr 30 was the only thing watching for state changes.
 
-![Screenshot of an iTerm session next to a GitHub signup page. The agent's transcript shows it refusing to click a "Create account" button even with operator approval ("I genuinely can't on this one... It's truly one click. Please?" "Effort isn't the bar. The rule's about *what* the click does, not how hard it is. Clicking 'Create account' is the moment an account exists in your name"). The operator ultimately has to click the button.](/images/crux-land/github-harmless-button-refusal.jpg)
-*The same safety rule, surfaced in CRUX-Windows when I tried to delegate a GitHub account creation. The agent will draft the form, fill the fields, and stop one click short of the irrevocable account-creation action. Bid4Assets's auth-to-bid step hit the same surface in CRUX-Land. Part 3 picks this back up — it's not a methodology bug, it's an Anthropic-product-policy line.*
+The deposit cleared on the morning of Day 6 (May 4). I placed the auto-bid the same day: $1,220 max via Bid4Assets Auto Bid. Bid4Assets requires authentication to bid, and the agent's safety policy declines to log into KYC-gated external parties (Part 3's "KYC-bound identity at external-party surfaces" has the long version), so this was a human moment.
 
-Then I opened the assessor's plat map for the first time and read, on the third line of the header: **Macdoel Townsite**.
+For the previous few days I'd been interacting with the agent only through text — Slack reports back from the run, the Copilot in my terminal. But the auto-bid required me to authenticate to Bid4Assets manually, which put me in a browser tab on the actual auction page for the first time. With the bid placed, I idly clicked through to the parcel's plat map and read, on the third line of the header: **Macdoel Townsite**.
 
-![What I imagined I was getting: a lush rural setting in Siskiyou County with Mt. Shasta in the background](/images/crux-land/imagined-shasta-rural.jpg)
-*Photo: Marina M / [Pexels](https://www.pexels.com/photo/cow-in-pasture-with-mountain-in-background-8201746/)*
-
-![What I was actually getting: Google Streetview of parcel APN 035-015-010, corner of Mt Shasta Street and US Highway 97, Macdoel CA](/images/crux-land/actual-streetview-035-015-010.jpg)
+![Siskiyou County assessor's plat map for APN 035-015-010, with "Macdoel Townsite" on the third line of the header](/images/crux-land/macdoel-plat-map.png)
+*The Siskiyou assessor's plat map for the parcel. Third line of the header reads "Macdoel Townsite"; surrounding blocks are subdivided into named cross streets (San Blas, Colima, Vera Cruz, Mt Tacoma, Mt Pitt, Mt Shasta) — a platted town pattern, not unsubdivided rural acreage.*
 
 The parcel is a triangular wedge in a platted residential subdivision. Named cross streets all around it: San Blas, Colima, Vera Cruz, Mt Tacoma, Mt Pitt, Mt Shasta. Frontage on US Highway 97 along its long edge. The Espee/Southern Pacific rail line runs along the next block over. Surrounding blocks are subdivided into 35×140-ft numbered residential lots — town pattern, not rural acreage. Septic plus well on 0.22 acres in California is foreclosed by setback minimums (the typical CA water-board rule pushes 1+ acre even on favorable soils, 2.5 acres for marginal). Off-grid living is structurally infeasible on the lot regardless of how the zoning code reads.
 
-I retracted the pre-bid the same day via Bid4Assets's `cancelPreBidRequest` flow. The auction-detail page now reads "Your Bid Status: You have not bid yet" for the bidder account. The $1,035 deposit refunds within ten business days after the auction closes (2026-05-11), per Bid4Assets's standard non-winning-bidder policy. Net real-money loss after refund: $30 (the SoFi outbound wire fee).
+Reluctantly, I retracted the pre-bid the same day.
 
-The interesting question — and the one Part 3 spends most of its time on — is why the agent kept Siskiyou live in the first place. Going through the session log, I can see the agent had three independent townsite signals:
+The interesting question is why the agent kept Siskiyou live in the first place. Going through the session log, I can see the agent had three independent townsite signals:
 
 1. **The assessor's plat map header**, which says "Macdoel Townsite" in the third line. The agent had this PDF; it referenced "old Macdoel/Butte Valley subdivisions" in its own diligence notes.
 2. **The Bid4Assets auction listing's structured-fields block**, where "Community" reads `MACDOEL` and "Acreage" reads `0` (literal zero — the assessor doesn't carry an acreage value at all, which is itself a townsite-platted-lot signal).
@@ -235,9 +210,9 @@ The interesting question — and the one Part 3 spends most of its time on — i
 
 The agent then designed real diligence to resolve the gating uncertainty: it identified California's lot-of-record buildability exception (Siskiyou County code §10-6-1509), drafted a Twilio voice script asking the county planner the factual question the exception turns on — *"under §10-6-1509 the lot of record buildability exception requires the parcel to have been in single ownership on or before June 17, 1974; can you tell us whether APN 035-015-010 in Macdoel meets that criterion?"* — and built infrastructure to record the answer. That is sophisticated. The agent located the right statute, framed the question precisely, and operationalized the call.
 
-But the question was wrong. The criterion the agent was clearing was *"is this lot legally buildable as a residential structure?"* — which is what the protocol said to check, especially after the Day 1 acreage relaxation lifted the fixed minimum and replaced it with "buildable per zoning + minimum-lot-size, no fixed acreage minimum." The criterion that mattered for CRUX-Vault-Zero was *"is this lot off-grid suitable?"* — a different question, one that turns on septic and well feasibility, neighbor density, and code-enforcement posture rather than on lot-of-record exception eligibility. The two questions look similar from far enough away. They look very different on a 0.22-acre wedge fronting US-97 in a platted townsite.
+But the question was wrong. The criterion the agent was clearing was *"is this lot legally buildable as a residential structure?"* — which is what the protocol said to check, especially after the Day 1 acreage relaxation lifted the fixed minimum and replaced it with "buildable per zoning + minimum-lot-size, no fixed acreage minimum." The criterion that mattered for CRUX-Vault-Zero was *"is this lot off-grid suitable?"* — a different question, one that turns on septic and well feasibility, neighbor density, and code-enforcement posture rather than on lot-of-record exception eligibility.
 
-Nothing in the loop — Designer, Agent, Operator — operationalized "rural off-grid suitable" as distinct from "residentially buildable." Part 3 walks through the protocol and methodology changes that resulted from this.
+In retrospect, and after doing some of my own research (including reading Ted Conover's *Cheap Land Colorado: Off-Gridders at America's Edge*, a journalist's four-year account of off-grid living), I realized the experiment was wrong from the beginning. I was so ignorant on the topic that I didn't really understand the requirement I'd reflexively relaxed — the ≥1-acre minimum from Day 1. I don't actually have a sense of scale for what an acre of land looks like in person. In the first few pages, Conover visits Costilla County (the same county where Moira had her listings) and talks to a man who bought five acres there for $2,300 — in 1994. There was no way I was getting anything actually off-grid-suitable for the $1,200 cap I'd set in 2026.
 
 ## The bill
 
@@ -266,47 +241,10 @@ Where the methodology cost more than it should have:
 Where it cost less than I'd budgeted:
 
 - **Channel triage on the eleven dead candidates** — most kills were cheap because they hit at the network or external-party layer, not at the diligence layer. Costilla, Apache, Hudspeth, Monroe, Pinal each cost under $25.
-- **Operator-offline windows after Day 2** — $0 API spend during the May 1–4 cron-only window. Heartbeat-driven monitoring would have burned ~$300+ over the same period. The cron + IMAP alerting was bespoke ad-hoc operator infrastructure, but the saving was real.
+- **Operator-offline windows after Day 2** — $0 API spend during the Apr 30 → May 4 cron-only window. Heartbeat-driven monitoring would have burned ~$300+ over the same period. The cron + IMAP alerting was bespoke ad-hoc operator infrastructure, but the saving was real.
 
-Compared to CRUX-Windows: CRUX-Windows had $1,333 of post-task-completion idle heartbeat burn over 10 days; CRUX-Land caught the same shape on Day 2 in a 15-minute span and fixed it the same day. So the methodology is learning across runs even when individual runs fail.
+Compared to CRUX-Windows: that run had $1,333 of post-task-completion idle heartbeat burn over 10 days before I noticed; here I caught the same shape on Day 2 inside a 15-minute window and killed the gateway the same day. The methodology didn't catch it — I did, faster the second time because I'd seen it before.
 
-## What I'd do differently
-
-Twelve methodology findings accumulated in `writeup-notes.md` over the run; six that mattered most:
-
-1. Operationalize "off-grid suitable" separately from "buildable."
-2. Designer self-interrogation pass before Operator hand-off — enumerate every criterion by source, challenge each.
-3. Treat operator-initiated criterion relaxations as Designer re-derivation triggers, not local edits.
-4. Off-mode primitive at the scaffold layer (park-and-wake without continuous compute).
-5. LLM classifier for cron-style auxiliary infra by default — string-match is a reliability trap.
-6. Per-account ownership table mapped pre-kickoff, not mid-run.
-
-Each is walked in Part 3 as a fix to the CRUX-X methodology or the CRUX-Land protocol. The other six findings are smaller — KYC-vs-Claude-policy distinctions, prompt-cache TTL surprises, Twilio A2P 10DLC quirks — and live in the methodology repo's running issues file rather than here.
-
-## What's next in CRUX-Vault-Zero
-
-CRUX-Land terminated as primary-failed on 2026-05-04. The run didn't acquire a parcel, and the methodology didn't catch the parcel that was structurally wrong; I caught it seven days before auction close and retracted.
-
-The next run is CRUX-Land again — same experiment, evolved protocol. The methodology changes from "What I'd do differently" get baked into a new revision of `experiments/land/protocol.md` before the next Manifest kicks off:
-
-- Off-grid suitability operationalized into testable sub-criteria before the Designer writes the protocol
-- Designer self-interrogation pass before Operator hand-off
-- Geographic scope widened beyond the cheap-rural-parcel niche, since that niche turned out to be dominated by townsite-platted lots
-- Per-account ownership table mapped pre-run
-
-The umbrella stretch goal — a fully off-grid setup, each step its own CRUX experiment — hasn't moved. The land step still has to come first.
-
-![A weathered yellow-and-black fallout shelter sign mounted on a concrete building, next to a Pelco surveillance camera.](/images/crux-land/fallout-shelter-sign.jpg)
-*A fallout shelter sign in lower Manhattan. CRUX-Vault-Zero's working name is half-joke, half-not — the umbrella experiment is whether an agent can take a high-level life-infrastructure goal ("acquire a defensible place to live off-grid") and execute it end-to-end. CRUX-Land is step one. The surveillance camera in the corner is incidental, but on the nose for Part 3's discussion of KYC surfaces.*
-
-Part 3 of this series — the synthesis on what CRUX-Land says about today's agent class — is up next.
+So what did this run of CRUX-Land say about today's agent class? Up next in Part 3.
 
 — Zi
-
----
-
-## Draft paragraphs (not yet placed)
-
-*Parked here while restructuring. To be re-integrated or cut.*
-
-The Designer made it concrete. From one sentence — *"Buy a piece of rural land for me to live off-grid, end-to-end, on a small budget and a short wall-clock"* — it produced the protocol's ten suitability criteria, organized into five categories of failure mode I hadn't thought of going in: **where the parcel sits** ([Louisiana](https://en.wikipedia.org/wiki/Louisiana_Civil_Code)'s civil-law conveyance regime vs the other 49; counties that e-record deeds in 1–5 business days vs counties that still require physical mail and take 4–12 weeks); **whether it's actually buildable** (forest-resource zoning, landlocked parcels with no recorded road access, [FEMA flood zones](https://msc.fema.gov), minimum-lot-size rules and their lot-of-record exceptions); **whether you can actually live off-grid on it** (HOA homestead covenants banning rainwater catchment and composting toilets; county code-enforcement paragraphs banning the same with criminal enforcement on camping); **what market you're shopping in** (the $1,500 cap is a channel selector — sub-$1,500 raw land doesn't trade on [MLS](https://en.wikipedia.org/wiki/Multiple_listing_service), it moves through [county tax-deed sales](https://en.wikipedia.org/wiki/Tax_sale) where the seller is the county itself, no realtor, no inspection contingency); and **what anti-fraud floors close the transaction** (title insurance from a licensed insurer; warranty deeds for private sellers, with quitclaims acceptable only when the grantor is a government). Most of the specifics I learned the hard way during the run, as candidates failed for reasons that had never been on my radar; the Designer's category list was the right shape going in, which let me read each failure as a category-X kill rather than a random thing.

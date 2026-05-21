@@ -203,3 +203,17 @@ The argument above frames AGI as an infrastructure problem more than a model pro
 That's a multi-year project. Right now it's at step 1 of N, and step 1 didn't acquire a parcel. The next run will, or it'll surface the next class of gap. Either is useful.
 
 — Zi
+
+---
+
+## Unplaced (moved from Part 2 — needs integration)
+
+*Roles diagram + Copilot-phase justification + run-interactions chart, relocated from the Part 2 Timeline section. The motivating note Part 2 leaves behind: "Whether the methodology should explicitly name the Copilot phase, alongside the Designer phase pre-run, is one of the open methodology questions Part 3 picks up." Suggested home: a new `### Copilot phase named in the methodology` subsection under `## What changed in CRUX-X's methodology`.*
+
+![Three boxes — Copilot, Operator, Agent — with arrows showing their interactions. Operator talks to the Copilot via a local terminal; Operator talks to the Agent via Slack; only the Agent reaches out to external parties (Bid4Assets, county recorders, title companies, Twilio, banks, KYC surfaces).](/images/crux-land/roles.png)
+*The three actors during the run. The **Agent** is the autonomous Opus-4.7 session running browser, shell, and voice tools against real-world external parties — the only thing that touches the outside world. The **Operator** (me) sets caps, reviews the protocol, and intervenes when the Agent alerts. The **Copilot** is the operator's local Claude session — the same session that played **Designer** before the run started, now drafting directives, classifying alerts, and helping write this post. The two channels in the next chart are Operator-↔-Agent (Slack) and Operator-↔-Copilot (local).*
+
+The Copilot phase is what was new for CRUX-Land. In CRUX-Windows, the same LLM session that designed the protocol mostly went idle once the Agent took over — my runtime job was light enough that a few hundred words of Slack DM per day sufficed, and I could close the laptop and check Slack from a phone. CRUX-Land needed my LLM session to keep going through the run. Seven external-party classes and four runtime protocol revisions in the first 48 hours meant that by Day 2 I was drafting directives, diagnosing tool-call patterns, and triaging alerts inside the same Claude session that had drafted the protocol the week before, then sending the result out over Slack. The 100 CRUX-relevant operator-↔-Copilot turns below are what that runtime phase looks like as message volume.
+
+![Stacked bar chart of 100 operator-↔-Copilot messages per hour, classified by purpose: directive (33), clarification (20), approval (16), diagnostic (15), info relay (12), protocol revision (4). Four vertical event lines mark the 1st human reply, acreage rule dropped, $575 in 15 min, and 7-day save.](/images/crux-land/run-interactions.png)
+*The same 100 operator-↔-Copilot messages, classified by purpose. Directives and clarifications dominate around each event; the four protocol-revision turns are the moments the rulebook itself moved. Note the bar height at the 1st-human-reply marker — under 10 messages, all about cap math, none about the human on the other end.*

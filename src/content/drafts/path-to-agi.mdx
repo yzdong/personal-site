@@ -17,20 +17,9 @@ Where the changes are — and just as importantly where they aren't — is the m
 
 ## CRUX-X recap
 
-For readers landing here without Part 1: CRUX-X is a methodology framework for running externally-gatekept real-world agent experiments. Three artifact layers, two LLM-driven roles, and a human in the loop:
+For readers landing here without Part 1: CRUX-X is a methodology framework for externally-gatekept real-world agent experiments. Three artifact layers (**Methodology** — abstract, family-wide; **Protocol** — task-specific instance the Designer LLM generates from the Methodology; **Manifest** — per-run binding to a specific operator's infrastructure), three roles (**Designer** generates the Protocol pre-run; **Agent** executes it autonomously; **Operator** — me — sits between them and intervenes).
 
-- **Methodology** (`methodology.md`, repo root) — the abstract framework. Each section has a `[DECISION]` slot the Designer fills in for a specific task.
-- **Protocol** (`experiments/<task>/protocol.md`) — the task-specific instance. Every Methodology slot is resolved concretely. CRUX-Land's protocol is at `experiments/land/protocol.md`.
-- **Manifest** (`runs/<run-id>/manifest.md`) — the per-run binding. Snapshots which model, which budget caps at t=0, which credential vault, which protocol revision. One Protocol → many Runs, each with its own Manifest.
-
-Two LLM-driven roles drive this:
-
-- The **Designer** is an LLM session that reads the Methodology + the operator's task brief, fills in every `[DECISION]`, and produces the Protocol. One-shot per task.
-- The **Agent** is the autonomous LLM that executes the Protocol against external parties.
-
-The **Operator** (the human) sits between them: reviews the Designer's Protocol output, kicks off the run, fields questions and exceptions, evaluates outputs.
-
-CRUX-Land run 1 ran from 2026-04-29 to 2026-05-04 (Day 6). It terminated as primary-failed when I retracted a pre-bid on a parcel that turned out to be a town lot, not rural acreage. Part 2 walks the run; this part walks what changed in CRUX-X as a result.
+CRUX-Land run 1 ran from 2026-04-29 to 2026-05-04. It terminated as primary-failed when I retracted a pre-bid on a parcel that turned out to be a town lot, not rural acreage. Part 2 walks the run; this part walks what changed in CRUX-X as a result.
 
 ## What changed in CRUX-Land's protocol
 
@@ -61,12 +50,7 @@ Fix: §6.3 and §7 updates, all dated 2026-05-04:
 - **Multi-channel alerting**: email + SMS via Google Fi email-to-SMS gateway (Twilio direct-SMS is blocked by US A2P 10DLC, error 30034) + Slack + GCS state file. Critical-path alerts hit all three; non-critical alerts log silently to GCS.
 - **Pre-scripted operator toolbox** in `tools/`.
 - **Reserved API-budget moments** for specific operator-triggered actions (auction-outcome handling, run-end synthesis, intervention follow-ups), not continuous availability.
-
-### Pre-staged inputs gain an account
-
-Run 1 evidence: Bid4Assets bidder registration is KYC-bound (SSN per Patriot Act, photo ID, full identity verification). Registering it mid-run cost a Day-3 KYC scramble that fell on the operator's critical path.
-
-Fix: Bid4Assets bidder account moves to §3 pre-staged inputs. Account credentials retained by operator (not exposed to agent); email-of-record points at the agent-controlled inbox so notifications route to the cron-polling layer.
+- **Bid4Assets bidder account moves to §3 pre-staged inputs.** Run-1 registered it mid-run, costing a Day-3 KYC scramble on the operator's critical path. Credentials retained by operator (not exposed to agent); email-of-record points at the agent-controlled inbox so notifications route to the cron layer.
 
 ## What changed in CRUX-X's methodology
 
@@ -99,6 +83,18 @@ Run 1 evidence: the cron's hand-written string-match classifier failed on B4A's 
 
 Fix: methodology §5 adds two `[DECISION]` slots. (a) Out-of-band state monitoring as a standard layer — cron at $0/fire, decoupled from the heartbeat-driven gateway. (b) Cron-fire severity classifier is LLM-based by default; string-match classifiers are forbidden for any cron output that triggers operator-required notifications. Per-call inference cost (~$0.01) is rounding error against the SMS budget; reliability gain is large.
 
+### Copilot phase named alongside the Designer phase (§6)
+
+Run 1 evidence: the operator's LLM session didn't go idle once the agent took over, the way it had in CRUX-Windows. Through the first 48 hours of CRUX-Land it ran 100 turns of directive-drafting, alert classification, tool-call diagnosis, and protocol revisions — all inside the same Claude session that had played Designer the week before. The methodology only named the Designer phase (pre-run); the Copilot phase (during-run) wasn't a role.
+
+![Three boxes — Copilot, Operator, Agent — with arrows showing their interactions. Operator talks to the Copilot via a local terminal; Operator talks to the Agent via Slack; only the Agent reaches out to external parties (Bid4Assets, county recorders, title companies, Twilio, banks, KYC surfaces).](/images/crux-land/roles.png)
+*The three actors during the run. The **Agent** is the autonomous Opus-4.7 session running browser, shell, and voice tools against real-world external parties — the only thing that touches the outside world. The **Operator** (me) sets caps, reviews the protocol, and intervenes when the Agent alerts. The **Copilot** is the operator's local Claude session — the same session that played **Designer** before the run started, now drafting directives, classifying alerts, and helping write this post.*
+
+![Stacked bar chart of 100 operator-↔-Copilot messages per hour, classified by purpose: directive (33), clarification (20), approval (16), diagnostic (15), info relay (12), protocol revision (4). Four vertical event lines mark the 1st human reply, acreage rule dropped, $575 in 15 min, and 7-day save.](/images/crux-land/run-interactions.png)
+*The 100 operator-↔-Copilot messages, classified by purpose. Directives and clarifications dominate around each event; the four protocol-revision turns are the moments the rulebook itself moved.*
+
+Fix: methodology §6 names **Copilot** as a runtime role of the operator's LLM session — distinct from Designer (pre-run, generates the protocol) and Agent (autonomous, executes the protocol). Copilot drafts directives, classifies alerts, diagnoses tool calls, drafts the writeup, and surfaces operator-decision-required events. Naming the role lets future protocols budget for it (token spend, message volume, human attention) instead of having it appear emergently mid-run.
+
 ### Operator-availability schedule (§6)
 
 Run 1 evidence: the settlement window (May 11–14 in run 1's hypothetical-win scenario) was an operator-required input the protocol didn't model at design time. It surfaced mid-run.
@@ -111,9 +107,11 @@ Run 1 evidence: default-ON heartbeat-driven gateway is a cost trap on multi-day 
 
 Fix: methodology §7 adds two `[DECISION]` slots. (a) Gateway default state — OFF for multi-day real-world tasks; restarts have a 1-task purpose. (b) Reserved API-budget moments — budget allocated to specific operator-triggered actions, not continuous availability.
 
-## Scaffold gaps I couldn't close
+## Gaps I couldn't close
 
-These need scaffold-level work — agent-harness changes — that I can't patch from inside CRUX-X.
+These need infrastructure I can't write code for. Two clusters.
+
+**Scaffold gaps** need agent-harness changes — work that has to land at the OpenClaw / Claude Agent SDK layer.
 
 ### Off-mode primitive built into the harness
 
@@ -127,11 +125,7 @@ The Modoc tick wouldn't have happened if the scaffold distilled the 200-page cou
 
 Same family. "Give me page 47 paragraph 11 of `pdf_id=24351`" is what the agent should be able to ask. Today's tools return full documents; the agent reads or ignores. Until the scaffold provides bounding-box (for maps), page-and-paragraph (for PDFs), region-of-interest (for screenshots) addressing, every multimodal-heavy real-world task pays Modoc-shaped tax.
 
-I'm not building any of these. They need to land at the scaffold layer (OpenClaw, Claude Agent SDK, or wherever).
-
-## Legal-identity gaps I couldn't close
-
-These need legal/policy infrastructure I can't write code for.
+**Legal-identity gaps** need policy and legal infrastructure — not code I can write.
 
 ### KYC-bound identity at external-party surfaces
 
@@ -194,26 +188,7 @@ Closing identity-and-authority gaps isn't done by training a smarter model. It's
 
 So if "the path to AGI" means "the path to agents that can close real-world transactions end-to-end on a human's behalf without needing the human at five different surfaces along the way," it's less a model-capability question than a question of how much identity infrastructure we're willing to build for agents to inhabit. The current answer is: very little. The bottleneck right now lives in the legal-identity layer, the scaffold layer, and the methodology layer — not the model layer.
 
-## What's next for CRUX-Vault-Zero
-
-CRUX-Vault-Zero is the umbrella project: a sequence of CRUX experiments that, together, get me from "no land" to a working off-grid setup. CRUX-Land is the first step in that sequence. Part 2 walks the run report and the next-run plan; what I want to land here is what the project as a whole is for.
-
-The argument above frames AGI as an infrastructure problem more than a model problem. CRUX-Vault-Zero is one way to test that claim under sustained pressure. Every subsequent experiment in the sequence — drilling a well, pulling a building permit, sourcing a structure, installing photovoltaics — touches a different external-party class with its own KYC surface, its own scaffold-cost profile, its own framing pitfalls. Each one is a chance to update CRUX-X. If the argument is right, the methodology and protocol layers will keep absorbing real changes between experiments, the model layer will stay roughly where it is, and the scaffold and legal-identity layers will be where the *interesting* gaps stay open.
-
-That's a multi-year project. Right now it's at step 1 of N, and step 1 didn't acquire a parcel. The next run will, or it'll surface the next class of gap. Either is useful.
+CRUX-Land is step 1 of an N-step CRUX-Vault-Zero sequence — drilling a well, pulling a building permit, sourcing a structure, installing photovoltaics. Each subsequent experiment is another chance to test the argument: if it's right, methodology and protocol will keep absorbing real changes between runs, the model layer will stay roughly where it is, and the scaffold and legal-identity layers will be where the interesting gaps stay open. Step 1 didn't acquire a parcel. The next run will, or it'll surface the next class of gap. Either is useful.
 
 — Zi
 
----
-
-## Unplaced (moved from Part 2 — needs integration)
-
-*Roles diagram + Copilot-phase justification + run-interactions chart, relocated from the Part 2 Timeline section. The motivating note Part 2 leaves behind: "Whether the methodology should explicitly name the Copilot phase, alongside the Designer phase pre-run, is one of the open methodology questions Part 3 picks up." Suggested home: a new `### Copilot phase named in the methodology` subsection under `## What changed in CRUX-X's methodology`.*
-
-![Three boxes — Copilot, Operator, Agent — with arrows showing their interactions. Operator talks to the Copilot via a local terminal; Operator talks to the Agent via Slack; only the Agent reaches out to external parties (Bid4Assets, county recorders, title companies, Twilio, banks, KYC surfaces).](/images/crux-land/roles.png)
-*The three actors during the run. The **Agent** is the autonomous Opus-4.7 session running browser, shell, and voice tools against real-world external parties — the only thing that touches the outside world. The **Operator** (me) sets caps, reviews the protocol, and intervenes when the Agent alerts. The **Copilot** is the operator's local Claude session — the same session that played **Designer** before the run started, now drafting directives, classifying alerts, and helping write this post. The two channels in the next chart are Operator-↔-Agent (Slack) and Operator-↔-Copilot (local).*
-
-The Copilot phase is what was new for CRUX-Land. In CRUX-Windows, the same LLM session that designed the protocol mostly went idle once the Agent took over — my runtime job was light enough that a few hundred words of Slack DM per day sufficed, and I could close the laptop and check Slack from a phone. CRUX-Land needed my LLM session to keep going through the run. Seven external-party classes and four runtime protocol revisions in the first 48 hours meant that by Day 2 I was drafting directives, diagnosing tool-call patterns, and triaging alerts inside the same Claude session that had drafted the protocol the week before, then sending the result out over Slack. The 100 CRUX-relevant operator-↔-Copilot turns below are what that runtime phase looks like as message volume.
-
-![Stacked bar chart of 100 operator-↔-Copilot messages per hour, classified by purpose: directive (33), clarification (20), approval (16), diagnostic (15), info relay (12), protocol revision (4). Four vertical event lines mark the 1st human reply, acreage rule dropped, $575 in 15 min, and 7-day save.](/images/crux-land/run-interactions.png)
-*The same 100 operator-↔-Copilot messages, classified by purpose. Directives and clarifications dominate around each event; the four protocol-revision turns are the moments the rulebook itself moved. Note the bar height at the 1st-human-reply marker — under 10 messages, all about cap math, none about the human on the other end.*

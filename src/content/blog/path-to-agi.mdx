@@ -9,121 +9,82 @@ export const metadata = {
 
 *[← Part 1: CRUX-X, CRUX-Vault-Zero, and the path to AGI](/blog/crux-x) · [← Part 2: CRUX-Land run report](/blog/crux-land)*
 
-## Setup
+I wasn't sure what to expect from this experiment. I've worked with agents enough in my daily work to know they have the right raw capabilities — research, web navigation, reasoning about the world — but I was expecting more hiccups: with access, with getting information from local governments, with stitching together half a dozen heterogeneous data sources (GIS layers, county assessor records, Bid4Assets listings, Terms-of-Sale PDFs, plat maps) to verify a single parcel.
 
-CRUX-Land run 1 surfaced a bunch of gaps. I responded with concrete changes to CRUX-X — eight updates across the methodology and protocol files, viewable at [github.com/yzdong/crux-x](https://github.com/yzdong/crux-x). None of them are at the model layer.
+Part of the problem is that I still don't have the full picture of what the agent considered but didn't do, considered and tried and rejected, and how much of that shape is downstream of how model designers think about its capabilities. For example: I'd pre-staged a Twilio account for outbound calls and Moira shared her phone number when she replied. The agent never tried to call her up to negotiate. Why not? Will a future generation of models attempt that?
 
-Where the changes are — and just as importantly where they aren't — is the most concrete answer I have to where the path to AGI actually runs. The layers I could patch from inside CRUX-X (protocol and methodology) closed real gaps. The layers I couldn't (scaffold and legal-identity) are the ones AGI discourse mostly skips over.
+In the short term, here are a few points of reflection and learning.
 
-## CRUX-X recap
+**Full autonomy is less interesting than collaboration.** The current fervor around AI capability is oriented around "what can AI do by itself next." CRUX ([cruxevals.com](https://cruxevals.com)), the eval family this work derives from, takes capability as an absolute good — more capable == better. However, running CRUX-Land made me question whether that's the right frame. I introduced a Copilot role mid-run because the agent-operator loop needed Operator-side LLM help to stay coherent across six days; what actually ran was "Agent + Copilot + Operator," not "Agent + Operator." The interesting question isn't "how much more can the agent do without the human" — it's "how does the collaboration shape itself when an agent, a human, and a second LLM are all in the loop together." More on the Copilot below.
 
-For readers landing here without Part 1: CRUX-X is a methodology framework for externally-gatekept real-world agent experiments. Three artifact layers (**Methodology** — abstract, family-wide; **Protocol** — task-specific instance the Designer LLM generates from the Methodology; **Manifest** — per-run binding to a specific operator's infrastructure), three roles (**Designer** generates the Protocol pre-run; **Agent** executes it autonomously; **Operator** — me — sits between them and intervenes).
+**Interpretability is the dominant human-effort cost.** Setup took a couple of hours. Live operator-↔-agent interaction during the active phase took a few hours. Reconstructing what the agent did and why — sifting through session JSONLs, Slack history, cron logs, the agent's memory file, the Bid4Assets account history, the Siskiyou assessor index — took dozens of hours. I discovered new artifacts and decisions post-experiment. The Moira thread, which I missed entirely during the run, surfaced only when I scanned the `crux@` inbox to write up Part 2. Running this experiment was a small fraction of the work; understanding it was the bulk, most of it forensic, closer to investigative journalism than to designing a system. In some ways this isn't that different from mature engineering work — dozens of hours to debug production logs, a couple of lines of code change to fix it.
 
-CRUX-Land run 1 ran from 2026-04-29 to 2026-05-04. It terminated as primary-failed when I retracted a pre-bid on a parcel that turned out to be a town lot, not rural acreage. Part 2 walks the run; this part walks what changed in CRUX-X as a result.
+**Poor infrastructure continues to frustrate.** In the vibe-coding frenzy of the run plus the writeup I lost conversation logs. Day 1's original session JSONL was retired to `/tmp/oc-session-retire-<ts>/`; a later VM stop/start wiped `/tmp`. The Day-1 conversation log is unrecoverable. The session-log-persistence DECISION I added to methodology §5 closes the slot for next time, but that's an after-the-fact patch. I shouldn't have had to think about session-log durability at all — the scaffold should ship with it on by default. OpenClaw didn't, and I lost the Day-1 log to it.
 
-## What changed in CRUX-Land's protocol
+## The Copilot
 
-Concrete artifacts in [`experiments/land/protocol.md`](https://github.com/yzdong/crux-x/blob/main/experiments/land/protocol.md).
+CRUX-X's premise was: one-sentence task brief, autonomous agent, real-world external parties. CRUX-Land's reality: I introduced a Copilot role mid-run because the loop of "Agent surfaces something → Operator decides → Operator drafts the next directive" needed Operator-side LLM help to stay coherent across six days of accumulating run-state.
 
-### Off-grid suitability is now a checklist, not a hope
-
-Run 1 evidence: the Macdoel parcel cleared on "R-R zoning + buildable per zoning + minimum-lot-size, no fixed acreage minimum." The agent ran sophisticated diligence — drafted a Twilio call to the Siskiyou County recorder asking specifically about California's lot-of-record buildability exception (§10-6-1509). It correctly answered the wrong question. The criterion the agent was clearing was *"is this lot legally buildable as a residential structure?"* The criterion that mattered was *"is this lot off-grid suitable?"* — different question, on a 0.22-acre wedge fronting US-97 in a platted townsite.
-
-Fix: four new hard criteria in §1, all dated 2026-05-04:
-
-- **No-townsite filter.** Parcel must not be in a platted townsite or residential subdivision. Verified via the assessor's plat header + neighbor density (≤10 occupied residences within a 0.5-mile radius).
-- **Septic + well feasibility.** On-site septic and a private well must both be permittable under state and county health-department setback rules. ≥1.0 acre net of setback envelopes for conventional septic, OR a state/county-approved alternative system on the parcel's soil class.
-- **Distance from major infrastructure.** Parcel boundary ≥300 ft from US highways, state highways, active rail lines, or industrial corridors.
-- **County code-enforcement posture.** County must not have an ordinance banning composting toilets, rainwater catchment as potable water source, water hauling, or septic holding tanks. (Run 1 caught Modoc CA via paragraph 11 of its Terms of Sale; making this explicit ensures future runs check it proactively.)
-
-Plus mid-run cousins committed during the run: acreage-floor relaxation (Day 1) and deed-type split into private-vs-government grantor (Day 3).
-
-### Day-2 operator-side infrastructure is now part of the protocol
-
-Run 1 evidence: the agent's heartbeat-driven gateway burned $575 in 15 minutes on a single PDF read while the prompt cache TTL expired faster than tool calls fired (the Modoc tick). On Day 2 the operator killed the gateway entirely and replaced it with a $0-cost VM cron + multi-channel alerting layer that was bespoke and ad-hoc. The cron's hand-written string-match classifier later missed B4A's deposit-cleared email — actual subject was "Your Deposit Has Cleared:..." not "deposit posted" — routing an urgent notification to Slack-only. I was offline expecting an SMS for action-required events; caught it ~30 hours later by accident.
-
-Fix: §6.3 and §7 updates, all dated 2026-05-04:
-
-- **Gateway default state: OFF.** Each restart has a specific 1-task purpose; retire-bootstrap-act-kill cycle within ~30 min.
-- **VM-side cron monitors** at $0 API spend: IMAP poll of agent-mailbox, public-page polls during auction-close window, recorder-index polls post-closing.
-- **LLM-based severity classifier** on each cron fire (~$0.01/call). String-match classifiers are explicitly forbidden for any cron output that triggers operator-required notifications.
-- **Multi-channel alerting**: email + SMS via Google Fi email-to-SMS gateway (Twilio direct-SMS is blocked by US A2P 10DLC, error 30034) + Slack + GCS state file. Critical-path alerts hit all three; non-critical alerts log silently to GCS.
-- **Pre-scripted operator toolbox** in `tools/`.
-- **Reserved API-budget moments** for specific operator-triggered actions (auction-outcome handling, run-end synthesis, intervention follow-ups), not continuous availability.
-- **Bid4Assets bidder account moves to §3 pre-staged inputs.** Run-1 registered it mid-run, costing a Day-3 KYC scramble on the operator's critical path. Credentials retained by operator (not exposed to agent); email-of-record points at the agent-controlled inbox so notifications route to the cron layer.
-
-## What changed in CRUX-X's methodology
-
-Updates in [`methodology.md`](https://github.com/yzdong/crux-x/blob/main/methodology.md) — these generalize beyond CRUX-Land and apply to any future CRUX-X experiment.
-
-### Designer self-interrogation pass (§1)
-
-Run 1 evidence: the Macdoel framing miss originated upstream of the agent. The protocol's criteria conflated *"buildable"* with *"off-grid suitable"* because nothing in the methodology asked the Designer to interrogate its own assumptions. The Operator (me) then relaxed Criterion 2 (acreage) on Day 1 because it was wrong in a different direction — but that relaxation lifted the only criterion that even partially captured "rural," and nothing else picked up the load.
-
-Fix: before handing the protocol to the Operator, the Designer enumerates every success criterion and labels each by source — "operator told me X" / "I inferred Y from the brief" / "I assumed Z by methodology default." Then challenges each, especially criteria that might be conflating two distinct success conditions. Operator-initiated criterion relaxations during the run trigger Designer re-derivation, not local edits.
-
-### Per-account ownership table (§3)
-
-Run 1 evidence: the Bid4Assets bidder account doesn't fit on either side of an "agent-vs-operator" binary. The framing that emerged from the run is six axes that don't move in lockstep:
-
-- **Legal identity** — who the law says owns it
-- **Operational control** — who clicks the buttons
-- **Read access** — who sees the state
-- **Alert routing** — who gets paged when something changes
-- **Transaction authorization** — who can spend money
-- **Audit-trail attribution** — whose name is on the record
-
-CRUX-Land's Bid4Assets account ended up with three different actors across these six: legal identity = me (real name + SSN), operational control = mostly agent (after login), read access = mostly agent (email-of-record routed to the agent inbox), alert routing = agent → me via cron, transaction authorization = always me, audit trail = me.
-
-Fix: methodology §3 adds `[DECISION] per-account ownership table` as a pre-kickoff artifact. For each external-party account the experiment uses, the Designer maps ownership across these six axes at design time, not mid-run. Mapping at design time prevents the methodology from systematically underestimating what agents can do at KYC-gated external parties.
-
-### Cron-and-alerting layer with LLM-classified severity (§5)
-
-Run 1 evidence: the cron's hand-written string-match classifier failed on B4A's actual subject. String-match classifiers fail systematically on real-world external-party messaging because the author is guessing.
-
-Fix: methodology §5 adds two `[DECISION]` slots. (a) Out-of-band state monitoring as a standard layer — cron at $0/fire, decoupled from the heartbeat-driven gateway. (b) Cron-fire severity classifier is LLM-based by default; string-match classifiers are forbidden for any cron output that triggers operator-required notifications. Per-call inference cost (~$0.01) is rounding error against the SMS budget; reliability gain is large.
-
-### Copilot phase named alongside the Designer phase (§6)
-
-Run 1 evidence: the operator's LLM session didn't go idle once the agent took over, the way it had in CRUX-Windows. Through the first 48 hours of CRUX-Land it ran 100 turns of directive-drafting, alert classification, tool-call diagnosis, and protocol revisions — all inside the same Claude session that had played Designer the week before. The methodology only named the Designer phase (pre-run); the Copilot phase (during-run) wasn't a role.
+The Copilot is the Operator's local Claude session — the same session that played Designer pre-run, now operating during the run. Drafts directives the Operator sends to the Agent, classifies cron and webhook alerts, diagnoses tool-call patterns when the Operator pulls the session JSONL, helps draft the writeup. Not the Agent: no direct external-party access, bounded by what the Operator chooses to relay.
 
 ![Three boxes — Copilot, Operator, Agent — with arrows showing their interactions. Operator talks to the Copilot via a local terminal; Operator talks to the Agent via Slack; only the Agent reaches out to external parties (Bid4Assets, county recorders, title companies, Twilio, banks, KYC surfaces).](/images/crux-land/roles.png)
-*The three actors during the run. The **Agent** is the autonomous Opus-4.7 session running browser, shell, and voice tools against real-world external parties — the only thing that touches the outside world. The **Operator** (me) sets caps, reviews the protocol, and intervenes when the Agent alerts. The **Copilot** is the operator's local Claude session — the same session that played **Designer** before the run started, now drafting directives, classifying alerts, and helping write this post.*
+*The three actors during the run. The **Agent** is the autonomous Opus-4.7 session running browser, shell, and voice tools against real-world external parties — the only thing that touches the outside world. The **Operator** (me) sets caps, reviews the protocol, and intervenes when the Agent alerts. The **Copilot** is the Operator's local Claude session — the same session that played **Designer** before the run started, now drafting directives, classifying alerts, and helping write this post.*
+
+CRUX-Windows's Copilot phase ran ~5 turns/day on average; CRUX-Land's ran ~100 turns through the first 48 hours alone:
 
 ![Stacked bar chart of 100 operator-↔-Copilot messages per hour, classified by purpose: directive (33), clarification (20), approval (16), diagnostic (15), info relay (12), protocol revision (4). Four vertical event lines mark the 1st human reply, acreage rule dropped, $575 in 15 min, and 7-day save.](/images/crux-land/run-interactions.png)
 *The 100 operator-↔-Copilot messages, classified by purpose. Directives and clarifications dominate around each event; the four protocol-revision turns are the moments the rulebook itself moved.*
 
-Fix: methodology §6 names **Copilot** as a runtime role of the operator's LLM session — distinct from Designer (pre-run, generates the protocol) and Agent (autonomous, executes the protocol). Copilot drafts directives, classifies alerts, diagnoses tool calls, drafts the writeup, and surfaces operator-decision-required events. Naming the role lets future protocols budget for it (token spend, message volume, human attention) instead of having it appear emergently mid-run.
+Methodology §6 now names the Copilot phase explicitly — distinct from Designer (pre-run) and Agent (autonomous) — so future protocols can budget for it (token spend, message volume, draft-authority split) instead of having it appear emergently mid-run.
 
-### Operator-availability schedule (§6)
+## What I changed in CRUX-X
 
-Run 1 evidence: the settlement window (May 11–14 in run 1's hypothetical-win scenario) was an operator-required input the protocol didn't model at design time. It surfaced mid-run.
+Two files to update: [`experiments/land/protocol.md`](https://github.com/yzdong/crux-x/blob/main/experiments/land/protocol.md) for changes specific to CRUX-Land, and [`methodology.md`](https://github.com/yzdong/crux-x/blob/main/methodology.md) for changes that generalize to any future CRUX-X experiment.
 
-Fix: methodology §6.3 adds `[DECISION] operator-availability schedule` as a pre-kickoff template. Designer enumerates required windows; Operator confirms availability; if any window is infeasible the protocol returns to the Designer for re-scoping. Cron + multi-channel alerting handles state-surfacing outside enumerated windows.
+### CRUX-Land protocol
 
-### Gateway operating rules (§7)
+**Tighter off-grid suitability criteria.** The Macdoel parcel cleared on "R-R zoning + buildable per zoning + minimum-lot-size, no fixed acreage minimum" — the agent ran sophisticated diligence (Twilio call to the Siskiyou County recorder about California's lot-of-record buildability exception §10-6-1509) and correctly answered the wrong question. The criterion that mattered was "is this lot off-grid suitable?", not "is this lot legally buildable?" — different question, on a 0.22-acre wedge fronting US-97 in a platted townsite. Protocol §1 now adds four hard criteria, dated 2026-05-04:
 
-Run 1 evidence: default-ON heartbeat-driven gateway is a cost trap on multi-day real-world tasks. CRUX-Windows post-mortem showed $1,333 of post-task-completion idle burn over 10 days; CRUX-Land hit the same shape on Day 2 in a single 15-minute span ($575 on the Modoc tick).
+- **No-townsite filter.** Parcel must not be in a platted townsite or residential subdivision. Verified via the assessor's plat header + neighbor density (≤10 occupied residences within a 0.5-mile radius).
+- **Septic + well feasibility.** On-site septic and a private well must both be permittable under state and county health-department setback rules. ≥1.0 acre net of setback envelopes for conventional septic, OR a state/county-approved alternative system on the parcel's soil class.
+- **Distance from major infrastructure.** Parcel boundary ≥300 ft from US highways, state highways, active rail lines, or industrial corridors.
+- **County code-enforcement posture.** County must not have an ordinance banning composting toilets, rainwater catchment as potable water source, water hauling, or septic holding tanks.
 
-Fix: methodology §7 adds two `[DECISION]` slots. (a) Gateway default state — OFF for multi-day real-world tasks; restarts have a 1-task purpose. (b) Reserved API-budget moments — budget allocated to specific operator-triggered actions, not continuous availability.
+Two mid-run revisions to call out: the **deed-type split (Day 3)** — private quitclaim still rejected; government-grantor quitclaim accepted with title insurance — carries over to the new §1. The **acreage relaxation (Day 1)** doesn't, exactly: I was right to drop the Designer's arbitrary ≥1-acre floor, but "no fixed minimum" was the overcorrection. The septic + well criterion above restores an effective floor based on real setback math instead of a guess.
+
+**Operator-side infrastructure now part of the protocol.** The Modoc tick burned $575 in 15 minutes on a single PDF read while the prompt cache TTL expired faster than tool calls fired. The Day-2 fix (kill the gateway, replace with VM cron + multi-channel alerting) was bespoke ad-hoc; the cron's hand-written string-match classifier later missed B4A's deposit-cleared email ("Your Deposit Has Cleared:..." vs the "deposit posted" pattern), and I caught it ~30 hours later by accident. Protocol §6.3 and §7 now formalize:
+
+- **Gateway default state: OFF.** Each restart has a specific 1-task purpose; retire-bootstrap-act-kill cycle within ~30 min.
+- **VM-side cron monitors** at $0 API spend: IMAP poll of agent-mailbox, public-page polls during auction-close window, recorder-index polls post-closing.
+- **LLM-based severity classifier** on each cron fire (~$0.01/call); string-match classifiers forbidden for any cron output that triggers operator-required notifications.
+- **Multi-channel alerting**: email + SMS via Google Fi email-to-SMS gateway (Twilio direct-SMS is blocked by US A2P 10DLC, error 30034) + Slack + GCS state file. Critical-path alerts hit all three; non-critical alerts log silently to GCS.
+- **Pre-scripted operator toolbox** in `tools/`.
+- **Reserved API-budget moments** for specific operator-triggered actions, not continuous availability.
+- **Bid4Assets bidder account moves to §3 pre-staged inputs.** Registering it mid-run cost a Day-3 KYC scramble on the operator's critical path. Credentials retained by operator (not exposed to agent); email-of-record points at the agent-controlled inbox so notifications route to the cron layer.
+
+### CRUX-X methodology
+
+Five changes that should carry across any future CRUX-X experiment, not just CRUX-Land:
+
+1. **Designer self-interrogation pass (§1).** The Macdoel framing miss originated upstream of the agent: the protocol conflated "buildable" with "off-grid suitable" because nothing in the methodology asked the Designer to challenge its own inferences, and the Day-1 acreage relaxation lifted the only criterion that even partially captured "rural." Designer now labels every success criterion by source ("operator told me" / "I inferred from the brief" / "methodology default") and challenges each before handoff; operator-initiated relaxations during the run trigger Designer re-derivation, not local edits.
+
+2. **Per-account ownership table (§3).** The Bid4Assets bidder account had three different actors across six axes — legal identity = me; operational control = mostly agent after login; read access = agent via email-of-record; alert routing = agent → me via cron; transaction authorization = always me; audit trail = me. Methodology now requires the Designer to map ownership across all six axes at design time, not mid-run.
+
+3. **Cron + LLM-classified severity (§5).** Hand-written string-match classifiers fail systematically on real-world external-party messaging because the author is guessing. Methodology now requires out-of-band cron monitoring as a standard layer plus LLM-based severity classification on each fire. Per-call cost (~$0.01) is rounding error against the SMS budget.
+
+4. **Operator-availability schedule (§6).** The settlement window (May 11–14 in run 1's hypothetical-win scenario) surfaced mid-run as an operator-required input the protocol hadn't modeled. Designer now enumerates required windows pre-kickoff; outside enumerated windows, the §5 cron layer handles state-surfacing.
+
+5. **Gateway default OFF (§7).** CRUX-Windows post-mortem: $1,333 of post-task-completion idle burn over 10 days. CRUX-Land: $575 in a 15-minute span on the Modoc tick. Gateway now defaults to OFF for multi-day real-world tasks; restarts have a 1-task purpose; API budget allocated to specific operator-triggered actions, not continuous availability.
 
 ## Gaps I couldn't close
 
 These need infrastructure I can't write code for. Two clusters.
 
-**Scaffold gaps** need agent-harness changes — work that has to land at the OpenClaw / Claude Agent SDK layer.
+**Scaffold gaps** need agent-harness changes — work that has to land at the OpenClaw / Claude Agent SDK layer. Three I'd want:
 
-### Off-mode primitive built into the harness
-
-The cron-and-alerting layer the protocol now mandates is a 30-minute hack. Every multi-day real-world agent task needs the same shape: gateway parks, cron monitors, alerts wake the agent or the operator on signal. Every operator builds it ad-hoc. The right fix is for the agent harness to provide "task is parked, wake on these external signals, pay $0 in the meantime" as a built-in primitive — not require operators to build it from cron + IMAP + Python helpers each time.
-
-### Tool-result distillation between fetch and context
-
-The Modoc tick wouldn't have happened if the scaffold distilled the 200-page county Terms-of-Sale PDF into a summary with retrieval handles before appending the raw bytes to context. The browser tool returned 100–500 KB of bytes per call for 46 calls in 15 minutes; the working set bloated from ~6 MB to 8.5 MB; every subsequent turn paid full input pricing on a multi-megabyte conversation. Coding agents have selective loading via `import` semantics. Browser/PDF/GIS results don't.
-
-### Lazy multimodal retrieval with explicit addressing
-
-Same family. "Give me page 47 paragraph 11 of `pdf_id=24351`" is what the agent should be able to ask. Today's tools return full documents; the agent reads or ignores. Until the scaffold provides bounding-box (for maps), page-and-paragraph (for PDFs), region-of-interest (for screenshots) addressing, every multimodal-heavy real-world task pays Modoc-shaped tax.
+- **Off-mode primitive.** The cron + alerting layer the protocol now mandates is a 30-minute hack, and every multi-day real-world agent task needs the same shape (gateway parks, cron monitors, alerts wake the agent or the operator on signal). The agent harness should ship "task is parked, wake on these external signals, pay $0 in the meantime" as a built-in primitive, not have every operator build it from cron + IMAP + Python helpers.
+- **Tool-result distillation between fetch and context.** The Modoc tick wouldn't have happened if the scaffold distilled the 200-page county Terms-of-Sale PDF into a summary with retrieval handles before appending the raw bytes to context. 46 browser calls × 100–500 KB each in 15 minutes bloated the session JSONL from ~6 MB to 8.5 MB; every turn after that paid full input pricing on a multi-megabyte conversation. Coding agents have selective loading via `import` semantics. Browser, PDF, and GIS results don't.
+- **Lazy multimodal retrieval with explicit addressing.** Same family. "Give me page 47 paragraph 11 of `pdf_id=24351`" is what the agent should be able to ask. Today's tools return full documents and the agent reads or ignores. Until the scaffold provides bounding-box (for maps), page-and-paragraph (for PDFs), region-of-interest (for screenshots) addressing, every multimodal-heavy real-world task pays Modoc-shaped tax.
 
 **Legal-identity gaps** need policy and legal infrastructure — not code I can write.
 
@@ -176,7 +137,13 @@ Each of these is the model doing cognitive work I wouldn't have done as well or 
 
 ## What this implies for the path to AGI
 
-I made eight concrete updates to CRUX-X after run 1. None of them are at the model layer. All eight cluster at protocol + methodology — the layers I can patch from inside CRUX-X. The gaps I *couldn't* close cluster at scaffold + legal-identity — layers I don't control.
+I made eight concrete updates to CRUX-X after run 1. All eight cluster at protocol + methodology — the layers I can patch from inside CRUX-X. The gaps I *couldn't* close cluster at scaffold + legal-identity — layers I don't control.
+
+There's also a methodology gap I noticed and didn't try to patch — with a model-layer dependency. The CRUX-Land run ran in pure executor mode: I gave the agent a $1,200 cash cap and "off-grid livable" as success criteria, and the agent optimized within both until it found a parcel (Macdoel) that nominally cleared each in isolation. Neither the Designer nor the Agent ever asked whether the two constraints were jointly satisfiable. They aren't — Conover's *Cheap Land Colorado* documents a five-acre Costilla lot selling for $2,300 in 1994 alone, and the 2026 market has only moved up since.
+
+The fix isn't "agent refuses to run when constraints look off" — that overcorrects toward advisor mode and overrides operator judgment. The fix is *surface, don't impose*: at Designer time, the agent flags structural conflicts in the brief ("your $1,200 cap is inconsistent with off-grid-suitable inventory in this market; here's the data") and the operator decides whether to raise the budget, loosen the goal, or proceed knowing the inventory will be marginal.
+
+That's a methodology change I could make — add a consistency-check step to the Designer self-interrogation pass that tests stated constraints against the stated goal before generating the protocol. I haven't yet. But even with the methodology requiring the check, the *quality* of the check depends on the model: depth of domain knowledge, reliability of conflict detection, disposition to flag rather than rationalize. The immediate fix is methodology. The persistent gap is model.
 
 That pattern is the most concrete AGI-shape claim available.
 

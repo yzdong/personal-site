@@ -108,14 +108,14 @@ LLC-personae for agents are sometimes proposed as a workaround, but they don't a
 
 ## Where today's agents are actually fine
 
-Stacking up the gaps makes it sound worse than the run actually felt. The model held up on most of the hard reasoning — these are the moments worth flagging on the other side of the ledger.
+Stacking up the gaps makes it sound worse than the run actually felt. Here are a few things the Agent did that seemed to make sense. I'll note here that I'm not a domain expert, so while these actions made sense to me, I don't have sufficient grounded experience to know if they're actually the right call.
 
 - **The Modoc kill artifact.** The Agent pulled paragraph 11 out of a 200-page county Terms-of-Sale PDF and correctly identified that Modoc County bans every off-grid water and sanitation strategy at the county code level, with criminal enforcement on camping. I would never have thought to look in that document, and if I had, I'd have skimmed past the paragraph. Cross-document inference at that depth is exactly what we want agents for.
 - **The Klickitat strip-parcel kill.** The Agent ran a GIS REST query, computed the parcel geometry, and visually confirmed via the county's plat viewer that APN 05-13-2600-0007/00 is a 25 ft × 1,321 ft strip — a road-frontage scrap that's not a buildable parcel in any practical sense. Multi-step tool-use across spatial APIs and visual confirmation, accomplished in a single session, was out of reach for agents two years ago.
 - **The Siskiyou §10-6-1509 phone call.** Even on the parcel that turned out to be wrong for the project, the Agent's diligence was technically sophisticated. It identified that California has a statutory lot-of-record exception that would let a substandard 1974-era subdivision lot be buildable as nonconforming, located the specific Siskiyou County code section, drafted a precise voice script to a county planner asking the factual question the exception turns on, and built Twilio infrastructure to record the answer. That is genuinely what we want agents for, even when it's pointed at the wrong question.
 - **Session-retirement recovery.** When a long-running session hit token-context limits, I retired it and started a fresh one with a memory file and bootstrap prompt. The new session picked up the run state, recognized the parcel pipeline mid-flight, and continued without re-doing prior diligence. Continuity across model session boundaries is a quiet capability that matters a lot for runs that span weeks.
 
-Each of these is the model doing cognitive work I wouldn't have done as well or as fast. They're the reason the rest of the run was worth attempting at all.
+Each of these is the model doing cognitive work I wouldn't have done as well or as fast. Whether they were the *right* calls is a question for someone with more domain experience than me.
 
 ## What could have caught the $1,200 problem
 

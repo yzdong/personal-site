@@ -1,8 +1,8 @@
 export const metadata = {
   title: "What CRUX-Land changed about the way I think about agent capability (Part 3 of 3)",
-  date: "2026-05-22",
+  date: "2026-06-01",
   description:
-    "What I changed in CRUX-X after CRUX-Land run 1 — protocol updates, methodology updates, and the gaps I couldn't close from inside CRUX-X.",
+    "What CRUX-Land run 1 changed about the way I think about agent capability — what would have caught the $1,200/off-grid constraint conflict at Designer time, and which of those three model dispositions is the deepest gap.",
 };
 
 <div style={{padding: '14px 18px', marginBottom: '20px', background: '#fef3c7', border: '2px solid #f59e0b', borderRadius: '6px', fontWeight: 700, color: '#92400e', fontSize: '15px', letterSpacing: '0.02em'}}>
@@ -117,23 +117,21 @@ Stacking up the gaps makes it sound worse than the run actually felt. The model 
 
 Each of these is the model doing cognitive work I wouldn't have done as well or as fast. They're the reason the rest of the run was worth attempting at all.
 
-## What this implies for the path to AGI
+## What could have caught the $1,200 problem
 
-I've been burying the lede about why this experiment was doomed from the start. I gave the Agent a $1,200 cash cap and "off-grid livable" as success criteria, and the Agent optimized within both until it found a parcel (Macdoel) that nominally cleared each in isolation. Neither the Designer nor the Agent ever asked whether the two constraints were jointly satisfiable. They aren't — Conover's *Cheap Land Colorado* documents a five-acre Costilla lot selling for $2,300 in 1994 alone, and the 2026 market has only moved up since.
+I've been burying the lede about why this experiment was doomed from the start. I gave the Agent a $1,200 cash cap and "off-grid livable" as success criteria, and the Agent optimized within both until it found a parcel (Macdoel) that nominally cleared each in isolation. Neither the Designer nor the Agent ever asked whether the two constraints were jointly satisfiable. They aren't — [Conover's *Cheap Land Colorado*](https://www.penguinrandomhouse.com/books/623614/cheap-land-colorado-by-ted-conover/) documents a five-acre Costilla lot selling for $2,300 in 1994 alone, and the 2026 market has only moved up since.
 
 The fix isn't "agent refuses to run when constraints look off" — that overcorrects toward advisor mode and overrides operator judgment. The fix is *surface, don't impose*: at Designer time, the Agent flags structural conflicts in the brief ("your $1,200 cap is inconsistent with off-grid-suitable inventory in this market; here's the data") and the Operator decides whether to raise the budget, loosen the goal, or proceed knowing the inventory will be marginal.
 
-That's a methodology change I could make — add a consistency check at protocol design time that tests stated constraints against the stated goal before kickoff. I haven't yet. Even with the methodology requiring the check, the *quality* of the check depends on the model: depth of domain knowledge, reliability of conflict detection, disposition to flag rather than rationalize.
+That's a methodology change I could make — add a consistency check at protocol design time that tests stated constraints against the stated goal before kickoff. I haven't yet. Even with the methodology requiring the check, the *quality* of the check depends on the model.
 
-"AGI" as the term is colloquially deployed usually means "model that can do most cognitive work humans do." Reading the discourse, you'd think the question is whether the next model crosses that bar. From inside CRUX-Land, the question is closer to: what does the rest of the stack around the model have to look like for the model to actually do that cognitive work in the world.
+Three things the model would need to do reliably to catch the conflict at Designer time: know the relevant market (off-grid-suitable parcel prices in 2026), detect joint-satisfiability of numeric vs goal-shaped constraints rather than checking each in isolation, and push back when the brief itself looks structurally wrong rather than executing within it.
 
-The model in CRUX-Land would have done well on graduate-level research about California tax-deed law, AZ §42-18301 procedure, PA Act 542 Repository sales, AR §22-6-414 limited warranty conveyances — and going by `writeup-notes.md`, it pretty much did. The same model can't sign up for the Bid4Assets bidder account the research is for, can't authorize a wire from my SoFi checking, can't sign a deed in its own name at a county recorder. These are identity-and-authority gaps.
+Of these, the first is almost certainly there — Claude has read enough land listings, county recorder data, and off-grid living blogs to know a $1,200 cap doesn't buy a parcel that can hold a well and a septic system. The second is achievable with prompting and tools. The third is the deepest — the bias toward executing what the Operator asked for, rather than questioning whether what the Operator asked for makes sense, is exactly the disposition the helpful-assistant training instills.
 
-Closing identity-and-authority gaps means writing (or interpreting) the law that grants agents narrow personhood, building agent-scoped banking primitives, defining what "an agent in good faith" means at an external-party surface — humans deciding what we're willing to let agents do under whose authority. Very little of that work is happening anywhere yet.
+And even if the model had pushed back, I would have had to listen. I picked $1,200 because $1,200 was what I wanted to spend, not because I'd researched what off-grid-suitable parcels cost. A model flagging *"your cap is inconsistent with your goal — here's the price data"* is only useful if the Operator is willing to update. I might not have been.
 
-So if "the path to AGI" means "the path to agents that can close real-world transactions end-to-end on a human's behalf without needing the human at five different surfaces along the way," it's less a model-capability question than a question of how much identity infrastructure we're willing to build for agents to inhabit. The current answer is: very little. The bottleneck right now lives in the legal-identity layer, the scaffold layer, and the methodology layer — not the model layer.
-
-CRUX-Land is step 1 of an N-step CRUX-Vault-Zero sequence — drilling a well, pulling a building permit, sourcing a structure, installing photovoltaics. Each subsequent experiment is another chance to test the argument: if it's right, methodology and protocol will keep absorbing real changes between runs, the model layer will stay roughly where it is, and the scaffold and legal-identity layers will be where the interesting gaps stay open. Step 1 didn't acquire a parcel. The next run will, or it'll surface the next class of gap. Either is useful.
+CRUX-Land is step 1 of an N-step CRUX-Vault-Zero sequence — drilling a well, pulling a building permit, sourcing a structure, installing photovoltaics. Step 1 didn't acquire a parcel. The next run will or it won't, and either result surfaces the next class of gap.
 
 ## What's next
 

@@ -168,6 +168,18 @@ deflection if the bug isn't named first.
 - ✗ "There's no clean methodology fix. 'Don't contact real humans' is the wrong rule for an experiment that's explicitly testing what an agent can do against real-world external parties..."
 - ✓ "The reason the agent contacted Moira in the first place was an agent error. The Craigslist posting led with $199 in the title, and the agent took that as the cash price..."
 
+**Don't end paragraphs with a lesson.** The temptation to close every
+paragraph with a pithy meta-takeaway that re-states the point in
+abstract terms reads as Claudism. The data-bearing sentence(s) above
+should land on their own. Common shapes to avoid: the "X is A; Y is B"
+parallel pivot, the "X was in the weights. Y wasn't" reframe, the "X is
+the requirement; whether Y meets it is itself a Z" abstraction. If a
+takeaway feels load-bearing, the paragraph above probably isn't pulling
+its weight — cut both the takeaway and the redundant setup. Let the
+paragraph end on the data or the action.
+- ✗ "...seeing how subsequent generations of coding agents implement it when the Designer phase fires next time. The methodology is the requirement; whether the scaffold meets it is itself a measurable result."
+- ✓ "...seeing how subsequent generations of coding agents implement it when the Designer phase fires next time."
+
 ## Patterns to use
 
 **Lead with numbers where possible.** "Net human inputs: three." "Final spend

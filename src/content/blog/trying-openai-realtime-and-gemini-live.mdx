@@ -1,0 +1,119 @@
+export const metadata = {
+  title: "Trying gpt-realtime-2 and Gemini Live: where speech-to-speech still falls down",
+  date: "2026-06-25",
+  description:
+    "OpenAI and Google shipped new speech-to-speech voice models within a few weeks of each other. I built an A/B harness to put them through the same five-turn script. Barge-in and latency feel great. Context retention, hallucination, and missing tool integrations don't.",
+};
+
+*Draft — not final. May be revised.*
+
+OpenAI shipped gpt-realtime-2 on May 7, 2026. Google shipped Gemini 3.1 Flash Live around the same window. Both are speech-to-speech: a single multimodal model takes audio in and produces audio out, with no separate transcribe-LLM-synthesize pipeline in between.
+
+I'd been using the cascaded version of OpenAI's voice mode in ChatGPT for a while before this — speech-to-text, then GPT, then text-to-speech. It feels stilted in retrospect. You finish your sentence, wait, then the response starts. You can't talk over it without the whole thing falling apart. Switching to the S2S models for an afternoon made the cascaded version feel like a walkie-talkie. Lower latency is part of it; the other part is that barge-in actually works, so the conversational rhythm gets closer to talking to a person.
+
+Caveat upfront: I ran all of this from my apartment on fiber, sitting still in front of a laptop. Real S2S deployment — in a car, on an embedded device, over a flaky LTE connection — probably feels different. The latency I'm describing is the floor case, not the median.
+
+## What I did
+
+I built a small WebRTC harness that runs the same script against three configurations: gpt-realtime-2 (S2S), Gemini Live 3.1 Flash (S2S), and a cascaded baseline (Whisper transcription → GPT-5.1 via Responses at `reasoning_effort: low` → gpt-4o-mini-tts). One UI, one mic, one script, switch the radio button.
+
+The script is a five-turn climbing-trip planning conversation: I'm planning a weekend trip to Yosemite, mention dispersed camping near the Highway 120 entrance, ask about weather, and then ask the model to back-calculate when I'd need to leave the Bay Area to be home by 7pm Sunday given an 8-pitch climb with stated approach time, pitch times, and descent options. The last turn includes a deliberate question that requires a web search (recent ascent conditions).
+
+Sessions are recorded as separate user and model audio tracks plus a transcript. Most of the clips below come from a single gpt-realtime-2 run and a matched Gemini Live run on 2026-06-25.
+
+A note on developer effort: the cascaded baseline took meaningfully longer to wire up than either S2S model. The S2S setups are roughly "open the WebRTC session, hand it a system prompt, start streaming the mic" — the model handles turn-taking, interruption, and buffering server-side. The cascaded pipeline has to do all of that in the client: a hand-rolled energy-based VAD with thresholds for "is the user speaking" and "has the user stopped speaking," a four-state machine to coordinate `idle → recording → processing → speaking`, manual conversation-history threading across three separate HTTP endpoints (STT, LLM, TTS), and tail-echo handling so the model's own audio playback doesn't re-trigger the VAD. The cascaded mode is about 280 lines of TypeScript; the S2S modes combined are shorter than that.
+
+I also got the VAD parameters wrong the first time. I had `SILENCE_FRAMES_TO_STOP` set to roughly 700ms — enough silence after the user's last word to declare the turn done — which is fine for short conversational utterances. It cut off the back-calculation question mid-sentence on turn 4. That question is multi-clause: pitch counts, then pitch times, then approach numbers, then descent options. Read at speaking pace, it includes natural sub-second pauses between clauses. At 700ms, the VAD fired in the middle of the question and sent only the first fragment to the LLM. The cascaded model had to ask for the rest in pieces, which made it look like it couldn't reason about the question — but really it was getting fragments. Bumping the threshold to 2 seconds fixed the bug, but only after I went back and checked the input the LLM was actually seeing.
+
+The same pattern shows up on the output side. The LLM behind the cascaded pipeline is GPT-5.1 over the Responses API — a text-trained model. By default it returns paragraph-length answers, fine for chat but way too long for a voice agent that has to speak every word. The cascaded system prompt now starts with *"Keep responses to 1-3 sentences. Be warm and natural in tone."* I added that line after the first run, when the model spent 25 seconds reading me a structured five-bullet response to a casual question. The S2S models default to voice-appropriate brevity because they're trained on voice — no prompt tuning needed to get them to sound like someone talking, not someone reading.
+
+A latency caveat that cuts the same direction. The cascaded numbers I'll show in a later section (7–14 second per-turn floor, 24 seconds on the multi-clause planning turn) aren't a structural floor on cascaded — they're the floor of *my naive implementation*. The pipeline waits for STT to finish, then waits for the LLM response in full, then waits for TTS to render the full audio blob, then plays. A faster cascaded build would stream tokens from the LLM into the TTS as they arrive, and start audio playback on the first TTS chunks instead of waiting for the full blob. Done well, time-to-first-audio on a turn like the back-calc could land in the 5–8 second range instead of 24. That's still slower than S2S, but the gap isn't where I left it in this build. The point is: closing that gap is *more* cascaded complexity to ship, not less. S2S does it inside the model.
+
+Aseem at Tolan, when I'd talked to him a few weeks earlier, named turn detection as the central pain point in cascaded voice agents. This is what he meant — energy-based VAD on the user side is the cascaded builder's constant tuning problem, and the kind of bug that *looks* like a model reasoning failure when it's actually an input fragmentation failure. Both Realtime and Gemini Live use server-side VAD that I never had to tune.
+
+## What worked
+
+Latency and barge-in held up. When I interrupted the model mid-sentence, it stopped cleanly and reformed around what I'd said. The conversational rhythm felt close to real-time. Gemini Live and gpt-realtime-2 were both noticeably better here than the cascaded baseline, which has a 7–14 second per-turn floor in my setup just from STT + LLM + TTS latency stacking.
+
+One smaller thing I didn't expect: the S2S models preserve the audio signal end-to-end, so when the transcript layer mis-hears something, the model can still respond correctly. I'll come back to this — it's the same property that produces the rap/wrap divergence below.
+
+A note on voice character. The default OpenAI voice (I was on Cedar) sounded natural and fairly even — the kind of register you'd pick if you wanted a voice that gets out of the way. Gemini Live's default voice had more going on: noticeably more inflection across the sentence, and a raspy or hoarse quality baked into the voice itself. Not unpleasant, more characterful. Worth flagging because for any consumer voice product, the voice character is half the product — and Gemini and OpenAI are picking different defaults on a spectrum from neutral-narrator to expressive-companion.
+
+## What still doesn't work
+
+### Both models dropped context inside a six-minute conversation
+
+I'd opened the gpt-realtime-2 session with a weekend trip framing. Three turns later, when I asked "what's the weather in Yosemite?", the model asked me which dates I was planning to be there. I re-stated "this weekend." Recoverable, annoying.
+
+The exact same drop happened on Gemini Live. I opened with "I want to climb in Yosemite this weekend… actually Bishop, what's the weather?" Three turns later I asked Gemini to check lodging in Yosemite and it came back with "What specific dates are you considering for Yosemite?" I had to re-state "this weekend" to it too. Same failure shape, different model.
+
+<audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-weekend-openai.mp3" />
+<audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-weekend-gemini.mp3" />
+
+The second context drop on gpt-realtime-2 wasn't recoverable in the same way. I asked it to plan out when I'd have to leave the Bay Area to get back at 7pm Sunday. After it walked through the climb math, I asked "so when is it?" — the model answered as if I were asking about when to leave the climbing destination, not the Bay Area. I had to follow up with "I'm asking you when I have to leave from the area" to redirect. Even then, the final answer (leave the climbing area by 2pm) only accounted for the return drive home, not the outbound drive from the Bay to the trailhead. The actual answer requires both legs of the round trip.
+
+This isn't a model that can't reason. It's a model that commits confidently to a specific answer while quietly skipping a constraint. That's a worse failure mode for the end user than hedging would be — confidently-wrong is harder to catch in a voice interface than confidently-wrong in text, because you can't re-read the answer.
+
+<audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-bay-area.mp3" />
+
+Gemini Live, given the same back-calculation, got further. It did the round-trip math — both the outbound drive from the Bay and the return — which is the structural piece gpt-realtime-2 dropped. But the magnitudes don't close. Gemini quoted "2–3 hours for the downclimb or 12 rappels" — those aren't equivalent (12 rappels at 30 minutes each is 6 hours, not 2–3), and the total mountain-day estimate drops the hike out from the base of the route back to the trailhead. Within Gemini's own range, the late endpoint doesn't work either: leave 5 AM Sunday + 5 hr drive + 12 hr activity + 5 hr drive home = arrive 3 AM Monday, not 7 PM Sunday. The realistic answer requires either a Saturday departure with overnight camping or a less ambitious climb. Gemini did the round-trip math gpt-realtime-2 didn't, but the constraint magnitudes are loose enough that the numerical answer is still wrong.
+
+<audio controls src="/audio/trying-openai-realtime-and-gemini-live/back-calc-gemini.mp3" />
+
+When I asked Gemini to walk through how it got the 9-12 hour estimate, it explained its math out loud — and the conflation surfaces directly: *"30-40 minutes per four 5.8 pitches, 45-60 minutes per three 5.9 pitches, plus 2.5 hours for the approach and 2-3 hours for the downclimb or 12 rappels."* The "or" treats the downclimb and 12-rappel descents as equivalent in time, which they aren't. Useful for the post that the model showed its work — the error is auditable.
+
+<audio controls src="/audio/trying-openai-realtime-and-gemini-live/gemini-reasoning-trace.mp3" />
+
+This complicates the "S2S structurally caps reasoning" framing I've heard from voice builders. The shape was right on Gemini, the magnitudes were loose. The shape was wrong on gpt-realtime-2 (whole constraint missing). Both reasoning failures, in different places.
+
+Gemini also went silent in the lead-up to that answer. After I asked the planning question, I tried to feed it the climb parameters across five separate turns — pitch counts, pitch times, approach distance, past-trip reference, "estimate my approach" — and got nothing back through all of them. It only spoke up once I'd added the descent option. Same dead-air failure mode I hit on gpt-realtime-2 in the section below, different trigger.
+
+<audio controls src="/audio/trying-openai-realtime-and-gemini-live/silent-turns-gemini.mp3" />
+
+### Both models fabricated specifics, in different shapes
+
+When I asked gpt-realtime-2 about the weather in Yosemite for the weekend, the model gave specific numbers: highs in the mid-80s, lows in the 50s, mostly sunny and dry. There's no live weather tool wired up to the session. The numbers are fabricated. The model didn't say "I can't check live forecasts, but typical conditions for that time of year are…" — it just answered with specifics a user might act on.
+
+In the same session, a few turns later, I asked if it could do a web search and it correctly said it couldn't. So the model knows it doesn't have web search. It just doesn't always reach for that disclaimer when the question would benefit from one.
+
+Gemini Live had a worse version of the same problem. When I asked it to check lodging, it said "Okay, looking into that now." When I asked about dispersed camping options, it said "Look into dispersed camping along Forest Service roads in the nearby Stanislaus or Inyo National Forests." Both phrasings imply a search is happening. No search was happening. I had to ask explicitly — "Are you looking?" — for the model to come back with "I'm providing information based on general knowledge."
+
+<audio controls src="/audio/trying-openai-realtime-and-gemini-live/gemini-caught.mp3" />
+
+So the pattern across both models is the same problem in two shapes. gpt-realtime-2 fabricates specifics without claiming to search. Gemini Live fabricates specifics *and* fabricates the action of searching, then only admits the gap when the user catches it directly. The Gemini version is more actively misleading, because the "checking…" phrasing is what an end user would take as confirmation that a real lookup just ran.
+
+<audio controls src="/audio/trying-openai-realtime-and-gemini-live/weather-hallucination.mp3" />
+
+This is the same failure I saw at 2026-06-02 with a different prompt. In that session I asked the model to look up recent ascents on Mountain Project, and it responded by speaking a hallucinated Python `requests.get()` call aloud, then pretending to be processing while nothing was actually running. The Yosemite weather case is the same underlying problem (no native tool composition for live data) producing a different surface failure (plausible specifics instead of obvious Python). The plausible failure is the more dangerous one because the user has no signal they should distrust it.
+
+### No native web_search
+
+The Realtime API exposes `function`, `mcp`, and `connector_googlecalendar` as built-in tool types. It doesn't expose `web_search` the way the Responses API does. If you want web search inside a voice agent today, you write a `function` tool that bridges back to Responses — Justin Umberti at OpenAI confirmed this pattern on the community forum.
+
+That works, but the bridge adds latency and is something every developer building voice agents writes themselves. More relevant for end users: when the bridge isn't there, the model improvises around the gap in the ways above (fabricated specifics, Python-as-voice, or three consecutive silent turns — which is what happened next in this session when I pushed on "can you do a web search").
+
+<audio controls src="/audio/trying-openai-realtime-and-gemini-live/silent-turns.mp3" />
+
+I think this is the cleanest gap to close in the API surface. The Responses ecosystem already has `web_search`, `file_search`, `code_interpreter`, `image_generation`. Bringing them in as native tool types on Realtime is mostly plumbing, not new research.
+
+### Transcript divergence from what the model heard
+
+A smaller thing, more curious than broken. At one point I said "we'll rap down" — rappel — and the transcript layer rendered it as "wrap down." But the model's response a second later included "if you rappel 12 times at roughly 30 minutes each," so the model itself had heard "rap" correctly and understood the climbing context.
+
+<audio controls src="/audio/trying-openai-realtime-and-gemini-live/rap-vs-wrap.mp3" />
+
+This is a property of S2S models that doesn't exist in cascaded pipelines: the transcript and the speech are generated as parallel channels off the same audio embedding. They can disagree, because the transcript is its own decoding head, not the input to the LLM. In cascaded, the transcript IS the input — if it mishears "rap" as "wrap," the model gets "wrap" and answers about packaging. In S2S, the audio carries through, and the displayed transcript is closer to a debug view than ground truth.
+
+The same divergence showed up on Gemini Live in the matched session. Same "we'll rap down" rendered as "we'll wrap down" in the transcript, but Gemini's response mentioned "the downclimb or 12 rappels" — model heard "rap" correctly. Later in that session I asked about "the weather in the high series" — transcript rendered exactly that — and Gemini responded about "High Sierra weather." Cross-model finding: this is an S2S-class property, not a quirk of one vendor's pipeline.
+
+<audio controls src="/audio/trying-openai-realtime-and-gemini-live/rap-vs-wrap-gemini.mp3" />
+
+I also saw the same shape earlier in a different session with gpt-realtime-2: I said "I'm going to Bishop" (the Eastern Sierra town) and the transcript rendered "worship," but the model correctly responded about Bishop, California. The displayed transcript was wrong; the answer was right.
+
+This is the one S2S advantage that survives every comparison in my testing. It's also currently invisible to the developer — there's no API field for "what the model actually understood from the audio," only the transcript that may or may not match.
+
+## Closing
+
+I'm going to keep using S2S over cascaded for the kind of conversational use cases I'd otherwise have used voice mode for. The latency floor and barge-in are real wins. But the failure modes above (context drift across turns, confidently-wrong specifics on questions that need a tool, three-turn dead air when you push on a missing capability) mean I'm not going to put one in front of a customer for anything that needs to be reliable. Not yet.
+
+The web search gap in particular feels like the closest thing to a single fix that would unlock a lot of consumer-voice use cases. The other gaps — context retention, calibration on when to disclaim — look like model work, not API work. Both companies will get there. Worth checking back in a few months.

@@ -30,10 +30,10 @@ export default async function Home() {
           enterprise (government, IoT, data platforms) for the past 10+ years.
           Most recently I am the founder of{" "}
           <a href="https://getnen.ai">Nen</a>, a developer platform for
-          computer use. I&apos;m interested in building tools for developers
-          in enterprises, software that works for teams with mixed technical
-          abilities, and generally building useful things that reduce human
-          toil. I&apos;m also an avid climber of all disciplines.
+          computer use. I&apos;m interested in building tools for developers,
+          software that works for teams with mixed technical abilities, and
+          generally building useful things that reduce human toil. I&apos;m
+          also an avid climber of all disciplines.
         </p>
       </section>
 

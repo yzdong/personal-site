@@ -9,7 +9,7 @@ export const metadata = {
 
 OpenAI shipped gpt-realtime-2 on May 7, 2026. Google shipped Gemini 3.1 Flash Live around the same window. Both are speech-to-speech: a single multimodal model takes audio in and produces audio out, with no separate transcribe-LLM-synthesize pipeline in between.
 
-I'd been using the cascaded version of OpenAI's voice mode in ChatGPT for a while before this — speech-to-text, then GPT, then text-to-speech. It feels stilted in retrospect. You finish your sentence, wait, then the response starts. You can't talk over it without the whole thing falling apart. Switching to the S2S models for an afternoon made the cascaded version feel like a walkie-talkie. Lower latency is part of it; the other part is that barge-in actually works, so the conversational rhythm gets closer to talking to a person.
+If like me, you're used to talking to Siri or Alexa in a specific "I'm talking to a computer" voice — slowing your cadence, enunciating, waiting for the chime before you start, waiting for the response to finish before you reply — the S2S models are a small revelation. You can start mid-sentence. You can interrupt. You don't have to finish the response before clarifying what you actually meant. Lower latency is part of it; the other part is that barge-in actually works, so the conversational rhythm gets closer to talking to a person than talking to a device.
 
 Caveat upfront: I ran all of this from my apartment on fiber, sitting still in front of a laptop. Real S2S deployment — in a car, on an embedded device, over a flaky LTE connection — probably feels different. The latency I'm describing is the floor case, not the median.
 
@@ -19,27 +19,15 @@ I built a small WebRTC harness that runs the same script against three configura
 
 The script is a five-turn climbing-trip planning conversation. Each turn stresses a different capability — audio-signal preservation, mid-flight context, domain knowledge with proper nouns, multi-step reasoning, and tool use.
 
-**Turn 1 — audio-signal preservation + self-correction.**
-> "I wanna climb in Yosemite this weekend, no wait Bishop. What's the weather like."
+*I chose climbing because I know the domain very well and it can be logistically challenging — perfect for testing reasoning.*
 
-The "Yosemite, no wait Bishop" mid-utterance self-correction tests whether the model tracks the corrected entity, and whether the displayed transcript renders "Bishop" (the Eastern Sierra town) correctly when surrounded by climbing context.
-
-**Turn 2 — mid-flight context, hesitation handling, cross-turn memory.**
-> "Actually hmm I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite."
-
-Reverses Turn 1's correction, with filler ("Actually hmm") that energy-VAD pipelines often cut on.
-
-**Turn 3 — proper nouns + domain knowledge.**
-> "Maybe we can find some dispersed camping, what are some good options near the 120 entrance or Tioga pass."
-
-Tests how concrete the model gets on a specific corridor — does it name real Forest Service roads or fall back to "check nearby."
-
-**Turn 4 — reasoning depth, multi-step back-calculation with interacting constraints.**
-> "Let's plan out when I'd have to leave the Bay Area to get back at 7 pm on Sunday. I'm doing an 8-pitch multi-pitch climb with 3 5.9 pitches and 4 5.8 pitches. I think I'll take 30–45 minutes per 5.8 pitch and 45–60 minutes per 5.9 pitch. The approach is about 2,100 feet elevation change and 5 miles, and in the past it took me 2.5 hours to do 1,800 feet and 6 miles, so estimate my approach time. I think we'll rap down — it's 12 raps at about 30 minutes per rap. Or maybe we should do the downclimb. I think the guidebook estimated 2–3 hours for the downclimb."
-
-A back-calculation that requires holding multiple constraints simultaneously: outbound drive, climb time, descent option (rap vs. downclimb), return drive, and a hard arrival deadline. The right answer requires walking the math backward from 7pm Sunday through both legs of the drive.
-
-**Turn 5 — tool use / web search.** Discussed in its own section below.
+| # | What it tests | What I said |
+|---|---|---|
+| 1 | Audio-signal preservation + self-correction. Does the model track the corrected entity ("Yosemite, no wait Bishop") and does the transcript render Bishop correctly in climbing context? | *"I wanna climb in Yosemite this weekend, no wait Bishop. What's the weather like."* |
+| 2 | Mid-flight context, hesitation handling, cross-turn memory. Reverses Turn 1's correction, with filler ("Actually hmm") that energy-VAD pipelines often cut on. | *"Actually hmm I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite."* |
+| 3 | Proper nouns + domain knowledge. Does the model name real Forest Service roads or fall back to "check nearby"? | *"Maybe we can find some dispersed camping, what are some good options near the 120 entrance or Tioga pass."* |
+| 4 | Reasoning depth, multi-step back-calculation. Outbound drive + climb time + descent option (rap vs. downclimb) + return drive + 7 PM Sunday deadline, all interacting. Right answer requires walking the math backward through both legs of the drive. | *"Let's plan out when I'd have to leave the Bay Area to get back at 7 pm on Sunday. I'm doing an 8-pitch multi-pitch climb with 3 5.9 pitches and 4 5.8 pitches. I think I'll take 30–45 minutes per 5.8 pitch and 45–60 minutes per 5.9 pitch. The approach is about 2,100 feet elevation change and 5 miles, and in the past it took me 2.5 hours to do 1,800 feet and 6 miles, so estimate my approach time. I think we'll rap down — it's 12 raps at about 30 minutes per rap. Or maybe we should do the downclimb. I think the guidebook estimated 2–3 hours for the downclimb."* |
+| 5 | Tool use / web search. Discussed in its own section below. | *"I want to get on Dark Star on Temple Crag but I'm not sure what the weather is like in the High Sierras. Can you look into ticks on Mountain Project to see what the weather's like?"* |
 
 Sessions are recorded as separate user and model audio tracks plus a transcript. Most of the clips below come from a single gpt-realtime-2 run and a matched Gemini Live run on 2026-06-25.
 
@@ -60,6 +48,18 @@ Latency and barge-in held up. When I interrupted the model mid-sentence, it stop
 One smaller thing I didn't expect: the S2S models preserve the audio signal end-to-end, so when the transcript layer mis-hears something, the model can still respond correctly. I'll come back to this — it's the same property that produces the rap/wrap divergence below.
 
 A note on voice character. The default OpenAI voice (I was on Cedar) sounded natural and fairly even — the kind of register you'd pick if you wanted a voice that gets out of the way. Gemini Live's default voice had more going on: noticeably more inflection across the sentence, and a raspy or hoarse quality baked into the voice itself. Not unpleasant, more characterful. Worth flagging because for any consumer voice product, the voice character is half the product — and Gemini and OpenAI are picking different defaults on a spectrum from neutral-narrator to expressive-companion.
+
+## Where the cascaded baseline came out ahead
+
+The cascaded pipeline lost on latency, barge-in, and audio preservation. It won on substance, in different ways on every turn of the script. Worth naming because the post otherwise risks reading as "S2S beats cascaded on everything that matters," and that's not what I saw.
+
+- **Turn 1 (weather).** Cascaded opened with *"I can't access live weather data, but for late June it's typically hot and dry: daytime highs often 85–100°F, cooler nights around 50–60°F… To plan precisely, I'd check the NWS, Weather.gov, or a weather app for 'Bishop, CA'."* It named the limit, gave a seasonal hedge, and pointed at the right source. Neither S2S did any of that — gpt-realtime-2 fabricated specifics, Gemini said "looking into that" without looking.
+- **Turn 2 (Yosemite lodging).** Cascaded named alternatives — Tuolumne Meadows, Lover's Leap, Tahoe crags — plus a cancellation strategy (Recreation.gov) and nearby towns (El Portal, Lee Vining, Groveland). The S2S models gave "check nearby" advice with no specifics.
+- **Turn 3 (dispersed camping near Hwy 120).** Cascaded named real Forest Service roads — Forest Rd 1N02 / Poole Power Plant Rd, Sawmill Canyon Rd, Hardin Flat / Cherry Lake Rd in Stanislaus National Forest. These check out. S2S gave general "Saddlebag Lake Road / Lee Vining Canyon" — fine but less actionable.
+- **Turn 4 (the back-calc).** Cascaded was the only one that correctly differentiated the two descent options *and* named the realistic alternative: *"~6 hours of rappels or a much better 2–3 hours for the downclimb… or do the big route Saturday and keep Sunday lighter."* That last clause is the actually-right answer to the question. Neither S2S got there.
+- **Turn 5 (tool use).** Covered in the Turn 5 section below — cascaded gave the cleanest refusal plus the most useful general knowledge and a specific NOAA point forecast to check.
+
+The common thread is the LLM. GPT-5.1 over Responses is text-trained, has stronger calibration on what it doesn't know, and is willing to volunteer specific sources or alternatives when it can't answer the question as asked. The S2S models default to either fabricating specifics or fabricating the action of looking them up. That's a model-training gap, not a structural property of S2S — but it's where the cascaded pipeline still beats both Realtime and Gemini Live on every turn that needs substance more than tempo.
 
 ## What still doesn't work
 
@@ -167,6 +167,8 @@ This is the one S2S advantage that survives every comparison in my testing. It's
 
 ## Closing
 
-I'm going to keep using S2S over cascaded for the kind of conversational use cases I'd otherwise have used voice mode for. The latency floor and barge-in are real wins. But the failure modes above (context drift across turns, confidently-wrong specifics on questions that need a tool, three-turn dead air when you push on a missing capability) mean I'm not going to put one in front of a customer for anything that needs to be reliable. Not yet.
+I'm going to keep using S2S over cascaded for casual conversational use the way I'd previously used ChatGPT voice mode. The latency floor and barge-in are real wins, and the audio-preservation property catches transcript mistakes that would otherwise derail the answer.
 
-The web search gap in particular feels like the closest thing to a single fix that would unlock a lot of consumer-voice use cases. The other gaps — context retention, calibration on when to disclaim — look like model work, not API work. Both companies will get there. Worth checking back in a few months.
+Where I wouldn't put either S2S model in front of a customer yet: anything that has to be reliable. Both Realtime and Gemini Live dropped a date constraint inside the same six-turn conversation, both fabricated specifics on questions that needed a live lookup (gpt-realtime-2 silently, Gemini Live by claiming to be searching when it wasn't), both went silent for several consecutive turns in this session under different triggers, and both silently resolved an under-specified constraint in the back-calculation rather than asking. These are the same shapes of failure across two different vendors' speech-to-speech stacks, which makes them feel less like vendor quirks and more like where the modality is right now.
+
+The fixes look like they live in two different places. The web search gap on Realtime is the cleanest API-surface fix — bringing the Responses hosted-tool ecosystem in as native Realtime tool types is plumbing, not new research, and it would cut off most of the failure modes above at the root. The other gaps — context retention across turns, calibration on when to volunteer a "I can't actually check this" disclaimer, asking instead of silently picking when a constraint is under-specified — are model-training gaps that the cascaded GPT-5.1 baseline doesn't share. Both companies will close them. Worth checking back in a few months.

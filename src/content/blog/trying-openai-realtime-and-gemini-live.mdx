@@ -17,7 +17,29 @@ Caveat upfront: I ran all of this from my apartment on fiber, sitting still in f
 
 I built a small WebRTC harness that runs the same script against three configurations: gpt-realtime-2 (S2S), Gemini Live 3.1 Flash (S2S), and a cascaded baseline (Whisper transcription → GPT-5.1 via Responses at `reasoning_effort: low` → gpt-4o-mini-tts). One UI, one mic, one script, switch the radio button.
 
-The script is a five-turn climbing-trip planning conversation: I'm planning a weekend trip to Yosemite, mention dispersed camping near the Highway 120 entrance, ask about weather, and then ask the model to back-calculate when I'd need to leave the Bay Area to be home by 7pm Sunday given an 8-pitch climb with stated approach time, pitch times, and descent options. The last turn includes a deliberate question that requires a web search (recent ascent conditions).
+The script is a five-turn climbing-trip planning conversation. Each turn stresses a different capability — audio-signal preservation, mid-flight context, domain knowledge with proper nouns, multi-step reasoning, and tool use.
+
+**Turn 1 — audio-signal preservation + self-correction.**
+> "I wanna climb in Yosemite this weekend, no wait Bishop. What's the weather like."
+
+The "Yosemite, no wait Bishop" mid-utterance self-correction tests whether the model tracks the corrected entity, and whether the displayed transcript renders "Bishop" (the Eastern Sierra town) correctly when surrounded by climbing context.
+
+**Turn 2 — mid-flight context, hesitation handling, cross-turn memory.**
+> "Actually hmm I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite."
+
+Reverses Turn 1's correction, with filler ("Actually hmm") that energy-VAD pipelines often cut on.
+
+**Turn 3 — proper nouns + domain knowledge.**
+> "Maybe we can find some dispersed camping, what are some good options near the 120 entrance or Tioga pass."
+
+Tests how concrete the model gets on a specific corridor — does it name real Forest Service roads or fall back to "check nearby."
+
+**Turn 4 — reasoning depth, multi-step back-calculation with interacting constraints.**
+> "Let's plan out when I'd have to leave the Bay Area to get back at 7 pm on Sunday. I'm doing an 8-pitch multi-pitch climb with 3 5.9 pitches and 4 5.8 pitches. I think I'll take 30–45 minutes per 5.8 pitch and 45–60 minutes per 5.9 pitch. The approach is about 2,100 feet elevation change and 5 miles, and in the past it took me 2.5 hours to do 1,800 feet and 6 miles, so estimate my approach time. I think we'll rap down — it's 12 raps at about 30 minutes per rap. Or maybe we should do the downclimb. I think the guidebook estimated 2–3 hours for the downclimb."
+
+A back-calculation that requires holding multiple constraints simultaneously: outbound drive, climb time, descent option (rap vs. downclimb), return drive, and a hard arrival deadline. The right answer requires walking the math backward from 7pm Sunday through both legs of the drive.
+
+**Turn 5 — tool use / web search.** Discussed in its own section below.
 
 Sessions are recorded as separate user and model audio tracks plus a transcript. Most of the clips below come from a single gpt-realtime-2 run and a matched Gemini Live run on 2026-06-25.
 
@@ -29,7 +51,7 @@ The same pattern shows up on the output side. The LLM behind the cascaded pipeli
 
 A latency caveat that cuts the same direction. The cascaded numbers I'll show in a later section (7–14 second per-turn floor, 24 seconds on the multi-clause planning turn) aren't a structural floor on cascaded — they're the floor of *my naive implementation*. The pipeline waits for STT to finish, then waits for the LLM response in full, then waits for TTS to render the full audio blob, then plays. A faster cascaded build would stream tokens from the LLM into the TTS as they arrive, and start audio playback on the first TTS chunks instead of waiting for the full blob. Done well, time-to-first-audio on a turn like the back-calc could land in the 5–8 second range instead of 24. That's still slower than S2S, but the gap isn't where I left it in this build. The point is: closing that gap is *more* cascaded complexity to ship, not less. S2S does it inside the model.
 
-Aseem at Tolan, when I'd talked to him a few weeks earlier, named turn detection as the central pain point in cascaded voice agents. This is what he meant — energy-based VAD on the user side is the cascaded builder's constant tuning problem, and the kind of bug that *looks* like a model reasoning failure when it's actually an input fragmentation failure. Both Realtime and Gemini Live use server-side VAD that I never had to tune.
+Turn detection on the user side is the cascaded builder's constant tuning problem, and the kind of bug that *looks* like a model reasoning failure when it's actually an input fragmentation failure. Both Realtime and Gemini Live use server-side VAD that I never had to tune.
 
 ## What worked
 
@@ -86,15 +108,27 @@ So the pattern across both models is the same problem in two shapes. gpt-realtim
 
 This is the same failure I saw at 2026-06-02 with a different prompt. In that session I asked the model to look up recent ascents on Mountain Project, and it responded by speaking a hallucinated Python `requests.get()` call aloud, then pretending to be processing while nothing was actually running. The Yosemite weather case is the same underlying problem (no native tool composition for live data) producing a different surface failure (plausible specifics instead of obvious Python). The plausible failure is the more dangerous one because the user has no signal they should distrust it.
 
-### No native web_search
+### Turn 5: the tool-use question, three different behaviors
 
-The Realtime API exposes `function`, `mcp`, and `connector_googlecalendar` as built-in tool types. It doesn't expose `web_search` the way the Responses API does. If you want web search inside a voice agent today, you write a `function` tool that bridges back to Responses — Justin Umberti at OpenAI confirmed this pattern on the community forum.
+The last turn of the script is deliberately designed to require a live lookup. Dark Star on Temple Crag is a real alpine route in the High Sierra; "ticks" on Mountain Project are climber logs that record recent conditions. Without a web search, the model can't answer correctly — what it does in that case is what I wanted to see.
 
-That works, but the bridge adds latency and is something every developer building voice agents writes themselves. More relevant for end users: when the bridge isn't there, the model improvises around the gap in the ways above (fabricated specifics, Python-as-voice, or three consecutive silent turns — which is what happened next in this session when I pushed on "can you do a web search").
+> "I want to get on Dark Star on Temple Crag but I'm not sure what the weather is like in the High Sierras. Can you look into ticks on Mountain Project to see what the weather's like?"
+
+The three configurations produced three distinct behaviors.
+
+**gpt-realtime-2 didn't reach Turn 5 in this session.** After I pushed on "can you do a web search?" on a Turn 4 sub-question, the model went silent for three consecutive turns and the session derailed before I could ask the Dark Star question. On a different session three weeks earlier with the same shape of question — asking it to look up Mountain Project ticks — gpt-realtime-2 hallucinated a Python `requests.get()` call and spoke it aloud, then pretended to be processing while nothing was running. Two failure modes, same underlying problem: no native tool composition for live data, model improvises around the gap.
 
 <audio controls src="/audio/trying-openai-realtime-and-gemini-live/silent-turns.mp3" />
 
-I think this is the cleanest gap to close in the API surface. The Responses ecosystem already has `web_search`, `file_search`, `code_interpreter`, `image_generation`. Bringing them in as native tool types on Realtime is mostly plumbing, not new research.
+**Gemini Live refused cleanly with a redirect.** *"I cannot directly access specific 'ticks' or real-time conditions on Mountain Project. However, the High Sierra weather can be quite variable, so checking the general forecast for the elevation near Temple Crag is recommended."* Notable mostly because Gemini was *less* honest earlier in the same session — it had said "looking into that now" when it wasn't. The capability-disclosure behavior is inconsistent within a single session.
+
+**Cascaded gave the best answer of the three.** *"I can't look up Mountain Project ticks directly, but for Temple Crag in summer you're generally looking at cool to mild days (often 50s–70s°F on route depending on wind/sun) and cold nights, with thunderstorms possible in the afternoon. I'd check the NOAA point forecast for Temple Crag / 3rd Lake plus recent MP comments for Dark Star to confirm snow, mosquitos, and storm patterns, and aim for a pre-dawn start to be off the upper face before any afternoon weather."*
+
+It refuses the part it can't do, gives accurate seasonal knowledge a climber can actually use, names a specific NOAA point forecast and the right MP route page to check, and adds a tactical recommendation (pre-dawn start to beat afternoon weather). This is the response a climbing partner would give. It also names the limit explicitly up front, which Gemini did in this exchange and gpt-realtime-2 didn't on the 06-02 run.
+
+The substance gap traces back to the model behind the LLM stage. GPT-5.1 over the Responses API is text-trained, has stronger calibration on what it doesn't know, and is willing to volunteer specific sources when it redirects. The S2S models default to either fabricating the action ("checking now…") or fabricating the data outright. That's a model behavior, not an API surface gap.
+
+**The API surface gap is still real, though, and it's the cleanest fix.** The Realtime API exposes `function`, `mcp`, and `connector_googlecalendar` as built-in tool types but doesn't expose `web_search` the way the Responses API does. If you want web search inside a voice agent today, you write a `function` tool that bridges back to Responses — Justin Umberti at OpenAI confirmed this pattern on the community forum. That works, but the bridge adds latency and every developer writes it themselves. Bringing the Responses tool ecosystem (`web_search`, `file_search`, `code_interpreter`, `image_generation`) in as native types on Realtime is mostly plumbing, not new research — and it'd cut off most of the failure modes above at the root.
 
 ### Transcript divergence from what the model heard
 

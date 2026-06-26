@@ -24,7 +24,7 @@ The script is a five-turn climbing-trip planning conversation. Each turn stresse
 | 1 | *"I wanna climb in Yosemite this weekend, no wait Bishop. What's the weather like."* | Audio-signal preservation + self-correction. Does the model track the corrected entity ("Yosemite, no wait Bishop") and does the transcript render Bishop correctly in climbing context? |
 | 2 | *"Actually hmm I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite."* | Mid-flight context, hesitation handling, cross-turn memory. Reverses Turn 1's correction, with filler ("Actually hmm") that energy-VAD pipelines often cut on. |
 | 3 | *"Maybe we can find some dispersed camping, what are some good options near the 120 entrance or Tioga pass."* | Proper nouns + domain knowledge. Does the model name real Forest Service roads or fall back to "check nearby"? |
-| 4 | *"Let's plan out when I'd have to leave the Bay Area to get back at 7 pm on Sunday. I'm doing an 8-pitch multi-pitch climb with 3 5.9 pitches and 4 5.8 pitches. I think I'll take 30–45 minutes per 5.8 pitch and 45–60 minutes per 5.9 pitch. The approach is about 2,100 feet elevation change and 5 miles, and in the past it took me 2.5 hours to do 1,800 feet and 6 miles, so estimate my approach time. I think we'll rap down — it's 12 raps at about 30 minutes per rap. Or maybe we should do the downclimb. I think the guidebook estimated 2–3 hours for the downclimb."* | Reasoning depth, multi-step back-calculation. Outbound drive + climb time + descent option (rap vs. downclimb) + return drive + 7 PM Sunday deadline, all interacting. Right answer requires walking the math backward through both legs of the drive. |
+| 4 | *"Let's plan out when I'd have to leave the Bay Area to get back at 7 pm on Sunday. I'm doing an 8-pitch multi-pitch climb with 3 5.9 pitches and 4 5.8 pitches. I think I'll take 30–45 minutes per 5.8 pitch and 45–60 minutes per 5.9 pitch. The approach is about 2,100 feet elevation change and 5 miles, and in the past it took me 2.5 hours to do 1,800 feet and 6 miles, so estimate my approach time. I think we'll rap down — it's 12 raps at about 30 minutes per rap. Or maybe we should do the downclimb. I think the guidebook estimated 2–3 hours for the downclimb."* | Reasoning depth, multi-step back-calculation. Outbound drive + climb time + descent option (rap vs. downclimb) + return drive + 7 PM Sunday deadline. An implicit assumption is that I am leaving and returning from the Bay Area to Yosemite. |
 | 5 | *"I want to get on Dark Star on Temple Crag but I'm not sure what the weather is like in the High Sierras. Can you look into ticks on Mountain Project to see what the weather's like?"* | Tool use / web search. A deliberately tool-requiring question — Dark Star on Temple Crag is a real alpine route, and recent "ticks" on Mountain Project (climber logs) are how you'd actually check conditions. Without a web search, the model can't answer correctly. |
 
 Sessions are recorded as separate user and model audio tracks plus a transcript. Most of the clips below come from a single gpt-realtime-2 run and a matched Gemini Live run on 2026-06-25.
@@ -63,8 +63,8 @@ Where they differ across the dimensions I cared about in this script. Each row i
     </tr>
     <tr>
       <td><strong>Context retention across turns</strong></td>
-      <td>Dropped "weekend" once</td>
-      <td>Dropped "weekend" once; otherwise held</td>
+      <td>Dropped "weekend" context</td>
+      <td>Dropped "weekend" context</td>
       <td>Held throughout</td>
     </tr>
     <tr>
@@ -76,7 +76,7 @@ Where they differ across the dimensions I cared about in this script. Each row i
     <tr>
       <td><strong>Complex reasoning</strong> (turn 4 reasoning)</td>
       <td>Skipped outbound drive entirely; answered "leave climbing area" instead of "leave Bay"</td>
-      <td>Got the structurally right answer — Saturday morning, before 8 AM. Did not want to commit to specifics.</td>
+      <td>Got the structurally right answer — Saturday morning, before 8 AM. Did not commit to a more specific timeline.</td>
       <td>Differentiated rappel vs. downclimb correctly; named Saturday-departure alternative</td>
     </tr>
   </tbody>
@@ -108,18 +108,6 @@ The Turn 4 reasoning has many sub-components — approach time scaling, per-pitc
 
 OpenAI shows its work — climb partner-style — so I can sanity-check each step as the model walks through it. If it had scaled the approach wrong, or assumed the wrong descent option, I'd hear that in time to correct. Gemini just lands on "9 to 12 hours" with no breakdown, takes a long pause before doing so, and needs to be pushed twice before giving a specific time. Both arrive at roughly the same total range, but only one of them is auditable in flight.
 
-## Where the cascaded baseline came out ahead
-
-In this current generation, cascaded models still win out on reasoning.
-
-- **Turn 1 (weather).** Cascaded opened with *"I can't access live weather data, but for late June it's typically hot and dry: daytime highs often 85–100°F, cooler nights around 50–60°F… To plan precisely, I'd check the NWS, Weather.gov, or a weather app for 'Bishop, CA'."* It named the limit, gave a seasonal hedge, and pointed at the right source. Neither S2S did any of that — both fabricated specific weather numbers (gpt-realtime-2: "mid-80s Fahrenheit and lows in the 50s"; Gemini Live: "quite sunny right now with a temperature of about 75 degrees Fahrenheit") with no disclaimer that there was no live data behind them.
-- **Turn 2 (Yosemite lodging).** Cascaded named alternatives — Tuolumne Meadows, Lover's Leap, Tahoe crags — plus a cancellation strategy (Recreation.gov) and nearby towns (El Portal, Lee Vining, Groveland). The S2S models gave "check nearby" advice with no specifics.
-- **Turn 3 (dispersed camping near Hwy 120).** Cascaded named real Forest Service roads — Forest Rd 1N02 / Poole Power Plant Rd, Sawmill Canyon Rd, Hardin Flat / Cherry Lake Rd in Stanislaus National Forest. These check out. S2S gave general "Saddlebag Lake Road / Lee Vining Canyon" — fine but less actionable.
-- **Turn 4 (reasoning).** Cascaded was the only one that correctly differentiated the two descent options *and* named the realistic alternative: *"~6 hours of rappels or a much better 2–3 hours for the downclimb… or do the big route Saturday and keep Sunday lighter."* That last clause is the actually-right answer to the question. Neither S2S got there.
-- **Turn 5 (tool use).** Covered in the Turn 5 section below — cascaded gave the cleanest refusal plus the most useful general knowledge and a specific NOAA point forecast to check.
-
-The common thread is the LLM. GPT-5.1 over Responses is text-trained, has stronger calibration on what it doesn't know, and is willing to volunteer specific sources or alternatives when it can't answer the question as asked. The S2S models default to either fabricating specifics or fabricating the action of looking them up. That's a model-training gap, not a structural property of S2S — but it's where the cascaded pipeline still beats both Realtime and Gemini Live on every turn that needs substance more than tempo.
-
 ## What still doesn't work
 
 ### Both models dropped context inside a six-minute conversation
@@ -131,7 +119,7 @@ The exact same drop happened on Gemini Live on a prior run of the same script. I
 | **gpt-realtime-2 — asked for dates after I'd said weekend** | **Gemini Live — same drop, three turns in (prior run)** |
 |---|---|
 | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-weekend-openai.mp3" /> | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-weekend-gemini.mp3" /> |
-| **Me:** What's the weather in Yosemite?<br/>**Model:** Sure, let me check that for you. Can you tell me which specific dates you're planning to be in Yosemite?<br/>**Me:** Next week.<br/>**Model:** Got it. Next week in Yosemite—<br/>**Me:** Actually, this weekend.<br/>**Model:** Understood. This weekend in Yosemite, the weather is expected to be warm, with highs around the mid-80s Fahrenheit and lows in the 50s. | **Me:** I want to climb in Yosemite this weekend. No wait, um, Bishop. What's the weather like?<br/>**Model:** Bishop is looking pretty clear with warm temperatures this weekend, perfect for climbing…<br/>**Me:** Actually, I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite.<br/>**Model:** That's true, Yosemite can be tricky. I can help check for lodging availability if you'd like.<br/>**Me:** Yeah, yeah, do that.<br/>**Model:** Okay, looking into that now. What specific dates are you considering for Yosemite?<br/>**Me:** This weekend. |
+| **Me:** What's the weather in Yosemite?<br/>**Model:** Sure, let me check that for you. Can you tell me which specific dates you're planning to be in Yosemite?<br/>**Me:** Next week.<br/>**Model:** Got it. Next week in Yosemite—<br/>**Me:** Actually, this weekend.<br/>**Model:** Understood. This weekend in Yosemite, the weather is expected to be warm, with highs around the mid-80s Fahrenheit and lows in the 50s. | **Model:** …I can help check for lodging availability…<br/>**Me:** Yeah, yeah, do that.<br/>**Model:** Okay, looking into that now. What specific dates are you considering for Yosemite?<br/>**Me:** This weekend. |
 
 ### Both models fabricated specifics, in different shapes
 
@@ -139,12 +127,12 @@ When I asked gpt-realtime-2 about the weather in Yosemite for the weekend, the m
 
 In the same session, a few turns later, I asked if it could do a web search and it correctly said it couldn't. So the model knows it doesn't have web search. It just doesn't always reach for that disclaimer when the question would benefit from one.
 
-Gemini Live did the same thing in this run, in a simpler form: I asked about the weather in Bishop and got *"Bishop, California is quite sunny right now with a temperature of about 75 degrees Fahrenheit. It's a beautiful day for climbing!"* Specific number, present tense, no disclaimer. No live weather behind it.
+Gemini Live did the same thing in this run, in a slightly different shape: I asked about the weather in Bishop and Gemini started to say *"Bishop, California is quite sunny right now…"* The transcript log went on to capture *"…with a temperature of about 75 degrees Fahrenheit. It's a beautiful day for climbing!"* — but I'd barged in by then and the audio cuts off after "right now." The fabricated specifics are visible in the *intended* response even though I didn't hear them out loud.
 
-| **gpt-realtime-2 — fabricated mid-80s/50s for Yosemite** | **Gemini Live — fabricated "75 degrees Fahrenheit" for Bishop** |
+| **gpt-realtime-2 — fabricated mid-80s/50s for Yosemite (audible)** | **Gemini Live — started to fabricate "75 degrees Fahrenheit" for Bishop (cut off audibly, captured in transcript log)** |
 |---|---|
 | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/weather-hallucination.mp3" /> | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/weather-hallucination-gemini.mp3" /> |
-| **Me:** Actually, this weekend.<br/>**Model:** Understood. This weekend in Yosemite, the weather is expected to be warm, with highs around the mid-80s Fahrenheit and lows in the 50s. Expect mostly sunny skies and dry conditions, so it should be great for outdoor activities. | **Me:** Bishop, what's the weather like?<br/>**Model:** Bishop, California is quite sunny right now with a temperature of about 75 degrees Fahrenheit. It's a beautiful day for climbing! |
+| **Me:** Actually, this weekend.<br/>**Model:** Understood. This weekend in Yosemite, the weather is expected to be warm, with highs around the mid-80s Fahrenheit and lows in the 50s. Expect mostly sunny skies and dry conditions, so it should be great for outdoor activities. | **Me:** Bishop, what's the weather like?<br/>**Model (audible):** Bishop, California is quite sunny right now—<br/>**Model (continued in transcript log, not audible because I barged in):** …with a temperature of about 75 degrees Fahrenheit. It's a beautiful day for climbing! |
 
 On a prior run of the same script, Gemini did something more actively misleading: when asked to check lodging, it said *"Okay, looking into that now"* and gave specific recommendations as if a search had run. No search had run. It only admitted *"I'm providing information based on general knowledge"* when I directly asked *"Are you looking?"* — the "checking…" phrasing is what an end user would take as confirmation that a real lookup just ran. The fact that this only showed up in one of two runs is itself a signal: voice agents that sometimes fabricate the *action* of searching are a meaningfully harder reliability problem than ones that consistently just fabricate the data.
 
@@ -161,10 +149,6 @@ The three configurations produced three distinct behaviors.
 **gpt-realtime-2 tried to hallucinate a `requests.get()` call** when asked to look up ticks on Mountain Project — spoke the Python code aloud, including a fabricated API key, then pretended to be processing while nothing was running. No native tool composition for live data, model improvises around the gap.
 
 **Gemini Live refused cleanly with a redirect.** *"I can't access specific ticks on Mountain Project, but weather in the High Sierra can be unpredictable. I recommend checking a specific weather forecast for the Temple Crag area closer to your dates."* Names the limit, redirects to general guidance. Less specific than cascaded about *which* forecast source to use, but the shape of the response is right.
-
-**Cascaded gave the best answer of the three.** *"I can't look up Mountain Project ticks directly, but for Temple Crag in summer you're generally looking at cool to mild days (often 50s–70s°F on route depending on wind/sun) and cold nights, with thunderstorms possible in the afternoon. I'd check the NOAA point forecast for Temple Crag / 3rd Lake plus recent MP comments for Dark Star to confirm snow, mosquitos, and storm patterns, and aim for a pre-dawn start to be off the upper face before any afternoon weather."*
-
-It refuses the part it can't do, gives accurate seasonal knowledge a climber can actually use, names a specific NOAA point forecast and the right MP route page to check, and adds a tactical recommendation (pre-dawn start to beat afternoon weather). This is the response a climbing partner would give. It also names the limit explicitly up front, which Gemini did in this exchange and gpt-realtime-2 didn't on the 06-02 run.
 
 The substance gap traces back to the model behind the LLM stage. GPT-5.1 over the Responses API is text-trained, has stronger calibration on what it doesn't know, and is willing to volunteer specific sources when it redirects. The S2S models default to either fabricating the action ("checking now…") or fabricating the data outright. That's a model behavior, not an API surface gap.
 
@@ -197,6 +181,18 @@ Later in the Gemini session, the same shape: I asked about "the weather in the h
 I also saw the same shape earlier in a different session with gpt-realtime-2: I said "I'm going to Bishop" (the Eastern Sierra town) and the transcript rendered "worship," but the model correctly responded about Bishop, California. The displayed transcript was wrong; the answer was right.
 
 This is the one S2S advantage that survives every comparison in my testing. It's also currently invisible to the developer — there's no API field for "what the model actually understood from the audio," only the transcript that may or may not match.
+
+## Where the cascaded baseline came out ahead
+
+In this current generation, cascaded models still win out on reasoning.
+
+- **Turn 1 (weather).** Cascaded opened with *"I can't access live weather data, but for late June it's typically hot and dry: daytime highs often 85–100°F, cooler nights around 50–60°F… To plan precisely, I'd check the NWS, Weather.gov, or a weather app for 'Bishop, CA'."* It named the limit, gave a seasonal hedge, and pointed at the right source. Neither S2S did any of that — both fabricated specific weather numbers (gpt-realtime-2: "mid-80s Fahrenheit and lows in the 50s"; Gemini Live: "quite sunny right now with a temperature of about 75 degrees Fahrenheit") with no disclaimer that there was no live data behind them.
+- **Turn 2 (Yosemite lodging).** Cascaded named alternatives — Tuolumne Meadows, Lover's Leap, Tahoe crags — plus a cancellation strategy (Recreation.gov) and nearby towns (El Portal, Lee Vining, Groveland). The S2S models gave "check nearby" advice with no specifics.
+- **Turn 3 (dispersed camping near Hwy 120).** Cascaded named real Forest Service roads — Forest Rd 1N02 / Poole Power Plant Rd, Sawmill Canyon Rd, Hardin Flat / Cherry Lake Rd in Stanislaus National Forest. These check out. S2S gave general "Saddlebag Lake Road / Lee Vining Canyon" — fine but less actionable.
+- **Turn 4 (reasoning).** Cascaded was the only one that correctly differentiated the two descent options *and* named the realistic alternative: *"~6 hours of rappels or a much better 2–3 hours for the downclimb… or do the big route Saturday and keep Sunday lighter."* That last clause is the actually-right answer to the question. Neither S2S got there.
+- **Turn 5 (tool use).** Cascaded gave the best answer of the three. *"I can't look up Mountain Project ticks directly, but for Temple Crag in summer you're generally looking at cool to mild days (often 50s–70s°F on route depending on wind/sun) and cold nights, with thunderstorms possible in the afternoon. I'd check the NOAA point forecast for Temple Crag / 3rd Lake plus recent MP comments for Dark Star to confirm snow, mosquitos, and storm patterns, and aim for a pre-dawn start to be off the upper face before any afternoon weather."* It refuses the part it can't do, gives accurate seasonal knowledge a climber can actually use, names a specific NOAA point forecast and the right MP route page to check, and adds a tactical recommendation. The response a climbing partner would give.
+
+The common thread is the LLM. GPT-5.1 over Responses is text-trained, has stronger calibration on what it doesn't know, and is willing to volunteer specific sources or alternatives when it can't answer the question as asked. The S2S models default to either fabricating specifics or fabricating the action of looking them up. That's a model-training gap, not a structural property of S2S — but it's where the cascaded pipeline still beats both Realtime and Gemini Live on every turn that needs substance more than tempo.
 
 ## Closing
 

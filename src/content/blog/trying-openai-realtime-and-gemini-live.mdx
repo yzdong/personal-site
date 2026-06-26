@@ -209,7 +209,7 @@ Later in the Gemini session, the same shape: I asked about "the weather in the h
 
 I also saw the same shape earlier in a different session with gpt-realtime-2: I said "I'm going to Bishop" (the Eastern Sierra town) and the transcript rendered "worship," but the model correctly responded about Bishop, California. The displayed transcript was wrong; the answer was right.
 
-This is the one S2S advantage that survives every comparison in my testing. It's also currently invisible to the developer — there's no API field for "what the model actually understood from the audio," only the transcript that may or may not match.
+This is actually confusing for a developer. The transcript is the only thing you can log, store, or feed into evals — but it's not what the model actually used to produce its response. There's no API field for "what the model heard from the audio," so debugging cases where the model answered correctly despite a bad transcript (or wrong despite a good one) requires guessing at the gap. Cascaded doesn't have this problem; the transcript IS the input.
 
 ## Where the cascaded baseline came out ahead
 

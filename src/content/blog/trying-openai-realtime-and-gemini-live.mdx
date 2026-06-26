@@ -63,7 +63,7 @@ Where they differ across the dimensions I cared about in this script. Each row i
     </tr>
     <tr>
       <td><strong>Context retention across turns</strong></td>
-      <td>Dropped "weekend" once; collapsed Bay-Area framing on turn 4</td>
+      <td>Dropped "weekend" once</td>
       <td>Dropped "weekend" once; otherwise held</td>
       <td>Held throughout</td>
     </tr>
@@ -76,7 +76,7 @@ Where they differ across the dimensions I cared about in this script. Each row i
     <tr>
       <td><strong>Complex reasoning</strong> (turn 4 reasoning)</td>
       <td>Skipped outbound drive entirely; answered "leave climbing area" instead of "leave Bay"</td>
-      <td>Got the structurally right answer — Saturday morning, before 8 AM. On a first run had given a confidently-wrong Sunday 2-5 AM answer; non-deterministic across runs.</td>
+      <td>Got the structurally right answer — Saturday morning, before 8 AM. Did not want to commit to specifics.</td>
       <td>Differentiated rappel vs. downclimb correctly; named Saturday-departure alternative</td>
     </tr>
   </tbody>
@@ -93,7 +93,7 @@ When I interrupted mid-utterance — including the "no wait, actually X" self-co
 | **gpt-realtime-2 — caught the redirect, but misattributed "too hot" to Yosemite** | **Gemini Live — caught the redirect cleanly** |
 |---|---|
 | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/barge-in-openai.mp3" /> | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/barge-in-gemini.mp3" /> |
-| **Me:** Wait, Bishop, what's the weather like?<br/>**Model:** It looks like the weather is sunny and clear, with bright skies and no visible clouds. It's likely warm and pleasant outside.<br/>**Me:** Actually, I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite.<br/>**Model:** Yeah, it can definitely get pretty hot in Yosemite during the summer… | **Me:** I want to climb in Yosemite this weekend, no wait, um, Bishop, what's the weather like?<br/>**Model:** Sounds like fun! Bishop is looking pretty clear with warm temperatures this weekend, perfect for climbing. Just be sure to check the specific forecast closer to the date. |
+| **Me:** I wanna climb in Yosemite this weekend, no wait, Bishop. What's the weather like?<br/>**Model:** It looks like—<br/>**Me:** *(interrupting)* Actually, I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite.<br/>**Model:** Yeah, it can definitely get pretty hot in Yosemite during the summer… | **Me:** I want to climb in Yosemite this weekend, no wait, um, Bishop, what's the weather like?<br/>**Model:** Bishop, California is quite sunny right now—<br/>**Me:** *(interrupting)* Actually, I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite.<br/>**Model:** Finding accommodations in Yosemite can be tricky, but exploring different areas or planning ahead can definitely help. |
 
 OpenAI's mistake here is worth flagging. I'd said *"Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite"* — Bishop is the city I'd said would be too hot. The model picked up on "Yosemite" and attributed the *too-hot* property to it, replying about Yosemite summer heat. The barge-in mechanics worked (model didn't lose the turn); the substance comprehension didn't. Gemini's interrupt-handle is cleaner on this opening exchange — it tracked which entity was active and gave a Bishop-specific weather answer.
 
@@ -131,7 +131,7 @@ The exact same drop happened on Gemini Live on a prior run of the same script. I
 | **gpt-realtime-2 — asked for dates after I'd said weekend** | **Gemini Live — same drop, three turns in (prior run)** |
 |---|---|
 | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-weekend-openai.mp3" /> | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-weekend-gemini.mp3" /> |
-| **Me:** What's the weather in Yosemite?<br/>**Model:** Sure, let me check that for you. Can you tell me which specific dates you're planning to be in Yosemite?<br/>**Me:** Next week.<br/>**Model:** Got it. Next week in Yosemite—<br/>**Me:** Actually, this weekend. | **Me:** I want to climb in Yosemite this weekend. No wait, um, Bishop. What's the weather like?<br/>**Model:** Bishop is looking pretty clear with warm temperatures this weekend, perfect for climbing…<br/>**Me:** Actually, I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite.<br/>**Model:** That's true, Yosemite can be tricky. I can help check for lodging availability if you'd like.<br/>**Me:** Yeah, yeah, do that.<br/>**Model:** Okay, looking into that now. What specific dates are you considering for Yosemite?<br/>**Me:** This weekend. |
+| **Me:** What's the weather in Yosemite?<br/>**Model:** Sure, let me check that for you. Can you tell me which specific dates you're planning to be in Yosemite?<br/>**Me:** Next week.<br/>**Model:** Got it. Next week in Yosemite—<br/>**Me:** Actually, this weekend.<br/>**Model:** Understood. This weekend in Yosemite, the weather is expected to be warm, with highs around the mid-80s Fahrenheit and lows in the 50s. | **Me:** I want to climb in Yosemite this weekend. No wait, um, Bishop. What's the weather like?<br/>**Model:** Bishop is looking pretty clear with warm temperatures this weekend, perfect for climbing…<br/>**Me:** Actually, I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite.<br/>**Model:** That's true, Yosemite can be tricky. I can help check for lodging availability if you'd like.<br/>**Me:** Yeah, yeah, do that.<br/>**Model:** Okay, looking into that now. What specific dates are you considering for Yosemite?<br/>**Me:** This weekend. |
 
 ### Both models fabricated specifics, in different shapes
 
@@ -200,11 +200,7 @@ This is the one S2S advantage that survives every comparison in my testing. It's
 
 ## Closing
 
-I'm going to keep using S2S over cascaded for casual conversational use the way I'd previously used ChatGPT voice mode. The latency floor and barge-in are real wins, and the audio-preservation property catches transcript mistakes that would otherwise derail the answer.
-
-Where I wouldn't put either S2S model in front of a customer yet: anything that has to be reliable. Both fabricated specific numbers on weather questions with no live lookup behind them and no disclaimer. Both silently resolved an under-specified constraint in the Turn 4 reasoning rather than asking. Gemini gave meaningfully different answers to the same Turn 4 reasoning question across two runs of the same script — a confident wrong answer one time, a structurally correct one the next. These are the same shapes of failure across two different vendors' speech-to-speech stacks, which makes them feel less like vendor quirks and more like where the modality is right now.
-
-The fixes look like they live in two different places. The web search gap on Realtime is the cleanest API-surface fix — bringing the Responses hosted-tool ecosystem in as native Realtime tool types is plumbing, not new research, and it would cut off most of the failure modes above at the root. The other gaps — context retention across turns, calibration on when to volunteer a "I can't actually check this" disclaimer, asking instead of silently picking when a constraint is under-specified — are model-training gaps that the cascaded GPT-5.1 baseline doesn't share. Both companies will close them. Worth checking back in a few months.
+It was really fun playing with the S2S models. The interactivity and responsiveness felt significantly different from any other voice experience I've had — the rhythm gets close to talking to a person rather than dictating to a device. The gap in reasoning and context can be a little frustrating right now, but it does seem like the kind of thing that could close with another half-generation of model development. Worth checking back in a few months.
 
 ## Other notes
 

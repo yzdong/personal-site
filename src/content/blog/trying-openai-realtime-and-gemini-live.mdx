@@ -55,11 +55,18 @@ Latency and barge-in held up. When I interrupted the model mid-sentence, it stop
 
 One smaller thing I didn't expect: the S2S models preserve the audio signal end-to-end, so when the transcript layer mis-hears something, the model can still respond correctly. The transcript divergence section below has the specific examples — "rap" rendered as "wrap" while the model answered correctly about rappels, "Bishop" rendered as "worship" while the model answered correctly about Bishop, California.
 
-**The reasoning itself is decent when you give it real planning data.** I'd given gpt-realtime-2 the climb parameters in pieces — pitch counts, pitch times, approach distance and elevation, a past-trip pace reference for scaling, two descent options — and the model's first response on Turn 4 walked through it the way a climbing partner would. Scaled the approach time correctly from the past reference (~2.5–3 hours for 2,100 ft / 5 miles given that 1,800 ft / 6 miles took 2.5 hours). Computed climb time correctly per pitch grade (5–6 hours total). Named both descent options with the right time deltas (2–3 hours downclimb, 6 hours for twelve rappels). It's only at the *total* that the answer goes wrong — "10 to 12 hours or more," a number that only closes for the downclimb path, with no flag that it had implicitly picked one descent over the other. But the math chain on the way there is solid.
+### Articulating the reasoning chain vs. just stating an answer
 
-<audio controls src="/audio/trying-openai-realtime-and-gemini-live/reasoning-turn-4.mp3" />
+The Turn 4 back-calc has many sub-components — approach time scaling, per-pitch climb time, descent options, drive time, the final total. Whether the model walks through them out loud (so the user can audit each step) or just emits the answer is a meaningful UX difference, and the two S2S models picked opposite defaults.
 
-*The clip starts with me listing the climb parameters; the model's response begins at 0:47.*
+| **gpt-realtime-2 — articulated every step** | **Gemini Live — stated the rough answer, no breakdown** |
+|---|---|
+| <audio controls src="/audio/trying-openai-realtime-and-gemini-live/reasoning-turn-4.mp3" /> | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/reasoning-gemini.mp3" /> |
+| **Me:** [climb parameters across several turns]<br/>**Model:** "All right, let's piece it together. For the approach, if you did 1800 feet and 6 miles in 2.5 hours, then for 2100 feet and 5 miles, it's likely about 2.5 to 3 hours, given the steeper elevation gain. Then, adding your climb time: around 30-40 minutes per 5.8 pitch and 45-60 minutes per 5.9 pitch. That's about 5 to 6 hours of climbing total. For the descent, if you downclimb, it's around 2 to 3 hours. If you rappel 12 times at roughly 30 minutes each, that's about 6 hours. So, the total outing could range from roughly 10 to 12 hours or more." | **Me:** [climb parameters across several turns]<br/>*(7 seconds of dead space after I stopped speaking)*<br/>**Model:** "With an estimated 9 to 12 hours for your climb and descent, plus 3.5-4.5 hours drive back, you'd need to leave Yosemite by around 2:30 to 3:30 PM Sunday. This suggests potentially starting very early on Sunday or planning the main climb for Saturday."<br/>**Me:** Uh, when do I have to leave the Bay Area?<br/>**Model:** You'll need to leave the Bay Area by Saturday morning to accommodate the travel time and the long climb you have planned.<br/>**Me:** Specific time.<br/>**Model:** Leaving by early Saturday morning, ideally before 8 AM, should provide adequate travel time and preparation for your climb. |
+
+OpenAI shows its work — climb partner-style — so I can sanity-check each step as the model walks through it. If it had scaled the approach wrong, or assumed the wrong descent option, I'd hear that in time to correct. Gemini just lands on "9 to 12 hours" with no breakdown, takes a long pause before doing so, and needs to be pushed twice before giving a specific time. Both arrive at roughly the same total range, but only one of them is auditable in flight.
+
+*OpenAI clip: I'm listing parameters up to 0:47, then the model responds. Gemini clip: parameters through ~0:48, then the dead-space + bare-answer sequence.*
 
 ## Where the cascaded baseline came out ahead
 
@@ -79,11 +86,12 @@ The common thread is the LLM. GPT-5.1 over Responses is text-trained, has strong
 
 I'd opened the gpt-realtime-2 session with *"I wanna climb in Yosemite this weekend"* — explicit date framing in the first sentence I said. Three turns later, when I asked "what's the weather in Yosemite?", the model asked me which dates I was planning to be there. I re-stated "this weekend." Recoverable, annoying.
 
-Gemini Live dropped the same kind of context on a prior run of the same script (opened with *"I want to climb in Yosemite this weekend"*, model asked *"What specific dates are you considering for Yosemite?"* three turns later). On the run that produced most of the audio clips below, I just didn't say "weekend" explicitly at the start, so there was nothing for Gemini to drop — the bug is intermittent across runs.
+The exact same drop happened on Gemini Live on a prior run of the same script. I opened with *"I want to climb in Yosemite this weekend. No wait, um, Bishop. What's the weather like?"* Three turns later I asked Gemini to check lodging in Yosemite and it came back with *"What specific dates are you considering for Yosemite?"* — same context drop, three turns in. The audio for this clip is from that prior run; the run that produced most of the other Gemini clips below didn't include a comparable moment where Gemini was forced to surface the date context, so we can't directly compare across runs on this specific finding.
 
-<audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-weekend-openai.mp3" />
-
-(Clip above: gpt-realtime-2 asking *"can you tell me which specific dates"* — me responding *"next week"*, then *"actually, this weekend"* — and the model proceeding to fabricate weather specifics for that weekend.)
+| **gpt-realtime-2 — asked for dates after I'd said weekend** | **Gemini Live — same drop, three turns in (prior run)** |
+|---|---|
+| <audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-weekend-openai.mp3" /> | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-weekend-gemini.mp3" /> |
+| **Me:** What's the weather in Yosemite?<br/>**Model:** Sure, let me check that for you. Can you tell me which specific dates you're planning to be in Yosemite?<br/>**Me:** Next week.<br/>**Model:** Got it. Next week in Yosemite—<br/>**Me:** Actually, this weekend. | **Me:** I want to climb in Yosemite this weekend. No wait, um, Bishop. What's the weather like?<br/>**Model:** Bishop is looking pretty clear with warm temperatures this weekend, perfect for climbing…<br/>**Me:** Actually, I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite.<br/>**Model:** That's true, Yosemite can be tricky. I can help check for lodging availability if you'd like.<br/>**Me:** Yeah, yeah, do that.<br/>**Model:** Okay, looking into that now. What specific dates are you considering for Yosemite?<br/>**Me:** This weekend. |
 
 The second context drop on gpt-realtime-2 wasn't recoverable in the same way. The turn opened with *"Let's plan out when I'd have to leave the Bay Area to get back at 7 pm on Sunday"* — explicit Bay-Area framing in the user transcript. After it walked through the climb math, I asked "so when is it?" — the model answered as if I were asking about when to leave the climbing destination, not the Bay Area. I had to follow up with "I'm asking you when I have to leave from the Bay Area" to redirect. Even then, the final answer (leave the climbing area by 2pm) only accounted for the return drive home, not the outbound drive from the Bay to the trailhead. The actual answer requires both legs of the round trip.
 
@@ -127,7 +135,7 @@ The last turn of the script is deliberately designed to require a live lookup. D
 
 The three configurations produced three distinct behaviors.
 
-**gpt-realtime-2.** I didn't ask the Dark Star question on the 2026-06-25 run, but I have the same shape of question from a session three weeks earlier. Asked to look up recent ticks on Mountain Project for a different route, gpt-realtime-2 hallucinated a Python `requests.get()` call and spoke it aloud — including a fabricated API key — then pretended to be processing while nothing was running. No native tool composition for live data, model improvises around the gap.
+**gpt-realtime-2 tried to hallucinate a `requests.get()` call** when asked to look up ticks on Mountain Project — spoke the Python code aloud, including a fabricated API key, then pretended to be processing while nothing was running. No native tool composition for live data, model improvises around the gap.
 
 **Gemini Live refused cleanly with a redirect.** *"I can't access specific ticks on Mountain Project, but weather in the High Sierra can be unpredictable. I recommend checking a specific weather forecast for the Temple Crag area closer to your dates."* Names the limit, redirects to general guidance. Less specific than cascaded about *which* forecast source to use, but the shape of the response is right.
 
@@ -179,14 +187,3 @@ The fixes look like they live in two different places. The web search gap on Rea
 
 A note on voice character. The default OpenAI voice (I was on Cedar) sounded natural and fairly even — the kind of register you'd pick if you wanted a voice that gets out of the way. Gemini Live's default voice had more going on: noticeably more inflection across the sentence, and a raspy or hoarse quality baked into the voice itself. Not unpleasant, more characterful. Worth flagging because for any consumer voice product, the voice character is half the product — and Gemini and OpenAI are picking different defaults on a spectrum from neutral-narrator to expressive-companion.
 
-## References
-
-Full session recordings, in case you want to listen to any clip in context. Both have my mic boosted with `loudnorm` and the model track delayed to its actual position (WebRTC negotiation in the recording harness started the model track ~3s late on Realtime and ~12s late on Gemini Live, which the original mix had aligned to t=0).
-
-**gpt-realtime-2 session — full recording (~4:20):**
-
-<audio controls src="/audio/trying-openai-realtime-and-gemini-live/full-session-openai.mp3" />
-
-**Gemini Live 3.1 Flash session — full recording (~4:02):**
-
-<audio controls src="/audio/trying-openai-realtime-and-gemini-live/full-session-gemini.mp3" />

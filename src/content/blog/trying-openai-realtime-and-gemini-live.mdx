@@ -84,7 +84,7 @@ Overall, reasoning and context were noticeably weaker for the S2S models. More d
     <tr>
       <td><strong>Cost</strong> (≈5 min session, measured from API billing)</td>
       <td>≈$0.09<br/>($32/M input audio · $64/M output audio. Older gpt-realtime-1.5 ran ≈$0.40+ on the same length of session — newer model is meaningfully cheaper.)</td>
-      <td>≈$0.05<br/>($3/M input audio · $12/M output audio)</td>
+      <td>≈$0.03<br/>($3/M input audio · $12/M output audio, measured from audible duration)</td>
       <td>≈$0.08<br/>(Whisper STT $0.006/min + GPT-5.1 Responses ≈$0.02 + gpt-4o-mini-tts ≈$0.05)</td>
     </tr>
   </tbody>
@@ -121,7 +121,7 @@ I expected S2S to be meaningfully more expensive than cascaded — closer to an 
 
 - **gpt-realtime-2** (~4-min Jun 25 session, from OpenAI billing): **$0.09**
 - **Cascaded** (~5-min session, Whisper $0.006/min + GPT-5.1 Responses + gpt-4o-mini-tts): **~$0.08**
-- **Gemini Live 3.1 Flash** (paid rate, $3/M input audio · $12/M output audio): **~$0.02** for the same session length
+- **Gemini Live 3.1 Flash** (paid rate, $3/M input audio · $12/M output audio, computed from 63s audible user audio + 71s audible model audio in the Jun 25 session): **~$0.03**
 
 Per minute of active speech, gpt-realtime-2 is ~4× more expensive than Gemini Live (at published audio-token rates) — but for a typical 3–5 minute conversation, the absolute cost gap is pennies, and cascaded came out roughly tied with gpt-realtime-2 in measured spend. Choosing gpt-realtime-2 over cascaded for the latency win adds roughly a cent or two per conversation.
 

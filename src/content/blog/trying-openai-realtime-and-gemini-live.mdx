@@ -83,7 +83,7 @@ Overall, reasoning and context were noticeably weaker for the S2S models. More d
     </tr>
     <tr>
       <td><strong>Cost</strong> (≈5 min session, measured from API billing)</td>
-      <td>≈$0.09<br/>($32/M input audio · $64/M output audio. Older gpt-realtime-1.5 ran ≈$0.40+ on the same length of session — newer model is meaningfully cheaper.)</td>
+      <td>≈$0.09<br/>($32/M input audio · $64/M output audio)</td>
       <td>≈$0.03<br/>($3/M input audio · $12/M output audio, measured from audible duration)</td>
       <td>≈$0.08<br/>(Whisper STT $0.006/min + GPT-5.1 Responses ≈$0.02 + gpt-4o-mini-tts ≈$0.05)</td>
     </tr>
@@ -219,11 +219,7 @@ A smaller thing, more curious than broken. At one point I said "we'll rap down" 
   </tbody>
 </table>
 
-This is a property of S2S models that doesn't exist in cascaded pipelines: the transcript and the speech are generated as parallel channels off the same audio embedding. They can disagree, because the transcript is its own decoding head, not the input to the LLM. In cascaded, the transcript IS the input — if it mishears "rap" as "wrap," the model gets "wrap" and answers about packaging. In S2S, the audio carries through, and the displayed transcript is closer to a debug view than ground truth.
-
-Later in the Gemini session, the same shape: I asked about "the weather in the high series" — transcript rendered exactly that — and Gemini responded about "High Sierra weather." Cross-model finding: this is an S2S-class property, not a quirk of one vendor's pipeline.
-
-I also saw the same shape earlier in a different session with gpt-realtime-2: I said "I'm going to Bishop" (the Eastern Sierra town) and the transcript rendered "worship," but the model correctly responded about Bishop, California. The displayed transcript was wrong; the answer was right.
+In S2S, the transcript and the speech are generated as parallel channels off the same audio embedding — the transcript is its own decoding head, not the input to the LLM, so they can disagree. Cascaded doesn't have this property: the transcript IS the input, so a mishear of "rap" as "wrap" sends "wrap" to the LLM and you get back an answer about packaging. Other examples from the same Gemini session and an earlier gpt-realtime-2 session: "the weather in the high series" rendered exactly that, model answered about High Sierra weather; "I'm going to Bishop" rendered as "worship," model answered about Bishop, California. Cross-model, the displayed transcript was wrong; the answer was right.
 
 This is actually confusing for a developer. The transcript is the only thing you can log, store, or feed into evals — but it's not what the model actually used to produce its response. There's no API field for "what the model heard from the audio," so debugging cases where the model answered correctly despite a bad transcript (or wrong despite a good one) requires guessing at the gap. Cascaded doesn't have this problem; the transcript IS the input.
 

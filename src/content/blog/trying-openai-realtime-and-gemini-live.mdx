@@ -11,8 +11,6 @@ OpenAI shipped gpt-realtime-2 on May 7, 2026. Google shipped Gemini 3.1 Flash Li
 
 If like me, you're used to talking to Siri or Alexa in a specific "I'm talking to a computer" voice — slowing your cadence, enunciating, waiting for the chime before you start, waiting for the response to finish before you reply — the S2S models are a small revelation. You can start mid-sentence. You can interrupt. You don't have to finish the response before clarifying what you actually meant. Lower latency is part of it; the other part is that barge-in actually works, so the conversational rhythm gets closer to talking to a person than talking to a device.
 
-Caveat upfront: I ran all of this from my apartment on fiber, sitting still in front of a laptop. Real S2S deployment — in a car, on an embedded device, over a flaky LTE connection — probably feels different. The latency I'm describing is the floor case, not the median.
-
 ## What I did
 
 I built a small WebRTC harness that runs the same script against three configurations: gpt-realtime-2 (S2S), Gemini Live 3.1 Flash (S2S), and a cascaded baseline (Whisper transcription → GPT-5.1 via Responses at `reasoning_effort: low` → gpt-4o-mini-tts). One UI, one mic, one script, switch the radio button.
@@ -21,13 +19,13 @@ The script is a five-turn climbing-trip planning conversation. Each turn stresse
 
 *I chose climbing because I know the domain very well and it can be logistically challenging — perfect for testing reasoning.*
 
-| # | What it tests | What I said |
+| # | What I said | What it tests |
 |---|---|---|
-| 1 | Audio-signal preservation + self-correction. Does the model track the corrected entity ("Yosemite, no wait Bishop") and does the transcript render Bishop correctly in climbing context? | *"I wanna climb in Yosemite this weekend, no wait Bishop. What's the weather like."* |
-| 2 | Mid-flight context, hesitation handling, cross-turn memory. Reverses Turn 1's correction, with filler ("Actually hmm") that energy-VAD pipelines often cut on. | *"Actually hmm I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite."* |
-| 3 | Proper nouns + domain knowledge. Does the model name real Forest Service roads or fall back to "check nearby"? | *"Maybe we can find some dispersed camping, what are some good options near the 120 entrance or Tioga pass."* |
-| 4 | Reasoning depth, multi-step back-calculation. Outbound drive + climb time + descent option (rap vs. downclimb) + return drive + 7 PM Sunday deadline, all interacting. Right answer requires walking the math backward through both legs of the drive. | *"Let's plan out when I'd have to leave the Bay Area to get back at 7 pm on Sunday. I'm doing an 8-pitch multi-pitch climb with 3 5.9 pitches and 4 5.8 pitches. I think I'll take 30–45 minutes per 5.8 pitch and 45–60 minutes per 5.9 pitch. The approach is about 2,100 feet elevation change and 5 miles, and in the past it took me 2.5 hours to do 1,800 feet and 6 miles, so estimate my approach time. I think we'll rap down — it's 12 raps at about 30 minutes per rap. Or maybe we should do the downclimb. I think the guidebook estimated 2–3 hours for the downclimb."* |
-| 5 | Tool use / web search. A deliberately tool-requiring question — Dark Star on Temple Crag is a real alpine route, and recent "ticks" on Mountain Project (climber logs) are how you'd actually check conditions. Without a web search, the model can't answer correctly. What it does in that case is what I wanted to see. Analyzed in detail in the Turn 5 section below. | *"I want to get on Dark Star on Temple Crag but I'm not sure what the weather is like in the High Sierras. Can you look into ticks on Mountain Project to see what the weather's like?"* |
+| 1 | *"I wanna climb in Yosemite this weekend, no wait Bishop. What's the weather like."* | Audio-signal preservation + self-correction. Does the model track the corrected entity ("Yosemite, no wait Bishop") and does the transcript render Bishop correctly in climbing context? |
+| 2 | *"Actually hmm I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite."* | Mid-flight context, hesitation handling, cross-turn memory. Reverses Turn 1's correction, with filler ("Actually hmm") that energy-VAD pipelines often cut on. |
+| 3 | *"Maybe we can find some dispersed camping, what are some good options near the 120 entrance or Tioga pass."* | Proper nouns + domain knowledge. Does the model name real Forest Service roads or fall back to "check nearby"? |
+| 4 | *"Let's plan out when I'd have to leave the Bay Area to get back at 7 pm on Sunday. I'm doing an 8-pitch multi-pitch climb with 3 5.9 pitches and 4 5.8 pitches. I think I'll take 30–45 minutes per 5.8 pitch and 45–60 minutes per 5.9 pitch. The approach is about 2,100 feet elevation change and 5 miles, and in the past it took me 2.5 hours to do 1,800 feet and 6 miles, so estimate my approach time. I think we'll rap down — it's 12 raps at about 30 minutes per rap. Or maybe we should do the downclimb. I think the guidebook estimated 2–3 hours for the downclimb."* | Reasoning depth, multi-step back-calculation. Outbound drive + climb time + descent option (rap vs. downclimb) + return drive + 7 PM Sunday deadline, all interacting. Right answer requires walking the math backward through both legs of the drive. |
+| 5 | *"I want to get on Dark Star on Temple Crag but I'm not sure what the weather is like in the High Sierras. Can you look into ticks on Mountain Project to see what the weather's like?"* | Tool use / web search. A deliberately tool-requiring question — Dark Star on Temple Crag is a real alpine route, and recent "ticks" on Mountain Project (climber logs) are how you'd actually check conditions. Without a web search, the model can't answer correctly. What it does in that case is what I wanted to see. Analyzed in detail in the Turn 5 section below. |
 
 Sessions are recorded as separate user and model audio tracks plus a transcript. Most of the clips below come from a single gpt-realtime-2 run and a matched Gemini Live run on 2026-06-25.
 
@@ -50,6 +48,8 @@ Where they differ across the dimensions I cared about in this script. Each row i
 | **Implementation complexity** | Trivial — open WebRTC session, hand it a system prompt, stream the mic | Trivial — same shape | ~280 lines TS: hand-rolled energy VAD, four-state machine, manual conversation threading across STT/LLM/TTS endpoints. Plus the LLM defaults to paragraph-length answers; had to add *"Keep to 1-3 sentences"* to the system prompt to get voice-appropriate brevity. |
 
 ## What worked
+
+*Caveat upfront: I ran all of this from my apartment on fiber, sitting still in front of a laptop. Real S2S deployment — in a car, on an embedded device, over a flaky LTE connection — probably feels different. The latency I'm describing is the floor case, not the median.*
 
 Latency and barge-in held up. When I interrupted the model mid-sentence, it stopped cleanly and reformed around what I'd said. The conversational rhythm felt close to real-time. Gemini Live and gpt-realtime-2 were both noticeably better here than the cascaded baseline, which has a 7–14 second per-turn floor in my setup just from STT + LLM + TTS latency stacking.
 
@@ -79,12 +79,11 @@ The common thread is the LLM. GPT-5.1 over Responses is text-trained, has strong
 
 I'd opened the gpt-realtime-2 session with *"I wanna climb in Yosemite this weekend"* — explicit date framing in the first sentence I said. Three turns later, when I asked "what's the weather in Yosemite?", the model asked me which dates I was planning to be there. I re-stated "this weekend." Recoverable, annoying.
 
-The exact same drop happened on Gemini Live. I opened with "I want to climb in Yosemite this weekend… actually Bishop, what's the weather?" Three turns later I asked Gemini to check lodging in Yosemite and it came back with "What specific dates are you considering for Yosemite?" I had to re-state "this weekend" to it too. Same failure shape, different model.
+Gemini Live dropped the same kind of context on a prior run of the same script (opened with *"I want to climb in Yosemite this weekend"*, model asked *"What specific dates are you considering for Yosemite?"* three turns later). On the run that produced most of the audio clips below, I just didn't say "weekend" explicitly at the start, so there was nothing for Gemini to drop — the bug is intermittent across runs.
 
-| **gpt-realtime-2 — asked for dates after I'd said weekend** | **Gemini Live — same drop, three turns in** |
-|---|---|
-| <audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-weekend-openai.mp3" /> | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-weekend-gemini.mp3" /> |
-| **Me:** What's the weather in Yosemite?<br/>**Model:** Sure, let me check that for you. Can you tell me which specific dates you're planning to be in Yosemite?<br/>**Me:** Next week.<br/>**Model:** Got it. Next week in Yosemite—<br/>**Me:** Actually, this weekend. | **Me:** I want to climb in Yosemite this weekend. No wait, um, Bishop. What's the weather like?<br/>**Model:** Bishop is looking pretty clear with warm temperatures this weekend, perfect for climbing…<br/>**Me:** Actually, I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite.<br/>**Model:** That's true, Yosemite can be tricky. I can help check for lodging availability if you'd like.<br/>**Me:** Yeah, yeah, do that.<br/>**Model:** Okay, looking into that now. What specific dates are you considering for Yosemite?<br/>**Me:** This weekend. |
+<audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-weekend-openai.mp3" />
+
+(Clip above: gpt-realtime-2 asking *"can you tell me which specific dates"* — me responding *"next week"*, then *"actually, this weekend"* — and the model proceeding to fabricate weather specifics for that weekend.)
 
 The second context drop on gpt-realtime-2 wasn't recoverable in the same way. The turn opened with *"Let's plan out when I'd have to leave the Bay Area to get back at 7 pm on Sunday"* — explicit Bay-Area framing in the user transcript. After it walked through the climb math, I asked "so when is it?" — the model answered as if I were asking about when to leave the climbing destination, not the Bay Area. I had to follow up with "I'm asking you when I have to leave from the Bay Area" to redirect. Even then, the final answer (leave the climbing area by 2pm) only accounted for the return drive home, not the outbound drive from the Bay to the trailhead. The actual answer requires both legs of the round trip.
 
@@ -102,10 +101,6 @@ Worth noting: this is the second time I ran the script through Gemini. The first
 There's a deeper read across the three configurations on the back-calc that's worth naming. I'd given them two descent options with very different totals — downclimb at 2–3 hr, twelve rappels at 30 min each for ~6 hr — and asked for the leave time. That question is structurally under-specified: which descent matters because it shifts the answer by 3+ hours. The right behavior is to ask which one I'd take, or to give two leave times so I can pick. None of the three did. gpt-realtime-2 named both options out loud and then quoted a total that only fits the downclimb path. Gemini absorbed both into a single "9 to 12 hours" range without distinguishing which path it had picked. Cascaded was the only one that called the math out correctly ("~6 hours of rappels or a much better 2–3 hours for the downclimb"), but then still produced one total and didn't flag that it had picked downclimb to do so. Under-specified constraints got silently resolved by assumption in every case, and the user has no way to see where the assumption was made.
 
 This complicates the "S2S structurally caps reasoning" framing I've heard from voice builders. Gemini got the structural shape right and landed on the correct realistic answer (Saturday morning departure). gpt-realtime-2 missed a whole constraint. Cascaded got closest to right on substance but still resolved an ambiguity silently. Three different failure modes on the same question, with Gemini and cascaded clearly above gpt-realtime-2 on this script.
-
-Gemini also went silent in the lead-up to that answer. After I asked the planning question, I tried to feed it the climb parameters across five separate turns — pitch counts, pitch times, approach distance, past-trip reference, "estimate my approach" — and got nothing back through all of them. It only spoke up once I'd added the descent option. Same dead-air failure mode I hit on gpt-realtime-2 in the section below, different trigger.
-
-<audio controls src="/audio/trying-openai-realtime-and-gemini-live/silent-turns-gemini.mp3" />
 
 ### Both models fabricated specifics, in different shapes
 

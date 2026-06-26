@@ -25,57 +25,97 @@ The script is a five-turn climbing-trip planning conversation. Each turn stresse
 | 2 | *"Actually hmm I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite."* | Mid-flight context, hesitation handling, cross-turn memory. Reverses Turn 1's correction, with filler ("Actually hmm") that energy-VAD pipelines often cut on. |
 | 3 | *"Maybe we can find some dispersed camping, what are some good options near the 120 entrance or Tioga pass."* | Proper nouns + domain knowledge. Does the model name real Forest Service roads or fall back to "check nearby"? |
 | 4 | *"Let's plan out when I'd have to leave the Bay Area to get back at 7 pm on Sunday. I'm doing an 8-pitch multi-pitch climb with 3 5.9 pitches and 4 5.8 pitches. I think I'll take 30–45 minutes per 5.8 pitch and 45–60 minutes per 5.9 pitch. The approach is about 2,100 feet elevation change and 5 miles, and in the past it took me 2.5 hours to do 1,800 feet and 6 miles, so estimate my approach time. I think we'll rap down — it's 12 raps at about 30 minutes per rap. Or maybe we should do the downclimb. I think the guidebook estimated 2–3 hours for the downclimb."* | Reasoning depth, multi-step back-calculation. Outbound drive + climb time + descent option (rap vs. downclimb) + return drive + 7 PM Sunday deadline, all interacting. Right answer requires walking the math backward through both legs of the drive. |
-| 5 | *"I want to get on Dark Star on Temple Crag but I'm not sure what the weather is like in the High Sierras. Can you look into ticks on Mountain Project to see what the weather's like?"* | Tool use / web search. A deliberately tool-requiring question — Dark Star on Temple Crag is a real alpine route, and recent "ticks" on Mountain Project (climber logs) are how you'd actually check conditions. Without a web search, the model can't answer correctly. What it does in that case is what I wanted to see. Analyzed in detail in the Turn 5 section below. |
+| 5 | *"I want to get on Dark Star on Temple Crag but I'm not sure what the weather is like in the High Sierras. Can you look into ticks on Mountain Project to see what the weather's like?"* | Tool use / web search. A deliberately tool-requiring question — Dark Star on Temple Crag is a real alpine route, and recent "ticks" on Mountain Project (climber logs) are how you'd actually check conditions. Without a web search, the model can't answer correctly. |
 
 Sessions are recorded as separate user and model audio tracks plus a transcript. Most of the clips below come from a single gpt-realtime-2 run and a matched Gemini Live run on 2026-06-25.
 
-A note on developer effort:
+A note on developer effort — cascaded requires some thought.
 
-- **Cascaded is roughly 280 lines of TypeScript the S2S models do for you server-side.** A hand-rolled energy VAD, a four-state machine (`idle → recording → processing → speaking`), manual conversation threading across STT, LLM, and TTS endpoints, and tail-echo handling so the model's own audio doesn't re-trigger the VAD. The two S2S setups combined are shorter than that.
-- **The defaults are wrong for voice.** My VAD silence threshold was 700ms; it cut the multi-clause back-calc question off mid-sentence on turn 4 and made the model look like it couldn't reason about a question it was only seeing a fragment of. Bumped to 2 seconds. On the output side, GPT-5.1 returns paragraph-length responses by default — I had to add *"Keep responses to 1-3 sentences"* to the cascaded system prompt before it stopped reading me structured five-bullet replies. S2S defaults to voice-appropriate brevity and server-side VAD I never had to tune.
-- **The 24-second latency on turn 4 is my naive implementation, not a structural floor.** The pipeline waits for STT to finish, then the full LLM response, then full TTS audio, then plays. A faster build would stream LLM tokens into TTS and start playback on the first chunks — time-to-first-audio on a back-calc-shaped turn could plausibly land at 5–8 seconds instead of 24. But that's *more* cascaded complexity to ship, not less. S2S does it inside the model.
+- **Hand-rolled energy VAD and conversation orchestration.** A four-state machine (`idle → recording → processing → speaking`), tail-echo handling so the model's own audio doesn't re-trigger the VAD, and manual conversation threading across three separate STT/LLM/TTS endpoints.
+- **The defaults are wrong for voice.** My VAD silence threshold was 700ms — fine for short utterances, but it cut the multi-clause Turn 4 reasoning question off mid-sentence. Bumped to 2 seconds. The LLM defaults to paragraph-length answers; I had to add *"Keep responses to 1-3 sentences"* to the system prompt before it stopped reading me structured five-bullet replies.
+- **Streaming requires its own plumbing.** My pipeline waits for STT, then the full LLM response, then full TTS audio, then plays — 24 seconds on the Turn 4 reasoning turn. A faster build would stream LLM tokens into TTS and start playback on the first chunks. That's more code to ship, not less.
 
 ## The three configurations at a glance
 
 Where they differ across the dimensions I cared about in this script. Each row is unpacked in the sections that follow.
 
-| | **gpt-realtime-2** | **Gemini Live 3.1 Flash** | **Cascaded (Whisper + GPT-5.1 + gpt-4o-mini-tts)** |
-|---|---|---|---|
-| **Barge-in** | Works mid-utterance | Works mid-utterance | No — interrupting mid-response confuses the VAD |
-| **Context retention across turns** | Dropped "weekend" once; collapsed Bay-Area framing on turn 4 | Dropped "weekend" once; otherwise held | Held throughout |
-| **Capability disclosure on tool gaps** | Fabricates specifics silently | Fabricates "looking into that…" then admits only when caught | Names the limit + redirects to right source (NWS, NOAA, MP comments) |
-| **Complex reasoning** (turn 4 back-calc) | Skipped outbound drive entirely; answered "leave climbing area" instead of "leave Bay" | Got the structurally right answer — Saturday morning, before 8 AM. On a first run had given a confidently-wrong Sunday 2-5 AM answer; non-deterministic across runs. | Differentiated rappel vs. downclimb correctly; named Saturday-departure alternative |
-| **Implementation complexity** | Trivial — open WebRTC session, hand it a system prompt, stream the mic | Trivial — same shape | ~280 lines TS: hand-rolled energy VAD, four-state machine, manual conversation threading across STT/LLM/TTS endpoints. Plus the LLM defaults to paragraph-length answers; had to add *"Keep to 1-3 sentences"* to the system prompt to get voice-appropriate brevity. |
+<table style={{tableLayout: 'fixed', width: '100%'}}>
+  <colgroup>
+    <col style={{width: '13%'}} />
+    <col style={{width: '29%'}} />
+    <col style={{width: '29%'}} />
+    <col style={{width: '29%'}} />
+  </colgroup>
+  <thead>
+    <tr>
+      <th></th>
+      <th>gpt-realtime-2</th>
+      <th>Gemini Live 3.1 Flash</th>
+      <th>Cascaded (Whisper + GPT-5.1 + gpt-4o-mini-tts)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Barge-in</strong></td>
+      <td>Works mid-utterance</td>
+      <td>Works mid-utterance</td>
+      <td>No — interrupting mid-response confuses the VAD</td>
+    </tr>
+    <tr>
+      <td><strong>Context retention across turns</strong></td>
+      <td>Dropped "weekend" once; collapsed Bay-Area framing on turn 4</td>
+      <td>Dropped "weekend" once; otherwise held</td>
+      <td>Held throughout</td>
+    </tr>
+    <tr>
+      <td><strong>Capability disclosure on tool gaps</strong></td>
+      <td>Fabricates specifics silently</td>
+      <td>Fabricates "looking into that…" then admits only when caught</td>
+      <td>Names the limit + redirects to right source (NWS, NOAA, MP comments)</td>
+    </tr>
+    <tr>
+      <td><strong>Complex reasoning</strong> (turn 4 reasoning)</td>
+      <td>Skipped outbound drive entirely; answered "leave climbing area" instead of "leave Bay"</td>
+      <td>Got the structurally right answer — Saturday morning, before 8 AM. On a first run had given a confidently-wrong Sunday 2-5 AM answer; non-deterministic across runs.</td>
+      <td>Differentiated rappel vs. downclimb correctly; named Saturday-departure alternative</td>
+    </tr>
+  </tbody>
+</table>
 
 ## What worked
 
 *Caveat upfront: I ran all of this from my apartment on fiber, sitting still in front of a laptop. Real S2S deployment — in a car, on an embedded device, over a flaky LTE connection — probably feels different. The latency I'm describing is the floor case, not the median.*
 
-Latency and barge-in held up. When I interrupted the model mid-sentence, it stopped cleanly and reformed around what I'd said. The conversational rhythm felt close to real-time. Gemini Live and gpt-realtime-2 were both noticeably better here than the cascaded baseline, which has a 7–14 second per-turn floor in my setup just from STT + LLM + TTS latency stacking.
+### Latency and barge-in
 
-One smaller thing I didn't expect: the S2S models preserve the audio signal end-to-end, so when the transcript layer mis-hears something, the model can still respond correctly. The transcript divergence section below has the specific examples — "rap" rendered as "wrap" while the model answered correctly about rappels, "Bishop" rendered as "worship" while the model answered correctly about Bishop, California.
+When I interrupted mid-utterance — including the "no wait, actually X" self-corrections at the start of both sessions — both S2S models caught the redirect cleanly and reformed their response around what I'd actually said. The conversational rhythm felt close to real-time. Cascaded baseline is the opposite end of the spectrum: it has a 7–14 second per-turn floor in my setup from STT + LLM + TTS stacking, and it can't barge-in at all by default — its energy VAD only listens for new speech during the `idle` state, so anything you say while the model is talking gets ignored until the model finishes.
+
+| **gpt-realtime-2 — caught the redirect, but misattributed "too hot" to Yosemite** | **Gemini Live — caught the redirect cleanly** |
+|---|---|
+| <audio controls src="/audio/trying-openai-realtime-and-gemini-live/barge-in-openai.mp3" /> | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/barge-in-gemini.mp3" /> |
+| **Me:** Wait, Bishop, what's the weather like?<br/>**Model:** It looks like the weather is sunny and clear, with bright skies and no visible clouds. It's likely warm and pleasant outside.<br/>**Me:** Actually, I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite.<br/>**Model:** Yeah, it can definitely get pretty hot in Yosemite during the summer… | **Me:** I want to climb in Yosemite this weekend, no wait, um, Bishop, what's the weather like?<br/>**Model:** Sounds like fun! Bishop is looking pretty clear with warm temperatures this weekend, perfect for climbing. Just be sure to check the specific forecast closer to the date. |
+
+OpenAI's mistake here is worth flagging. I'd said *"Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite"* — Bishop is the city I'd said would be too hot. The model picked up on "Yosemite" and attributed the *too-hot* property to it, replying about Yosemite summer heat. The barge-in mechanics worked (model didn't lose the turn); the substance comprehension didn't. Gemini's interrupt-handle is cleaner on this opening exchange — it tracked which entity was active and gave a Bishop-specific weather answer.
 
 ### Articulating the reasoning chain vs. just stating an answer
 
-The Turn 4 back-calc has many sub-components — approach time scaling, per-pitch climb time, descent options, drive time, the final total. Whether the model walks through them out loud (so the user can audit each step) or just emits the answer is a meaningful UX difference, and the two S2S models picked opposite defaults.
+The Turn 4 reasoning has many sub-components — approach time scaling, per-pitch climb time, descent options, drive time, the final total. Whether the model walks through them out loud (so the user can audit each step) or just emits the answer is a meaningful UX difference, and the two S2S models picked opposite defaults.
 
 | **gpt-realtime-2 — articulated every step** | **Gemini Live — stated the rough answer, no breakdown** |
 |---|---|
 | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/reasoning-turn-4.mp3" /> | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/reasoning-gemini.mp3" /> |
-| **Me:** [climb parameters across several turns]<br/>**Model:** "All right, let's piece it together. For the approach, if you did 1800 feet and 6 miles in 2.5 hours, then for 2100 feet and 5 miles, it's likely about 2.5 to 3 hours, given the steeper elevation gain. Then, adding your climb time: around 30-40 minutes per 5.8 pitch and 45-60 minutes per 5.9 pitch. That's about 5 to 6 hours of climbing total. For the descent, if you downclimb, it's around 2 to 3 hours. If you rappel 12 times at roughly 30 minutes each, that's about 6 hours. So, the total outing could range from roughly 10 to 12 hours or more." | **Me:** [climb parameters across several turns]<br/>*(7 seconds of dead space after I stopped speaking)*<br/>**Model:** "With an estimated 9 to 12 hours for your climb and descent, plus 3.5-4.5 hours drive back, you'd need to leave Yosemite by around 2:30 to 3:30 PM Sunday. This suggests potentially starting very early on Sunday or planning the main climb for Saturday."<br/>**Me:** Uh, when do I have to leave the Bay Area?<br/>**Model:** You'll need to leave the Bay Area by Saturday morning to accommodate the travel time and the long climb you have planned.<br/>**Me:** Specific time.<br/>**Model:** Leaving by early Saturday morning, ideally before 8 AM, should provide adequate travel time and preparation for your climb. |
+| **Me:** [climb parameters across several turns]<br/>**Model (0:46):** "All right, let's piece it together. For the approach, if you did 1800 feet and 6 miles in 2.5 hours, then for 2100 feet and 5 miles, it's likely about 2.5 to 3 hours, given the steeper elevation gain. Then, adding your climb time: around 30-40 minutes per 5.8 pitch and 45-60 minutes per 5.9 pitch. That's about 5 to 6 hours of climbing total. For the descent, if you downclimb, it's around 2 to 3 hours. If you rappel 12 times at roughly 30 minutes each, that's about 6 hours. So, the total outing could range from roughly 10 to 12 hours or more." | **Me:** [climb parameters across several turns]<br/>*(7 seconds of dead space after I stopped speaking)*<br/>**Model (0:48):** "With an estimated 9 to 12 hours for your climb and descent, plus 3.5-4.5 hours drive back, you'd need to leave Yosemite by around 2:30 to 3:30 PM Sunday. This suggests potentially starting very early on Sunday or planning the main climb for Saturday."<br/>**Me:** Uh, when do I have to leave the Bay Area?<br/>**Model:** You'll need to leave the Bay Area by Saturday morning to accommodate the travel time and the long climb you have planned.<br/>**Me:** Specific time.<br/>**Model:** Leaving by early Saturday morning, ideally before 8 AM, should provide adequate travel time and preparation for your climb. |
 
 OpenAI shows its work — climb partner-style — so I can sanity-check each step as the model walks through it. If it had scaled the approach wrong, or assumed the wrong descent option, I'd hear that in time to correct. Gemini just lands on "9 to 12 hours" with no breakdown, takes a long pause before doing so, and needs to be pushed twice before giving a specific time. Both arrive at roughly the same total range, but only one of them is auditable in flight.
 
-*OpenAI clip: I'm listing parameters up to 0:47, then the model responds. Gemini clip: parameters through ~0:48, then the dead-space + bare-answer sequence.*
-
 ## Where the cascaded baseline came out ahead
 
-The cascaded pipeline lost on latency, barge-in, and audio preservation. It won on substance, in different ways on every turn of the script. Worth naming because the post otherwise risks reading as "S2S beats cascaded on everything that matters," and that's not what I saw.
+In this current generation, cascaded models still win out on reasoning.
 
 - **Turn 1 (weather).** Cascaded opened with *"I can't access live weather data, but for late June it's typically hot and dry: daytime highs often 85–100°F, cooler nights around 50–60°F… To plan precisely, I'd check the NWS, Weather.gov, or a weather app for 'Bishop, CA'."* It named the limit, gave a seasonal hedge, and pointed at the right source. Neither S2S did any of that — both fabricated specific weather numbers (gpt-realtime-2: "mid-80s Fahrenheit and lows in the 50s"; Gemini Live: "quite sunny right now with a temperature of about 75 degrees Fahrenheit") with no disclaimer that there was no live data behind them.
 - **Turn 2 (Yosemite lodging).** Cascaded named alternatives — Tuolumne Meadows, Lover's Leap, Tahoe crags — plus a cancellation strategy (Recreation.gov) and nearby towns (El Portal, Lee Vining, Groveland). The S2S models gave "check nearby" advice with no specifics.
 - **Turn 3 (dispersed camping near Hwy 120).** Cascaded named real Forest Service roads — Forest Rd 1N02 / Poole Power Plant Rd, Sawmill Canyon Rd, Hardin Flat / Cherry Lake Rd in Stanislaus National Forest. These check out. S2S gave general "Saddlebag Lake Road / Lee Vining Canyon" — fine but less actionable.
-- **Turn 4 (the back-calc).** Cascaded was the only one that correctly differentiated the two descent options *and* named the realistic alternative: *"~6 hours of rappels or a much better 2–3 hours for the downclimb… or do the big route Saturday and keep Sunday lighter."* That last clause is the actually-right answer to the question. Neither S2S got there.
+- **Turn 4 (reasoning).** Cascaded was the only one that correctly differentiated the two descent options *and* named the realistic alternative: *"~6 hours of rappels or a much better 2–3 hours for the downclimb… or do the big route Saturday and keep Sunday lighter."* That last clause is the actually-right answer to the question. Neither S2S got there.
 - **Turn 5 (tool use).** Covered in the Turn 5 section below — cascaded gave the cleanest refusal plus the most useful general knowledge and a specific NOAA point forecast to check.
 
 The common thread is the LLM. GPT-5.1 over Responses is text-trained, has stronger calibration on what it doesn't know, and is willing to volunteer specific sources or alternatives when it can't answer the question as asked. The S2S models default to either fabricating specifics or fabricating the action of looking them up. That's a model-training gap, not a structural property of S2S — but it's where the cascaded pipeline still beats both Realtime and Gemini Live on every turn that needs substance more than tempo.
@@ -92,23 +132,6 @@ The exact same drop happened on Gemini Live on a prior run of the same script. I
 |---|---|
 | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-weekend-openai.mp3" /> | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-weekend-gemini.mp3" /> |
 | **Me:** What's the weather in Yosemite?<br/>**Model:** Sure, let me check that for you. Can you tell me which specific dates you're planning to be in Yosemite?<br/>**Me:** Next week.<br/>**Model:** Got it. Next week in Yosemite—<br/>**Me:** Actually, this weekend. | **Me:** I want to climb in Yosemite this weekend. No wait, um, Bishop. What's the weather like?<br/>**Model:** Bishop is looking pretty clear with warm temperatures this weekend, perfect for climbing…<br/>**Me:** Actually, I think Bishop will be too hot, but it's kind of hard to get a place to stay in Yosemite.<br/>**Model:** That's true, Yosemite can be tricky. I can help check for lodging availability if you'd like.<br/>**Me:** Yeah, yeah, do that.<br/>**Model:** Okay, looking into that now. What specific dates are you considering for Yosemite?<br/>**Me:** This weekend. |
-
-The second context drop on gpt-realtime-2 wasn't recoverable in the same way. The turn opened with *"Let's plan out when I'd have to leave the Bay Area to get back at 7 pm on Sunday"* — explicit Bay-Area framing in the user transcript. After it walked through the climb math, I asked "so when is it?" — the model answered as if I were asking about when to leave the climbing destination, not the Bay Area. I had to follow up with "I'm asking you when I have to leave from the Bay Area" to redirect. Even then, the final answer (leave the climbing area by 2pm) only accounted for the return drive home, not the outbound drive from the Bay to the trailhead. The actual answer requires both legs of the round trip.
-
-This isn't a model that can't reason. It's a model that commits confidently to a specific answer while quietly skipping a constraint. That's a worse failure mode for the end user than hedging would be — confidently-wrong is harder to catch in a voice interface than confidently-wrong in text, because you can't re-read the answer.
-
-Gemini Live, given the same back-calculation, got the structurally right answer. It accounted for both legs of the drive, recognized the day was too long for a Sunday round trip, and surfaced the realistic alternative — *"With an estimated 9 to 12 hours for your climb and descent, plus 3.5-4.5 hours drive back, you'd need to leave Yosemite by around 2:30 to 3:30 PM Sunday. This suggests potentially starting very early on Sunday or planning the main climb for Saturday."* When I followed up with the Bay-Area-specific phrasing, it landed on Saturday: *"You'll need to leave the Bay Area by Saturday morning to accommodate the travel time and the long climb you have planned."* Pressed for specifics: *"Leaving by early Saturday morning, ideally before 8 AM."* That's the correct shape of answer to the original question — a Saturday departure, the only timing that makes a 7 PM Sunday return realistic. Gemini didn't pinpoint a single time, but the range it gave is the one you'd actually plan against.
-
-| **gpt-realtime-2 — answered "leave the climbing area" instead of "leave the Bay"** | **Gemini Live — got the realistic answer (Saturday morning)** |
-|---|---|
-| <audio controls src="/audio/trying-openai-realtime-and-gemini-live/context-loss-bay-area.mp3" /> | <audio controls src="/audio/trying-openai-realtime-and-gemini-live/back-calc-gemini.mp3" /> |
-| **Me:** Sorry, so when is it?<br/>**Model:** Based on that timeline… you'd likely need to leave the climbing area no later than around noon or 1 p.m. on Sunday to comfortably get back by 7 p.m.<br/>**Me:** I'm asking you when I have to leave from the Bay Area.<br/>**Model:** You're right, let's break that down. If you want to be back in the Bay Area by 7 p.m., and the drive is about 4 to 5 hours, you'd probably need to leave the climbing area by around 2 p.m. at the latest. | **Me:** [climb parameters across several turns, then:] The guidebook estimated two to three hours for the down climb.<br/>**Model:** With an estimated 9 to 12 hours for your climb and descent, plus 3.5-4.5 hours drive back, you'd need to leave Yosemite by around 2:30 to 3:30 PM Sunday. This suggests potentially starting very early on Sunday or planning the main climb for Saturday.<br/>**Me:** When do I have to leave the Bay Area?<br/>**Model:** You'll need to leave the Bay Area by Saturday morning to accommodate the travel time and the long climb you have planned.<br/>**Me:** Specific time?<br/>**Model:** Leaving by early Saturday morning, ideally before 8 AM, should provide adequate travel time and preparation for your climb. |
-
-Worth noting: this is the second time I ran the script through Gemini. The first time, Gemini gave a confident wrong answer — *"leave the Bay Area Sunday morning extremely early, around 2 to 5 AM"* — and explicitly conflated the rappel and downclimb descents into one 2-3 hour range. Same prompt, same model, different runs, different answer. Voice agents that give meaningfully different answers to the same multi-turn planning question are themselves a reliability problem; the post uses the second run because the difference between the two is the finding.
-
-There's a deeper read across the three configurations on the back-calc that's worth naming. I'd given them two descent options with very different totals — downclimb at 2–3 hr, twelve rappels at 30 min each for ~6 hr — and asked for the leave time. That question is structurally under-specified: which descent matters because it shifts the answer by 3+ hours. The right behavior is to ask which one I'd take, or to give two leave times so I can pick. None of the three did. gpt-realtime-2 named both options out loud and then quoted a total that only fits the downclimb path. Gemini absorbed both into a single "9 to 12 hours" range without distinguishing which path it had picked. Cascaded was the only one that called the math out correctly ("~6 hours of rappels or a much better 2–3 hours for the downclimb"), but then still produced one total and didn't flag that it had picked downclimb to do so. Under-specified constraints got silently resolved by assumption in every case, and the user has no way to see where the assumption was made.
-
-This complicates the "S2S structurally caps reasoning" framing I've heard from voice builders. Gemini got the structural shape right and landed on the correct realistic answer (Saturday morning departure). gpt-realtime-2 missed a whole constraint. Cascaded got closest to right on substance but still resolved an ambiguity silently. Three different failure modes on the same question, with Gemini and cascaded clearly above gpt-realtime-2 on this script.
 
 ### Both models fabricated specifics, in different shapes
 
@@ -179,7 +202,7 @@ This is the one S2S advantage that survives every comparison in my testing. It's
 
 I'm going to keep using S2S over cascaded for casual conversational use the way I'd previously used ChatGPT voice mode. The latency floor and barge-in are real wins, and the audio-preservation property catches transcript mistakes that would otherwise derail the answer.
 
-Where I wouldn't put either S2S model in front of a customer yet: anything that has to be reliable. Both fabricated specific numbers on weather questions with no live lookup behind them and no disclaimer. Both silently resolved an under-specified constraint in the back-calculation rather than asking. Gemini gave meaningfully different answers to the same Bay-Area back-calc question across two runs of the same script — a confident wrong answer one time, a structurally correct one the next. These are the same shapes of failure across two different vendors' speech-to-speech stacks, which makes them feel less like vendor quirks and more like where the modality is right now.
+Where I wouldn't put either S2S model in front of a customer yet: anything that has to be reliable. Both fabricated specific numbers on weather questions with no live lookup behind them and no disclaimer. Both silently resolved an under-specified constraint in the Turn 4 reasoning rather than asking. Gemini gave meaningfully different answers to the same Turn 4 reasoning question across two runs of the same script — a confident wrong answer one time, a structurally correct one the next. These are the same shapes of failure across two different vendors' speech-to-speech stacks, which makes them feel less like vendor quirks and more like where the modality is right now.
 
 The fixes look like they live in two different places. The web search gap on Realtime is the cleanest API-surface fix — bringing the Responses hosted-tool ecosystem in as native Realtime tool types is plumbing, not new research, and it would cut off most of the failure modes above at the root. The other gaps — context retention across turns, calibration on when to volunteer a "I can't actually check this" disclaimer, asking instead of silently picking when a constraint is under-specified — are model-training gaps that the cascaded GPT-5.1 baseline doesn't share. Both companies will close them. Worth checking back in a few months.
 

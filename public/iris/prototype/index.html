@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Iris — Council of Elrond</title>
+<style>
+  :root{--bg:#f4f2ee;--ink:#1d1b18;--muted:#726c63;--line:#e7e3db;--iris:#6b4eb8;--iris-soft:#efeafc;--iris-ink:#4a2f9e;--gold:#b07b1e;--teal:#2c7a6f}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  html,body{height:100%;margin:0;overflow:hidden}
+  body{background:#0c0c0e;color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;height:100vh;height:100dvh}
+  button,select,input{font:inherit}button{cursor:pointer}
+  .spin{display:inline-block;width:10px;height:10px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-1px;margin-right:5px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .btn.loading{background:#6b4eb8;border-color:#9a80e0;color:#fff;animation:pulse 1.1s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(107,78,184,.5)}50%{box-shadow:0 0 0 4px rgba(107,78,184,0)}}
+  .bar{background:#17161a;color:#e9e6df;padding:8px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;flex:none;border-bottom:1px solid #2a2831}
+  .bar .brand{font-weight:800;color:#fff;margin-right:2px}.bar .brand b{color:#b9a7e6}
+  .bar select,.bar input{background:#232128;color:#e9e6df;border:1px solid #37343f;border-radius:7px;padding:5px 8px;font-size:12.5px}
+  .bar input.key{width:130px}
+  .bar label{font-size:11px;color:#9a94a3;display:flex;gap:5px;align-items:center}
+  .bar .spacer{flex:1}
+  .pill{font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:99px}
+  .pill.live{background:#1e6a3a;color:#c9f0d6}.pill.demo{background:#5a4a12;color:#f0e2b0}
+  .btn{background:#2e2b37;color:#e9e6df;border:1px solid #423e4e;border-radius:7px;padding:5px 10px;font-size:12px;font-weight:700}
+  .btn:hover{background:#3a3646}.btn:disabled{opacity:.4;cursor:default}
+  .loop{background:#211f27;padding:7px 14px;display:flex;gap:8px;align-items:center;flex:none;border-bottom:1px solid #2a2831;flex-wrap:wrap}
+  .loop .grp{display:flex;gap:6px;align-items:center;background:#17161a;border:1px solid #34313d;border-radius:9px;padding:4px 8px}
+  .loop .gl{font-size:10px;color:#8a8494;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+  .loop .primary{background:#3a3550;border-color:#5a4e8a}
+  .loop .hint{font-size:12px;color:#b9a7e6}
+  .loop input{background:#232128;color:#e9e6df;border:1px solid #37343f;border-radius:7px;padding:5px 8px;font-size:12px;width:220px}
+  .loop select{background:#232128;color:#e9e6df;border:1px solid #37343f;border-radius:7px;padding:5px 7px;font-size:12px}
+  .status{font-size:12px;color:#b9a7e6;max-width:640px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .drawer{display:none;background:#1b1a1f;padding:10px 14px;border-bottom:1px solid #2a2831;flex:none}
+  .drawer textarea{width:100%;height:150px;background:#232128;color:#e9e6df;border:1px solid #37343f;border-radius:8px;padding:9px;font:12px/1.5 ui-monospace,Menlo,monospace}
+  .drawer .cap{font-size:11px;color:#8a8494;margin-top:5px}
+  /* layout */
+  .grid{flex:1;min-height:0;display:grid;grid-template-columns:44% 56%;gap:1px;background:var(--line)}
+  .rightcol{display:grid;grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:1px;background:#c2c8d0;min-height:0;border-left:3px solid #98a2ae}
+  /* right = a debug / inspector surface, cool-toned & monospace-headed; left = the app, warm */
+  .rightcol .pane{background:#edeff2}
+  .rightcol .phead{background:#e1e5eb;color:#58636f;font-family:ui-monospace,Menlo,monospace;letter-spacing:0}
+  .rightcol .rtabs{background:#e1e5eb}
+  .rightcol .memlist{border-right-color:#d3d8df}
+  .rightcol .reply{background:#e1e5eb;border-top-color:#d3d8df}
+  .appchip{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#1e6a3a;background:#d6efdf;border:1px solid #b3ddc2;border-radius:99px;padding:1px 7px}
+  .dbg{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#58636f;background:#d7dce3;border:1px solid #c0c8d2;border-radius:99px;padding:1px 7px}
+  .pane{background:var(--bg);min-height:0;display:flex;flex-direction:column}
+  .phead{flex:none;padding:8px 14px;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:#faf8f3;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+  .phead .sub{font-weight:600;text-transform:none;color:#9a9187;letter-spacing:0}
+  .scroll{flex:1;overflow-y:auto;padding:12px 14px}
+  .scroll::-webkit-scrollbar{width:8px}.scroll::-webkit-scrollbar-thumb{background:rgba(0,0,0,.16);border-radius:99px}
+  /* transcript */
+  .msg{margin:0 0 10px;max-width:92%}
+  .msg .nm{font-weight:800;font-size:12px}
+  .msg .tx{background:#fff;border:1px solid var(--line);border-radius:3px 10px 10px 10px;padding:6px 10px;font-size:13px;color:#2a2620;margin-top:2px}
+  .msg.iris{margin-left:auto;max-width:94%}.msg.iris .nm{color:var(--iris);text-align:right}
+  .msg.iris .tx{background:var(--iris-soft);border-color:#ddd2f7;border-radius:10px 3px 10px 10px;color:#2c2350}
+  .empty{color:#9a9187;font-size:12.5px;font-style:italic;padding:8px 0}
+  .composer{flex:none;display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--line);background:#faf8f3;align-items:center}
+  .composer select{border:1px solid var(--line);border-radius:8px;padding:6px 7px;font-size:12px;background:#fff;color:#3b362f}
+  .composer input{flex:1;border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12.5px}
+  .composer button{background:var(--iris);color:#fff;border:none;border-radius:8px;padding:6px 13px;font-weight:700;font-size:12.5px;cursor:pointer;white-space:nowrap}
+  /* memory file browser (top-right) */
+  .browser{flex:1;min-height:0;display:grid;grid-template-columns:206px 1fr}
+  .memlist{border-right:1px solid var(--line);overflow-y:auto;padding:8px 8px}
+  .memlist .lbl{font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#a49d92;margin:8px 6px 4px}
+  .memitem{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:7px;font-size:12px;cursor:pointer;color:#514b42}
+  .memitem:hover{background:#f1eef7}
+  .memitem.on{background:var(--iris-soft);color:var(--iris-ink)}
+  .memitem .ic{width:15px;text-align:center;flex:none}
+  .memitem .nm{font-family:ui-monospace,Menlo,monospace;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .memitem .dot{width:7px;height:7px;border-radius:50%;background:#d98a1e;box-shadow:0 0 0 2px #fbeec3;margin-left:auto;flex:none}
+  .memcontent{overflow-y:auto;padding:12px 14px}
+  .filehd{font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:800;color:#3a2c66;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .newtag{font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#96690f;background:#fbeec3;border-radius:99px;padding:1px 6px}
+  .kv{font-size:12.5px;margin:5px 0;color:#3b362f}
+  .kv b{color:var(--gold)}.kv b.read{color:var(--iris)}.kv b.pub{color:#2c7a6f}
+  .filepre{background:#fbfaf7;border:1px solid var(--line);border-radius:8px;padding:9px;font:11.5px/1.55 ui-monospace,Menlo,monospace;color:#4b463d;white-space:pre-wrap}
+  .polbar{display:flex;gap:6px;align-items:center;font-size:11px;color:#9a8f7f;margin-bottom:8px}
+  .mini{background:#efece5;border:1px solid var(--line);border-radius:6px;padding:3px 9px;font-size:11.5px;font-weight:700;color:#514b42;cursor:pointer}
+  .mini:hover{background:#e6e2da}
+  .poledit{width:100%;min-height:250px;background:#fbfaf7;border:1px solid var(--line);border-radius:8px;padding:9px;font:11.5px/1.55 ui-monospace,Menlo,monospace;color:#3b362f;resize:vertical}
+  .ctxpre{background:#fbfaf7;border:1px solid var(--line);border-radius:8px;padding:9px;font:11px/1.5 ui-monospace,Menlo,monospace;color:#4b463d;white-space:pre-wrap;overflow:auto;margin-top:4px}
+  .card{border:1px solid var(--line);border-radius:9px;background:#fff;padding:8px 10px;margin-bottom:9px}
+  .card.pub{background:#f6faf8;border-color:#d6e6de}
+  .card .t{font-weight:800;font-size:12.5px;color:#2a2620;display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .st{font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:99px;padding:1px 7px;white-space:nowrap}
+  .st.gathering{background:#fbeec3;color:#96690f}.st.groan{background:#f6d6cf;color:#a4392a}
+  .st.converging{background:#d3e6f5;color:#2c5f8a}.st.decided{background:#cdecd6;color:#1e6a3a}
+  .meta{font-size:11px;color:#6a655c;margin-top:3px}.res{color:#1e6a3a}
+  .opts{margin:6px 0 2px;display:flex;flex-direction:column;gap:3px}
+  .opts .lbl{font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#8a8073;margin-bottom:1px}
+  .opt{font-size:11.5px;color:#33302a;display:flex;gap:6px;align-items:baseline}
+  .opt:before{content:"▸";color:#8b78c9;font-size:10px}
+  .opt .by{color:#8a8073;font-size:10.5px}
+  /* bottom-right tabs (caucuses + lens) */
+  .rtabs{flex:none;display:flex;gap:2px;padding:7px 8px 0;background:#faf8f3;border-bottom:1px solid var(--line);overflow-x:auto}
+  .rtab{border:1px solid var(--line);border-bottom:none;background:#efece5;border-radius:8px 8px 0 0;padding:5px 10px;font-size:11.5px;font-weight:700;color:#6a655c;white-space:nowrap;display:flex;align-items:center;gap:5px;cursor:pointer}
+  .rtab.on{background:var(--bg);color:#2a2620}
+  .rtab .dot{width:7px;height:7px;border-radius:50%}
+  .rtab .b{background:var(--iris);color:#fff;border-radius:99px;font-size:9px;padding:0 5px;font-weight:800}
+  .cmsg{max-width:90%;margin:0 0 8px}
+  .cmsg .tx{border-radius:3px 10px 10px 10px;padding:6px 10px;font-size:12.5px}
+  .cmsg.iris{margin-left:auto}.cmsg.iris .tx{background:var(--iris-soft);border:1px solid #ddd2f7;color:#2c2350;border-radius:10px 3px 10px 10px}
+  .cmsg.them .tx{background:#fff;border:1px solid var(--line);color:#2a2620}
+  .reply{flex:none;display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--line);background:#faf8f3}
+  .reply input{flex:1;border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:12.5px}
+  .reply button{background:var(--iris);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-weight:700;font-size:12.5px}
+  /* context lens */
+  .lenshd{font-size:12px;color:#6a655c;margin-bottom:8px}
+  .lenshd code{font-family:ui-monospace,Menlo,monospace;color:var(--iris-ink)}
+  .src{display:flex;align-items:center;gap:9px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:6px 10px;margin-bottom:6px;font-size:12px}
+  .src .ic{width:18px;text-align:center}
+  .src.in{border-color:#cfe6d6;background:#f4fbf6}
+  .src.out{border-color:#eadfe0;background:#fbf6f6;color:#9a8f8f}
+  .src .lab b{color:#2a2620}.src.out .lab b{color:#9a8f8f}
+  .src .tag{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:1px 7px;border-radius:99px}
+  .src.in .tag{background:#cdecd6;color:#1e6a3a}.src.out .tag{background:#efe1e1;color:#9a5b5b}
+  .lenscap{font-size:11.5px;color:#6a655c;margin:8px 0 6px}
+  details.raw summary{font-size:11px;color:#8a8478;cursor:pointer}
+  details.raw pre{background:#fbfaf7;border:1px solid var(--line);border-radius:8px;padding:9px;font:11px/1.5 ui-monospace,Menlo,monospace;color:#4b463d;white-space:pre-wrap;max-height:210px;overflow:auto;margin-top:6px}
+</style>
+</head>
+<body>
+  <div class="bar">
+    <span class="brand">&amp; <b>Iris</b></span>
+    <span id="pill" class="pill demo">demo</span>
+    <label>model
+      <select id="provider"><option value="demo">demo · offline mocks</option><option value="proxy">Live model</option></select>
+    </label>
+    <button class="btn" id="reset">reset</button>
+    <span class="spacer"></span>
+  </div>
+
+  <div class="loop">
+    <div class="grp"><span class="gl">step</span><button class="btn" id="prev">◀ prev</button><button class="btn primary" id="next">next ▶</button><span class="hint" id="nextlabel"></span></div>
+    <span class="spacer"></span>
+    <span class="status" id="report"></span>
+  </div>
+
+  <div class="grid">
+    <section class="pane">
+      <div class="phead">The council · shared room <span class="appchip">app</span> <span class="sub">— what everyone in the group sees</span></div>
+      <div class="scroll" id="room"></div>
+      <div class="composer">
+        <select id="author"></select>
+        <input id="compose" placeholder="type a line as this member…"/>
+        <button id="send">send ▶</button>
+      </div>
+    </section>
+    <div class="rightcol">
+      <section class="pane">
+        <div class="phead">Iris's memory <span class="dbg">debug</span> <span class="sub">— internal files · ● fresh write · click to inspect</span></div>
+        <div class="browser">
+          <div class="memlist" id="memlist"></div>
+          <div class="memcontent" id="memcontent"></div>
+        </div>
+      </section>
+      <section class="pane">
+        <div class="phead">Caucuses + context <span class="dbg">debug</span> <span class="sub">— private 1:1 lines &amp; what Iris can see</span></div>
+        <div class="rtabs" id="ctabs"></div>
+        <div class="scroll" id="cbody"></div>
+        <div class="reply" id="replybar" style="display:none"><input id="reply" placeholder="reply as this member…"/><button id="replybtn">reply</button></div>
+      </section>
+    </div>
+  </div>
+
+<script type="module">
+import { IrisAgent } from './iris-sdk.js';
+import { proxy } from './models.js';
+import { decisions } from './surfaces.js';
+import { PARTICIPANTS, ROOM, MESSAGE_QUEUE } from './scenario-elrond.js';
+
+const $ = id => document.getElementById(id);
+const P = Object.fromEntries(PARTICIPANTS.map(p => [p.id, p]));
+const nm = id => (P[id] && P[id].name) || (id === 'iris' ? 'Iris' : id);
+const esc = s => (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const N = PARTICIPANTS.length;
+
+let agent, step, memSel = 'canvas', caucSel = PARTICIPANTS[0].id;
+
+const PRESETS = {};
+async function loadPreset(name){ if(PRESETS[name]==null){ try{ PRESETS[name]=await (await fetch(`./policy-${name}.md`)).text(); }catch{ PRESETS[name]=`# Iris · ${name}\nFacilitate, never decide.`; } } return PRESETS[name]; }
+let policyText = await loadPreset('facilitator');
+
+function buildModel(){ return $('provider').value==='proxy' ? proxy({ model:'claude-opus-4-8' }) : null; }
+
+// persist the whole snapshot history so prev / reload restore instantly — never re-running the model.
+// (Full snapshots are large, so they live in sessionStorage; the URL carries the step index #sN.)
+const SKEY = 'iris_state';   // snapshot history for prev/reload without recomputation
+// the URL carries the step index AND which memory file / caucus tab you're viewing, so a click on
+// next/prev (or a reload) keeps you where you were looking.
+function persist(){
+  try{ sessionStorage.setItem(SKEY, JSON.stringify(step.serialize())); }catch{}
+  try{ history.replaceState(null, '', `#s${step.cursor}&f=${encodeURIComponent(memSel)}&c=${encodeURIComponent(caucSel)}`); }catch{}
+}
+function parseHash(){
+  const h = location.hash, s = h.match(/s(\d+)/), f = h.match(/[&?]f=([^&]*)/), c = h.match(/[&?]c=([^&]*)/);
+  return { n: s?+s[1]:null, f: f?decodeURIComponent(f[1]):null, c: c?decodeURIComponent(c[1]):null };
+}
+function build(fresh){
+  if(fresh){ try{ sessionStorage.removeItem(SKEY); }catch{} }
+  agent = new IrisAgent({ policy: policyText, participants: PARTICIPANTS, surface: decisions, room: ROOM, model: buildModel(), maxSteps: 1 });
+  step = agent.stepper(MESSAGE_QUEUE);
+  memSel = 'canvas'; caucSel = PARTICIPANTS[0].id; $('report').textContent = '';
+  if(!fresh){
+    try{ const s=sessionStorage.getItem(SKEY); if(s) step.load(JSON.parse(s)); }catch{}   // restore prior run
+    const h = parseHash(); if(h.f) memSel = h.f; if(h.c) caucSel = h.c;                    // and the file / tab you were viewing
+  }
+  syncPill(); renderAll(); updateNext(); persist();
+}
+function syncConfig(){ if(!agent)return; agent.policy=policyText; agent.model=buildModel(); syncPill(); }
+function syncPill(){ const live=$('provider').value!=='demo'; const el=$('pill'); el.textContent=live?'live':'demo'; el.className='pill '+(live?'live':'demo'); }
+function setStatus(t){ $('report').textContent=t; }
+
+const changed = () => (step ? step.changed : new Set());
+
+// ---------- shared room ----------
+function renderRoom(){
+  $('room').innerHTML = agent.room.messages.map(m => {
+    if(m.author==='iris') return `<div class="msg iris"><div class="nm">Iris</div><div class="tx">${esc(m.text)}</div></div>`;
+    const c = P[m.author] || {name:m.author,color:'#555'};
+    return `<div class="msg"><div class="nm" style="color:${c.color}">${esc(c.name)}</div><div class="tx">${esc(m.text)}</div></div>`;
+  }).join('') || '<div class="empty">No messages yet. Click “next ▶”.</div>';
+  $('room').scrollTop = $('room').scrollHeight;
+}
+
+// ---------- top-right: memory files ----------
+function memFiles(){
+  const ch = changed();
+  const f = [
+    { key:'log', grp:'shared', ic:'📜', name:'room.md', changed: ch.has('log') },
+    { key:'canvas', grp:'shared', ic:'📋', name:'canvas', changed: ch.has('canvas') },
+    { key:'policy', grp:'shared', ic:'🌐', name:'policy.md', changed:false },
+  ];
+  Object.values(agent.room.items).forEach(it => f.push({ key:'item/'+it.id, grp:'iris (private working memory)', ic:'📝', name:`iris/decisions/${it.id}.md`, id:it.id, changed: ch.has('item/'+it.id) }));
+  f.push({ key:'introspection', grp:'iris (private working memory)', ic:'🧠', name:'iris/introspection/log.md', changed: ch.has('introspection') });
+  [...PARTICIPANTS].sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => f.push({ key:'user/'+p.id, grp:'people (sealed)', ic:'🔒', name:`people/${p.id}.md`, id:p.id, changed: ch.has('user/'+p.id) }));
+  return f;
+}
+function renderMemList(){
+  const files = memFiles();
+  if(!files.some(f=>f.key===memSel)) memSel = 'canvas';
+  let html = '', grp = '';
+  files.forEach(f => {
+    if(f.grp!==grp){ grp=f.grp; html += `<div class="lbl">${esc(grp)}</div>`; }
+    html += `<div class="memitem ${f.key===memSel?'on':''}" data-k="${f.key}"><span class="ic">${f.ic}</span><span class="nm">${esc(f.name)}</span>${f.changed?'<span class="dot" title="fresh write"></span>':''}</div>`;
+  });
+  $('memlist').innerHTML = html;
+}
+// the courses of action on a decision — public positions, attributed to who proposed them
+function optionsHtml(options){
+  if(!options || !options.length) return '';
+  const rows = options.map(o => `<div class="opt"><span>${esc(o.label)}</span>${o.by?`<span class="by">— ${esc(nm(o.by))}</span>`:''}</div>`).join('');
+  return `<div class="opts">${rows}</div>`;
+}
+function renderMemContent(){
+  const k = memSel, ch = changed(), fresh = ch.has(k) ? ' <span class="newtag">new</span>' : '';
+  let body = '';
+  if(k==='log'){
+    const log = agent.room.log.length ? esc(agent.room.log.join('\n')) : '(nothing said yet)';
+    body = `<div class="filehd">📜 room.md${fresh}</div>
+      <div class="kv"># topic: ${esc(agent.room.topic)}</div>
+      <div class="kv" style="color:#6a655c">The running log of everything said in the room — Iris's raw record of the conversation. It grows the moment anyone speaks.</div>
+      <pre class="filepre">${log}</pre>`;
+  } else if(k==='canvas'){
+    const cards = agent.room.canvas.map(d => `<div class="card pub"><div class="t"><span>${esc(d.title)}</span><span class="st ${esc(d.status)}">${esc(d.status)}</span></div>${optionsHtml(d.options)}<div class="meta">${d.weighedIn} of ${N} weighed in${d.resolution?` · <span class="res">✓ ${esc(d.resolution)}</span>`:''}</div></div>`).join('');
+    body = `<div class="filehd">📋 canvas${fresh}</div><div class="kv" style="color:#6a655c">The de-identified projection of every decision — what the group sees. Private notes never appear here.</div>${cards||'<div class="empty">No decisions yet.</div>'}`;
+  } else if(k==='policy'){
+    body = `<div class="filehd">🌐 policy.md${fresh}</div>
+      <div class="polbar"><span>load a default:</span><button class="mini" data-preset="facilitator">facilitator</button><button class="mini" data-preset="coach">coach</button><span style="margin-left:auto">editable — changes Iris on the next turn</span></div>
+      <textarea id="poledit" class="poledit">${esc(policyText)}</textarea>`;
+  } else if(k==='introspection'){
+    const log = agent.memory.introspection;
+    const entries = log.length
+      ? log.map(e => `<div class="kv" style="padding:6px 0;border-bottom:1px solid var(--line)"><b class="read">${e.tool==='none'?'held':esc(e.tool)}${e.target?' → '+esc(nm(e.target)):''}:</b> ${esc(e.note)}</div>`).join('')
+      : '<div class="empty">Nothing yet — Iris hasn\'t taken a beat.</div>';
+    body = `<div class="filehd">🧠 iris/introspection/log.md${fresh}</div>
+      <div class="kv" style="color:#6a655c">Iris's private running log of what she decided each turn, in her own voice, and why. Never leaves memory — the group never sees it.</div>${entries}`;
+  } else if(k.startsWith('item/')){
+    const it = agent.room.items[k.slice(5)];
+    body = `<div class="filehd">📝 iris/decisions/${esc(it.id)}.md${fresh}</div>
+      <div class="kv"># ${esc(it.title)}</div>
+      <div class="kv"><b class="pub">status:</b> ${esc(it.status)}${it.resolution?` &nbsp; <b class="pub">resolution:</b> ${esc(it.resolution)}`:''}</div>
+      <div class="kv"><b class="pub">options on the table:</b></div>${optionsHtml(it.options)||'<div class="kv" style="color:#9a9187;margin-top:-2px">— none proposed yet —</div>'}
+      <div class="kv"><b class="pub">weighed in:</b> ${Object.keys(it.contributions).map(esc).join(', ')||'none'}</div>
+      <div class="kv"><b>heartbeat:</b> ${esc(it.heartbeat)||'—'}</div>
+      <div class="kv"><b class="read">read (de-identified):</b> ${esc(it.read)||'—'}</div>`;
+  } else if(k.startsWith('user/')){
+    const id = k.slice(5), rec = agent.memory.private[id], m = rec.mind;
+    const empty = !m.interest && !m.position && !m.beliefs && !(m.regards||[]).length && !rec.plan.watchingFor && !rec.plan.helpNext && !(rec.shifts||[]).length;
+    const gl = 'font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#8b78c9;margin:12px 0 5px';
+    const regards = (m.regards||[]).length
+      ? `<div class="opts" style="margin-top:6px"><div class="lbl">how ${esc(nm(id))} regards the others</div>${m.regards.map(x=>`<div class="opt"><span>${esc(nm(x.toward))}: ${esc(x.note)}</span></div>`).join('')}</div>`
+      : '';
+    const shifts = (rec.shifts||[]).length
+      ? `<div class="opts" style="margin-top:6px"><div class="lbl">how ${esc(nm(id))} has moved</div>${rec.shifts.map(s=>`<div class="opt"><span>t${s.turn}: ${esc(s.observed)}${s.from||s.to?` <span class="by">(${esc(s.from||'—')} → ${esc(s.to||'—')})</span>`:''}</span></div>`).join('')}</div>`
+      : '';
+    const header = `<div class="filehd">🔒 people/${esc(id)}.md${fresh}</div>
+      <div class="kv"># ${esc(nm(id))} · <span style="color:#9a8f7f">${esc(P[id].role)}</span></div>
+      <div class="kv" style="color:#9a8f7f;font-size:11px">My private notes on ${esc(nm(id))} — never shown to anyone.</div>`;
+    body = empty
+      ? header + `<div class="empty">No read of ${esc(nm(id))} yet — I build one as they speak.</div>`
+      : header + `
+      <div style="${gl}">theory of mind — their mind, as I read it <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#9a8f7f">· confidence: ${esc(rec.confidence)||'—'}</span></div>
+      <div class="kv"><b class="read">interest</b> <span style="color:#9a8f7f">(desire):</span> ${esc(m.interest)||'—'}</div>
+      <div class="kv"><b class="pub">position</b> <span style="color:#9a8f7f">(stance):</span> ${esc(m.position)||'—'}</div>
+      <div class="kv"><b style="color:#8a5a2b">beliefs:</b> ${esc(m.beliefs)||'—'}</div>
+      <div class="kv"><b>arc</b> <span style="color:#9a8f7f">(disposition):</span> ${esc(m.arc)||'—'}</div>
+      ${regards}
+      <div style="${gl}">my plan <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#9a8f7f">· not part of their mind</span></div>
+      <div class="kv"><b>what I'm watching for:</b> ${esc(rec.plan.watchingFor)||'—'}</div>
+      <div class="kv"><b>how I can help next:</b> ${esc(rec.plan.helpNext)||'—'}</div>
+      ${shifts}`;
+  }
+  $('memcontent').innerHTML = body;
+  if(k==='policy'){
+    $('poledit').addEventListener('input', e => { policyText = e.target.value; syncConfig(); });
+    $('memcontent').querySelectorAll('[data-preset]').forEach(b => b.onclick = async () => { policyText = await loadPreset(b.dataset.preset); syncConfig(); renderMemContent(); });
+  }
+}
+function renderMem(){ renderMemList(); renderMemContent(); }
+
+// ---------- bottom-right: caucus tabs + context lens ----------
+function renderCTabs(){
+  let html = '';
+  [...PARTICIPANTS].sort((a,b)=>a.name.localeCompare(b.name)).forEach(p => { const n=agent.caucus(p.id).length; html += `<div class="rtab ${caucSel===p.id?'on':''}" data-c="${p.id}"><span class="dot" style="background:${p.color}"></span>${esc(p.name)}${n?`<span class="b">${n}</span>`:''}</div>`; });
+  $('ctabs').innerHTML = html;
+}
+function lensPre(aud){ let raw=''; try{ raw = agent.context({ audience: aud }); }catch{} return `<pre class="ctxpre">${esc(raw)}</pre>`; }
+function renderCBody(){
+  $('replybar').style.display = 'flex';
+  const thread = agent.caucus(caucSel);
+  const msgs = thread.length ? thread.map(m => { const iris=m.from==='iris'; return `<div class="cmsg ${iris?'iris':'them'}"><div class="tx"><b style="font-size:10px;color:${iris?'#8a76c8':P[caucSel].color}">${iris?'Iris':esc(nm(caucSel))}</b><br>${esc(m.text)}</div></div>`; }).join('') : `<div class="empty">No private caucus with ${esc(nm(caucSel))} yet.</div>`;
+  $('cbody').innerHTML = `${msgs}<details class="raw" style="margin-top:12px"><summary>🔒 the context Iris draws on to speak with ${esc(nm(caucSel))} — <code>context({ audience: '${caucSel}' })</code></summary>${lensPre(caucSel)}</details>`;
+  $('reply').placeholder = `reply as ${nm(caucSel)}…`;
+}
+function renderCaucus(){ renderCTabs(); renderCBody(); }
+
+function populateAuthors(){ $('author').innerHTML = PARTICIPANTS.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join(''); }
+function renderAll(){ renderRoom(); renderMem(); renderCaucus(); populateAuthors(); }
+
+// ---------- the loop ----------
+function reportStep(){
+  const a = step.lastAction;   // decide + act are one beat now; the action carries its own rationale
+  // the viewed file / caucus tab stays where you put it (persisted in the URL) — no auto-switching
+  const chArr = [...step.changed];
+  const changes = chArr.length ? ` · ${chArr.join(', ')}` : '';
+  let line = step.label || '';
+  if(a){
+    // first person, in Iris's voice — the same note that lands in iris/introspection/log.md
+    line = a.note ? `③ ${a.note}`
+      : `③ Iris ${a.tool==='none'?'held — nothing to do':a.tool==='post'?'posted to the room':a.tool==='caucus'?'caucused → '+nm(a.target):a.tool}`;
+  }
+  $('report').textContent = line + changes;
+  renderAll(); updateNext(); persist();
+}
+function updateNext(){
+  $('nextlabel').textContent = 'next: ' + step.nextLabel;
+  $('prev').disabled = !step.canPrev;
+}
+async function nextStep(inject=null){
+  syncConfig();
+  const n=$('next'); const old=n.innerHTML;
+  // a model round-trip happens on the reflect + act beats when a live model is wired up
+  const waiting = $('provider').value==='proxy' && ['reflect','act'].includes(step.phase);
+  n.disabled = $('prev').disabled = true;
+  n.innerHTML = waiting ? '<span class="spin"></span>running model…' : '…';
+  n.classList.toggle('loading', waiting);
+  try{
+    const r = await step.next(inject);
+    if(r===null) setStatus('End of the scripted council — send a custom line below, or reset.');
+  }catch(e){ setStatus('⚠ '+e.message); }
+  n.innerHTML=old; n.classList.remove('loading'); n.disabled=false; reportStep();
+}
+// the chat composer: post a line as a member and run the full turn (Iris reacts)
+async function sendMessage(){
+  const c=$('compose').value.trim(); if(!c) return;
+  $('send').disabled=true;
+  try{
+    let g=0; while(step.phase!=='msg' && g++<12) await nextStep();              // finish any in-progress turn first
+    const inject={ author:$('author').value, text:c }; $('compose').value='';
+    await nextStep(inject);                                                     // ① the line enters the room
+    g=0; while(step.phase!=='msg' && g++<12) await nextStep();                  // ② reflect, then ③ act(s) until she holds
+  } finally { $('send').disabled=false; }
+}
+function prevStep(){ step.prev(); reportStep(); }
+
+// ---------- events ----------
+$('next').onclick = () => nextStep();   // wrap so the click event isn't passed as `inject`
+$('prev').onclick = () => prevStep();
+window.addEventListener('keydown', e => {
+  if(e.target.closest('input,textarea,select')) return;   // don't hijack typing
+  if(e.key==='ArrowRight'){ e.preventDefault(); nextStep(); }
+  else if(e.key==='ArrowLeft'){ e.preventDefault(); if(step.canPrev) prevStep(); }
+});
+$('memlist').addEventListener('click', e => { const it=e.target.closest('.memitem'); if(it){ memSel=it.dataset.k; renderMem(); persist(); } });
+$('ctabs').addEventListener('click', e => { const t=e.target.closest('.rtab'); if(t){ caucSel=t.dataset.c; renderCaucus(); persist(); } });
+async function sendReply(){
+  const t=$('reply').value.trim(); if(!t||caucSel==='room')return;
+  const who=caucSel; $('reply').value='';
+  const btn=$('replybtn'); btn.disabled=true; const blabel=btn.innerHTML;
+  try{
+    syncConfig();
+    agent.ingestCaucus(who, t);                     // record the reply and show it right away
+    renderCaucus();
+    const live = $('provider').value==='proxy';
+    if(live){ btn.innerHTML='<span class="spin"></span>'; setStatus(`${nm(who)} replied — Iris is thinking…`); }
+    const before = step._memState();                // so a caucus reply lights fresh-write dots like a normal turn
+    const acts = await agent.react();               // ② reflect, ③ act — Iris takes a turn
+    step.changed = step._diff(before);
+    step.record('caucus · '+nm(who));
+    const a = acts[acts.length-1];
+    setStatus(a ? `after ${nm(who)}'s reply, Iris ${a.tool==='post'?'surfaced it to the room':a.tool==='caucus'?'replied privately':'held'}` : `${nm(who)} replied`);
+  }catch(e){ setStatus('⚠ '+e.message); }
+  btn.disabled=false; btn.innerHTML=blabel; renderAll(); updateNext();
+}
+$('replybtn').onclick = sendReply;
+$('reply').addEventListener('keydown', e => { if(e.key==='Enter') $('replybtn').click(); });
+$('send').onclick = sendMessage;
+$('compose').addEventListener('keydown', e => { if(e.key==='Enter') sendMessage(); });
+$('reset').onclick = () => build(true);
+$('provider').addEventListener('change', syncConfig);
+window.addEventListener('hashchange', () => {   // manual URL nav jumps to that step + file/tab (no re-run)
+  const h = parseHash(); let dirty = false;
+  if(h.f && h.f!==memSel){ memSel = h.f; dirty = true; }
+  if(h.c && h.c!==caucSel){ caucSel = h.c; dirty = true; }
+  if(step && h.n!==null && h.n!==step.cursor && h.n>=0 && h.n<step.history.length){ step.goto(h.n); dirty = true; }
+  if(dirty){ renderAll(); updateNext(); }
+});
+
+// off-localhost (e.g. shared on the web) the live-model proxy + API key aren't available — demo only
+if(!['localhost','127.0.0.1','::1',''].includes(location.hostname)){
+  const opt = [...$('provider').options].find(o => o.value === 'proxy'); if(opt) opt.remove();
+}
+
+build(false);   // initial load: restore the prior run from sessionStorage if present
+</script>
+</body>
+</html>

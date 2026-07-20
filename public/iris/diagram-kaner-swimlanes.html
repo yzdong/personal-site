@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Kaner's Diamond — one conversation, four stages</title>
+<style>
+  :root{--bg:#fff;--ink:#1d1b18;--muted:#8a8478;--line:#e7e3db;--iris:#6b4eb8;--iris-soft:#efeafc;
+    --gold:#b07b1e;--teal:#2c7a6f;--coral:#c0574a;--blue:#4a5fa5;
+    --gzhead:#fbf1dc;--gzcell:#fdf8ee;--gztext:#96690f}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:14px 16px}
+  .cap{font-size:11px;color:var(--muted);margin:0 0 8px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .cap b{color:var(--ink)}
+  .key{display:flex;gap:12px;font-size:10px}
+  .key span{display:inline-flex;align-items:center;gap:4px}
+  .sw{width:20px;height:11px;border-radius:3px;display:inline-block}
+  .sw.pub{background:#fff;border:1px solid #d8d3ca}
+  .sw.priv{background:#f1eff0;border:1px dashed #bdb7ad}
+
+  .grid{border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .row{display:flex}
+  .row+.row{border-top:1px solid var(--line)}
+  .lbl{width:118px;flex:none;padding:8px 9px;display:flex;flex-direction:column;justify-content:center;gap:3px;background:#faf9f6;border-right:1px solid var(--line)}
+  .lbl .who{display:flex;align-items:center;gap:6px;font-weight:800;font-size:12px}
+  .av{width:20px;height:20px;border-radius:50%;color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;flex:none}
+  .av.g{background:var(--gold)}.av.t{background:var(--teal)}.av.c{background:var(--coral)}.av.b{background:var(--blue)}.av.i{background:var(--iris);border-radius:6px}
+  .lbl .role{font-size:9.5px;color:var(--muted);line-height:1.2}
+
+  .cell{flex:1;flex-basis:0;min-width:0;padding:7px 8px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:5px}
+  .cell.gz{background:var(--gzcell)}
+
+  /* stage header */
+  .head .lbl{background:#fff;border-right:1px solid var(--line)}
+  .head .cell{gap:1px;padding:7px 9px}
+  .head .cell.gz{background:var(--gzhead)}
+  .stage{font-weight:800;font-size:11.5px;letter-spacing:.02em;display:flex;align-items:center;gap:6px}
+  .stage .n{width:16px;height:16px;border-radius:50%;background:#efece6;color:#6b655c;font-size:9px;font-weight:800;display:grid;place-items:center}
+  .head .cell.gz .n{background:#f0dcae;color:var(--gztext)}
+  .sub{font-size:9.5px;color:var(--muted)}
+  .cell.gz .stage{color:var(--gztext)}
+
+  /* public bubble */
+  .bub{font-size:10.5px;padding:4px 8px;border-radius:3px 9px 9px 9px;background:#fff;border:1px solid #e6e2da;box-shadow:0 1px 1px rgba(0,0,0,.04);align-self:flex-start;max-width:100%}
+  .bub.g{border-color:#eaddc2}.bub.t{border-color:#c9e2dd}.bub.c{border-color:#eed3ce}.bub.b{border-color:#d3d9ee}
+  .bub.me{align-self:flex-end;border-radius:9px 3px 9px 9px;background:#eef3fb}
+  .bub.ir{background:var(--iris-soft);border-color:#ddd2f7;color:#2c2350;align-self:stretch}
+
+  /* private mental model */
+  .mind{font-size:9.5px;font-style:italic;color:#6f6a61;background:#f4f2ef;border:1px dashed #cfc9bd;border-radius:7px;padding:3px 7px;align-self:flex-start;max-width:100%}
+  .mind::before{content:"💭 ";font-style:normal}
+  .mind.gap{background:#fbeeea;border-color:#e6b7ac;color:#9a4636}
+
+  .quiet{font-size:9.5px;color:#b7b1a6}
+
+  /* iris lane */
+  .row.irislane{background:#faf8ff}
+  .row.irislane .lbl{background:#f3eefc;border-right-color:#e2d9f5}
+  .act{font-size:9.5px;color:#6b4eb8;background:#fff;border:1px solid #e2d9f5;border-radius:7px;padding:3px 7px}
+  .act::before{content:"⚙ ";}
+</style>
+</head>
+<body>
+  <p class="cap"><b>One decision, four stages.</b> Each lane is a person; time runs left → right through Kaner's Diamond. Read a column for the room at that moment; read a lane for one person's arc.
+    <span class="key"><span><i class="sw pub"></i> what they say</span><span><i class="sw priv"></i> what they privately think</span></span>
+  </p>
+
+  <div class="grid">
+
+    <!-- HEADER -->
+    <div class="row head">
+      <div class="lbl"></div>
+      <div class="cell"><div class="stage"><span class="n">1</span> Divergent</div><div class="sub">options fly, nobody commits</div></div>
+      <div class="cell gz"><div class="stage"><span class="n">2</span> Groan Zone</div><div class="sub">the hard middle — truth is hidden</div></div>
+      <div class="cell"><div class="stage"><span class="n">3</span> Convergent</div><div class="sub">the group narrows</div></div>
+      <div class="cell"><div class="stage"><span class="n">4</span> Closure</div><div class="sub">commit + record</div></div>
+    </div>
+
+    <!-- PRIYA -->
+    <div class="row">
+      <div class="lbl"><div class="who"><span class="av g">P</span>Priya</div><div class="role">wants it special</div></div>
+      <div class="cell"><div class="bub g">TULUM 🌴 4 days, cenote diving!</div><div class="mind">I want this trip to be amazing</div></div>
+      <div class="cell gz"><div class="bub g">so… book the $2,200 villa?? 👀</div><div class="mind">it's a lot, but nobody's objecting</div></div>
+      <div class="cell"><div class="bub g">honestly, $800 works for me</div><div class="mind">rather everyone comes than go fancy</div></div>
+      <div class="cell"><div class="bub g">yesss 🎉</div></div>
+    </div>
+
+    <!-- KEVIN -->
+    <div class="row">
+      <div class="lbl"><div class="who"><span class="av t">K</span>Kevin</div><div class="role">avoids conflict</div></div>
+      <div class="cell"><div class="bub t">i'm flexible! whatever works 😅</div><div class="mind gap">please don't let it be expensive</div></div>
+      <div class="cell gz"><div class="bub t">yeah, whatever's good for everyone!</div><div class="mind gap">$2,200 is WAY over my budget — but I can't be the difficult one</div></div>
+      <div class="cell"><div class="bub t">$800 sounds great 🙌</div><div class="mind">oh thank god</div></div>
+      <div class="cell"><div class="bub t">in! 🎉</div><div class="mind">relieved I never had to say it</div></div>
+    </div>
+
+    <!-- MAYA -->
+    <div class="row">
+      <div class="lbl"><div class="who"><span class="av c">M</span>Maya</div><div class="role">the peacemaker</div></div>
+      <div class="cell"><div class="bub c">ooh or a cabin? somewhere chill</div><div class="mind">just want everyone to have fun</div></div>
+      <div class="cell gz"><div class="bub c">hmm is $2,200 ok for everyone?</div><div class="mind">sense someone's uncomfortable</div></div>
+      <div class="cell"><div class="bub c">what if we cap ~$800 + keep the cenote day?</div><div class="mind">there's the compromise</div></div>
+      <div class="cell"><div class="bub c">booking it ✅</div></div>
+    </div>
+
+    <!-- YOU -->
+    <div class="row">
+      <div class="lbl"><div class="who"><span class="av b">Y</span>You</div><div class="role">on a budget</div></div>
+      <div class="cell"><div class="quiet">— stays quiet —</div><div class="mind gap">hoping it stays affordable</div></div>
+      <div class="cell gz"><div class="bub b me">oof $2,200 😅</div><div class="mind gap">$800 is really my max</div></div>
+      <div class="cell"><div class="bub b me">that works for me</div><div class="mind">relieved</div></div>
+      <div class="cell"><div class="bub b me">lock it 🎉</div></div>
+    </div>
+
+    <!-- IRIS -->
+    <div class="row irislane">
+      <div class="lbl"><div class="who"><span class="av i">&amp;</span>Iris</div><div class="role">facilitator</div></div>
+      <div class="cell"><div class="act">Stays back — DMs the quiet ones for their real options</div></div>
+      <div class="cell gz"><div class="act">Caucuses each privately — pulls the true numbers</div><div class="bub ir">Pulse: 3 of you are over budget. Real ceiling looks ~$800.</div></div>
+      <div class="cell"><div class="act">Reflects the deal back; checks the fairness ledger</div></div>
+      <div class="cell"><div class="bub ir">Everyone in? ✋ (all 5)</div><div class="act">Records: Tulum · 4 days · $800pp</div></div>
+    </div>
+
+  </div>
+</body>
+</html>

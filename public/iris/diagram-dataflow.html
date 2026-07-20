@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Iris — memory at the center of the loop</title>
+<style>
+  :root{--bg:#f4f2ee;--ink:#1d1b18;--muted:#726c63;--line:#e7e3db;--iris:#6b4eb8}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:10px 18px;display:flex;flex-direction:column}
+  .wrap{max-width:1240px;margin:0 auto;width:100%;flex:1;display:flex;flex-direction:column;min-height:0}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 6px}
+  .sub b{color:#3b362f;font-weight:700}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 1px 2px rgba(0,0,0,.04),0 10px 30px rgba(30,25,18,.06);padding:8px;flex:1;min-height:0;display:flex}
+  svg{width:100%;height:100%;display:block}
+  .foot{margin:7px 2px 0;font-size:11px;color:var(--muted)}
+  .foot a{color:var(--iris);text-decoration:none;border-bottom:1px solid #d5c8ef;font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="sub"><b>Memory is the hub of the loop.</b> Each new line updates it, and it drives every action. Its <b>architecture</b> is what lives in each file; the <b>mechanism</b> is how those files stay current.</p>
+
+  <div class="card">
+  <svg viewBox="0 0 1300 580" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Iris memory-centered runloop">
+    <defs>
+      <marker id="arwc" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#7a63c0"/></marker>
+      <marker id="arwe" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#3f9488"/></marker>
+      <marker id="arwm" markerWidth="7" markerHeight="7" refX="5.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 z" fill="#b07b1e"/></marker>
+    </defs>
+
+    <!-- EXTERNAL: chat platform (left) -->
+    <rect x="18" y="238" width="168" height="120" rx="14" fill="#eef4f3" stroke="#a9cfc7" stroke-width="1.5"/>
+    <text x="38" y="268" font-size="10" font-weight="800" letter-spacing=".5" fill="#3f9488">EXTERNAL SYSTEM</text>
+    <text x="38" y="294" font-size="14" font-weight="700" fill="#245a52">💬 Chat platform</text>
+    <text x="38" y="314" font-size="11.5" fill="#5a8078">Slack · WhatsApp</text>
+    <text x="38" y="337" font-size="11" fill="#3f7d73">→ messages in</text>
+    <text x="38" y="352" font-size="11" fill="#3f7d73">← actions out</text>
+
+    <!-- THE AGENT (container) -->
+    <rect x="204" y="24" width="1082" height="548" rx="18" fill="#fffdfa" stroke="#c9b4a2" stroke-width="1.7"/>
+    <text x="228" y="50" font-size="13" font-weight="800" letter-spacing=".4" fill="#7a4f24">THE AGENT · MEMORY AT THE CENTER OF THE LOOP</text>
+
+    <!-- REFLECT (top) — box auto-sized to its text by the script below -->
+    <rect id="reflectBox" x="378" y="58" width="376" height="40" rx="12" fill="#fff" stroke="#e7e3db"/>
+    <text id="reflectTxt" x="566" y="83" text-anchor="middle" font-size="12.5" fill="#3b362f"><tspan font-weight="800" letter-spacing=".5" fill="#a29b8f">② REFLECT   </tspan>re-reads with the new line; re-derives her notes</text>
+
+    <!-- MEMORY ARCHITECTURE (center — wide + shorter) -->
+    <rect x="248" y="138" width="636" height="352" rx="16" fill="#efeafc" stroke="#6b4eb8" stroke-width="1.8"/>
+    <text x="270" y="163" font-size="14" font-weight="800" letter-spacing=".4" fill="#4a2f9e">MEMORY ARCHITECTURE</text>
+    <text x="270" y="179" font-size="11" fill="#8a76c8">Iris's own notes, in her voice</text>
+
+    <text x="270" y="203" font-size="12.5"><tspan font-weight="700" fill="#5f6b7a">🌐 policy.md</tspan><tspan font-size="10.5" fill="#9a8f7f"> · global default, tunable per org</tspan></text>
+    <text x="286" y="219" font-size="11.5" font-style="italic" fill="#6a5f8a">I facilitate; I never decide. I move the group through the groan zone.</text>
+
+    <text x="270" y="243" font-size="12.5"><tspan font-weight="700" fill="#2c7a6f"># room.md</tspan><tspan font-size="10.5" fill="#9a8f7f"> · the group's channel</tspan></text>
+    <text x="278" y="259" font-size="11.5"><tspan font-weight="700" fill="#8a8478">📜 log:</tspan><tspan fill="#5c564c"> Priya floated the $2,200 villa, Kevin hedged, Maya asked if it's ok.</tspan></text>
+    <text x="278" y="275" font-size="11.5" fill="#3b362f">• Tulum trip: I think they're stuck in the groan zone; 3 passes, no landing.</text>
+    <text x="294" y="291" font-size="11.5"><tspan font-weight="700" fill="#b07b1e">heartbeat:</tspan><tspan fill="#5c564c"> I should nudge them by Sam's birthday, ~5 days out.</tspan></text>
+    <text x="294" y="307" font-size="11.5"><tspan font-weight="700" fill="#6b4eb8">read:</tspan><tspan fill="#5c564c"> I think budget is the quiet blocker; 3 are privately over $2,200.</tspan></text>
+    <text x="278" y="323" font-size="11.5" fill="#3b362f">• Dana's gift: I've logged it as settled, ~$40 each.</text>
+
+    <text x="270" y="347" font-size="12.5"><tspan font-weight="700" fill="#b07b1e">👤 people/</tspan><tspan font-size="10.5" fill="#9a8f7f"> · one file per person</tspan></text>
+
+    <text x="278" y="363" font-size="11.5"><tspan font-weight="700" fill="#3a2c66">kevin.md</tspan><tspan font-weight="700" fill="#a5423a">  🔒 sealed from Priya</tspan></text>
+    <text x="290" y="379" font-size="11.5" fill="#3b362f">I read Kevin as budget-tight, a ~$800 ceiling he hasn't said aloud.</text>
+    <text x="294" y="395" font-size="11.5"><tspan font-weight="700" fill="#b07b1e">heartbeat:</tspan><tspan fill="#5c564c"> I should check he's ok with the number before we commit.</tspan></text>
+    <text x="294" y="411" font-size="11.5"><tspan font-weight="700" fill="#6b4eb8">read:</tspan><tspan fill="#5c564c"> I think he assumes the others can all afford $2,200.</tspan></text>
+
+    <text x="278" y="431" font-size="11.5"><tspan font-weight="700" fill="#3a2c66">priya.md</tspan><tspan font-weight="700" fill="#2c7a6f">  👁 Priya sees this</tspan></text>
+    <text x="290" y="447" font-size="11.5" fill="#3b362f">I read Priya as set on the villa, how she pictured the trip.</text>
+    <text x="294" y="463" font-size="11.5"><tspan font-weight="700" fill="#b07b1e">heartbeat:</tspan><tspan fill="#5c564c"> I should make sure she doesn't steamroll the quieter ones.</tspan></text>
+    <text x="294" y="479" font-size="11.5"><tspan font-weight="700" fill="#6b4eb8">read:</tspan><tspan fill="#5c564c"> I think she assumes Kevin's fine with the price.</tspan></text>
+
+    <!-- INTROSPECT & ACT (bottom) — box auto-sized to its text by the script below -->
+    <rect id="actBox" x="378" y="518" width="376" height="40" rx="12" fill="#fff" stroke="#ddd2f7"/>
+    <text id="actTxt" x="566" y="543" text-anchor="middle" font-size="12" fill="#3b362f"><tspan font-weight="800" letter-spacing=".5" fill="#8a76c8">③ INTROSPECT &amp; ACT   </tspan>reason privately · then hold · caucus · post</text>
+
+    <!-- HOW MEMORY UPDATES (right — narrower) -->
+    <rect x="904" y="154" width="368" height="318" rx="14" fill="#fdf7ee" stroke="#e6d3ad" stroke-width="1.6"/>
+    <text x="924" y="182" font-size="12.5" font-weight="800" letter-spacing=".3" fill="#a5730f">HOW MEMORY UPDATES</text>
+
+    <text x="924" y="212" font-size="12" font-weight="800" fill="#7a5a12">① Reactive · driven by events</text>
+    <text x="924" y="230" font-size="11" fill="#3b362f">Iris updates her memory on each new message.</text>
+
+    <text x="924" y="260" font-size="12" font-weight="800" fill="#7a5a12">② Triggers · created by Iris</text>
+    <text x="924" y="278" font-size="11" fill="#3b362f">Iris sets triggers to check back later:</text>
+    <text x="932" y="294" font-size="11" fill="#3b362f">· by <tspan font-weight="700">time</tspan>: a deadline nears, or a topic goes stale</text>
+    <text x="932" y="310" font-size="11" fill="#3b362f">· by <tspan font-weight="700">stage</tspan>: the group circles a proposal 3 times</text>
+
+    <text x="924" y="340" font-size="12" font-weight="800" fill="#7a5a12">③ In the background · auto-dreaming</text>
+    <text x="924" y="358" font-size="11" fill="#3b362f">When idle, Iris reworks her memory: she consolidates</text>
+    <text x="924" y="374" font-size="11" fill="#3b362f">notes, re-derives the read, and prunes stale detail.</text>
+
+    <!-- MAIN LOOP arrows (iris, long shafts) -->
+    <path d="M566,98 L566,133" fill="none" stroke="#7a63c0" stroke-width="3" marker-end="url(#arwc)"/>
+    <text x="578" y="122" font-size="12" font-weight="700" fill="#6b4eb8">updates memory</text>
+    <path d="M566,490 L566,517" fill="none" stroke="#7a63c0" stroke-width="3" marker-end="url(#arwc)"/>
+    <text x="578" y="510" font-size="12" font-weight="700" fill="#6b4eb8">drives the action</text>
+
+    <!-- mechanism ↔ memory : a loop (reads off memory's top, writes back into memory's bottom) -->
+    <path d="M820,138 L820,122 L1088,122 L1088,154" fill="none" stroke="#b07b1e" stroke-width="2.4" marker-end="url(#arwm)"/>
+    <text x="954" y="115" font-size="10.5" font-weight="700" fill="#b07b1e" text-anchor="middle">reads</text>
+    <path d="M1088,472 L1088,502 L820,502 L820,492" fill="none" stroke="#b07b1e" stroke-width="2.4" marker-end="url(#arwm)"/>
+    <text x="954" y="514" font-size="10.5" font-weight="700" fill="#b07b1e" text-anchor="middle">writes</text>
+
+    <!-- chat-platform calls (teal, right-angle so they clear the boxes) -->
+    <path id="msgArrow" d="M186,278 L238,278 L238,80 L376,80" fill="none" stroke="#3f9488" stroke-width="2.6" marker-end="url(#arwe)"/>
+    <text x="250" y="72" font-size="12" font-weight="700" fill="#3f9488">① new message</text>
+    <path id="actArrow" d="M378,538 L216,538 L216,338 L188,338" fill="none" stroke="#3f9488" stroke-width="2.6" marker-end="url(#arwe)"/>
+    <text x="300" y="532" font-size="12" font-weight="700" fill="#3f9488">posts · DMs</text>
+  </svg>
+  </div>
+  <script>
+    // size the two labelled beat-boxes to their text (centered on the loop axis at x=566),
+    // then re-anchor the side arrows to each box's new left edge so they still connect.
+    window.addEventListener('load', function(){
+      function sizeBox(rectId, txtId){
+        var rect=document.getElementById(rectId), txt=document.getElementById(txtId);
+        if(!rect||!txt) return null;
+        var w=txt.getBBox().width, pad=24, boxW=w+pad*2, cx=566, left=cx-boxW/2;
+        rect.setAttribute('x', left); rect.setAttribute('width', boxW);
+        return left;
+      }
+      var topLeft=sizeBox('reflectBox','reflectTxt'), botLeft=sizeBox('actBox','actTxt');
+      var msg=document.getElementById('msgArrow'), act=document.getElementById('actArrow');
+      if(msg && topLeft!=null) msg.setAttribute('d', 'M186,278 L238,278 L238,80 L'+topLeft+',80');
+      if(act && botLeft!=null) act.setAttribute('d', 'M'+botLeft+',538 L216,538 L216,338 L188,338');
+    });
+  </script>
+
+  <div class="foot">Memory design inspired by
+    <a href="https://honcho.dev" target="_blank" rel="noopener">Honcho</a> (per-peer representations, async derivation),
+    <a href="https://www.letta.com" target="_blank" rel="noopener">Letta</a> (sleep-time · memory blocks),
+    <a href="https://docs.claude.com/en/docs/agents-and-tools/tool-use/memory-tool" target="_blank" rel="noopener">Anthropic</a> (memory tool), and
+    <a href="https://docs.openclaw.ai" target="_blank" rel="noopener">OpenClaw</a> (SOUL · HEARTBEAT).
+  </div>
+</div>
+</body>
+</html>

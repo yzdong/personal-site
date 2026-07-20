@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Kaner's Diamond — the caucus as a sequence</title>
+<style>
+  html,body{height:100%;margin:0;background:#fff}
+  body{font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  svg{width:100%;height:100%;display:block}
+
+  .cmsg{background:#fff;border:1px solid #e6e2da;border-radius:4px 9px 9px 9px;padding:3px 8px;margin:0 0 5px;font-size:12px;color:#2a2620}
+  .cmsg .nm{font-weight:800;margin-right:4px}
+  .cmsg.ir{background:#efeafc;border-color:#ddd2f7}
+  .nm.g{color:#b07b1e}.nm.t{color:#2c7a6f}.nm.c{color:#c0574a}.nm.y{color:#4a5fa5}.nm.i{color:#6b4eb8}
+
+  .th{box-sizing:border-box;font-style:italic;font-size:12px;line-height:1.28;color:#6f6a61;background:#f4f2ef;border:1px dashed #cfc9bd;border-radius:8px;padding:4px 8px}
+  .th .lead{font-style:normal}
+  .th.gap{background:#fbeeea;border-color:#e6b7ac;color:#9a4636}
+
+  .act{box-sizing:border-box;font-size:11.5px;line-height:1.3;color:#3a2c66;background:#f6f2ff;border:1px solid #e2d9f5;border-radius:8px;padding:5px 9px}
+  .act .h{font-weight:800;font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;color:#8a6fd0;display:block;margin-bottom:2px}
+
+  .alab{font-weight:600;font-size:11.5px;fill:#4a2f9e;paint-order:stroke;stroke:#fdf8ee;stroke-width:3px;stroke-linejoin:round}
+  .alab.rev{fill:#9a4636}
+  .alab.syn{fill:#4a2f9e;font-weight:800}
+  .stagepill{font-weight:800;font-size:12px;fill:#fff;letter-spacing:.03em}
+  .stagesub{font-size:11px;fill:#8a8478}
+  .hname{font-weight:800;font-size:13px;fill:#1d1b18}
+  .hsub{font-size:10px;fill:#8a8478}
+  .hav{font-weight:800;font-size:11px;fill:#fff}
+</style>
+</head>
+<body>
+<svg viewBox="0 0 1240 772" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#6b4eb8"/></marker>
+    <marker id="arg" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#a79f93"/></marker>
+    <marker id="ars" markerWidth="10" markerHeight="10" refX="7" refY="3.2" orient="auto"><path d="M0,0 L8,3.2 L0,6.4 Z" fill="#6b4eb8"/></marker>
+  </defs>
+
+  <!-- stage band backgrounds -->
+  <rect x="10" y="210" width="1220" height="330" rx="10" fill="#fdf8ee"/>
+  <rect x="10" y="540" width="1220" height="118" rx="10" fill="#f1f7f4"/>
+  <rect x="10" y="658" width="1220" height="106" rx="10" fill="#eef7f1"/>
+
+  <!-- lifelines -->
+  <line x1="186" y1="56" x2="186" y2="760" stroke="#ddd8cf" stroke-dasharray="2 5"/>
+  <line x1="474" y1="56" x2="474" y2="760" stroke="#e4cfb0" stroke-dasharray="2 5"/>
+  <line x1="640" y1="56" x2="640" y2="760" stroke="#bfe0d8" stroke-dasharray="2 5"/>
+  <line x1="806" y1="56" x2="806" y2="760" stroke="#eecdc6" stroke-dasharray="2 5"/>
+  <line x1="1066" y1="56" x2="1066" y2="760" stroke="#d8c9f2" stroke-dasharray="2 5"/>
+
+  <!-- headers -->
+  <rect x="24" y="10" width="324" height="40" rx="9" fill="#f7f6f3" stroke="#e7e3db"/>
+  <text x="40" y="29" class="hname">💬 Group chat</text><text x="40" y="43" class="hsub">what's actually said, in public</text>
+
+  <rect x="400" y="10" width="148" height="40" rx="9" fill="#fff" stroke="#e7e3db"/>
+  <circle cx="419" cy="30" r="11" fill="#b07b1e"/><text x="419" y="34" text-anchor="middle" class="hav">P</text>
+  <text x="436" y="35" class="hname">Priya</text>
+
+  <rect x="566" y="10" width="148" height="40" rx="9" fill="#fff" stroke="#e7e3db"/>
+  <circle cx="585" cy="30" r="11" fill="#2c7a6f"/><text x="585" y="34" text-anchor="middle" class="hav">K</text>
+  <text x="602" y="35" class="hname">Kevin</text>
+
+  <rect x="732" y="10" width="148" height="40" rx="9" fill="#fff" stroke="#e7e3db"/>
+  <circle cx="751" cy="30" r="11" fill="#c0574a"/><text x="751" y="34" text-anchor="middle" class="hav">M</text>
+  <text x="768" y="35" class="hname">Maya</text>
+
+  <rect x="916" y="10" width="300" height="40" rx="9" fill="#f6f2ff" stroke="#ddd2f7"/>
+  <circle cx="936" cy="30" r="11" fill="#6b4eb8"/><text x="936" y="34" text-anchor="middle" class="hav">&amp;</text>
+  <text x="954" y="27" class="hname">Iris</text><text x="954" y="41" class="hsub">her read of the room — and what she does with it</text>
+
+  <!-- sublane hint -->
+  <text x="474" y="66" text-anchor="middle" class="stagesub" style="font-size:10px">— private thoughts —</text>
+  <text x="640" y="66" text-anchor="middle" class="stagesub" style="font-size:10px">— private thoughts —</text>
+  <text x="806" y="66" text-anchor="middle" class="stagesub" style="font-size:10px">— private thoughts —</text>
+
+  <!-- ===== DIVERGENT ===== -->
+  <rect x="24" y="74" width="150" height="22" rx="6" fill="#8a8478"/><text x="34" y="89" class="stagepill">① DIVERGENT</text>
+  <text x="182" y="89" class="stagesub">options fly, nobody commits — Iris stays out of the way</text>
+
+  <foreignObject x="24" y="100" width="324" height="96"><div xmlns="http://www.w3.org/1999/xhtml">
+    <div class="cmsg"><span class="nm g">Priya</span>TULUM 🌴 4 days, cenote diving!</div>
+    <div class="cmsg"><span class="nm c">Maya</span>ooh or a cabin? somewhere chill</div>
+    <div class="cmsg"><span class="nm t">Kevin</span>i'm flexible! whatever works 😅</div>
+  </div></foreignObject>
+  <foreignObject x="400" y="104" width="148" height="52"><div xmlns="http://www.w3.org/1999/xhtml"><div class="th">I want this to be amazing</div></div></foreignObject>
+  <foreignObject x="566" y="104" width="148" height="52"><div xmlns="http://www.w3.org/1999/xhtml"><div class="th gap">please don't let it be expensive</div></div></foreignObject>
+  <foreignObject x="732" y="104" width="148" height="52"><div xmlns="http://www.w3.org/1999/xhtml"><div class="th">just want everyone to have fun</div></div></foreignObject>
+  <foreignObject x="916" y="100" width="300" height="84"><div xmlns="http://www.w3.org/1999/xhtml"><div class="act"><span class="h">Reads</span>Wide divergence, no commitment. Nothing to fix yet → stay quiet, let options breathe.</div></div></foreignObject>
+
+  <!-- ===== GROAN ZONE ===== -->
+  <rect x="24" y="216" width="164" height="22" rx="6" fill="#96690f"/><text x="34" y="231" class="stagepill">② GROAN ZONE</text>
+  <text x="196" y="231" class="stagesub" style="fill:#96690f">a false consensus forms out loud — so Iris opens a private caucus with each person</text>
+
+  <foreignObject x="24" y="242" width="324" height="166"><div xmlns="http://www.w3.org/1999/xhtml">
+    <div class="cmsg"><span class="nm g">Priya</span>so… book the $2,200 Airbnb?? 👀</div>
+    <div class="cmsg"><span class="nm t">Kevin</span>yeah whatever's good for everyone!</div>
+    <div class="cmsg"><span class="nm c">Maya</span>hmm is that ok for everyone?</div>
+    <div class="cmsg ir"><span class="nm i">Iris</span>Sounds like there's still some deliberation — let me check with each of you privately and come back.</div>
+  </div></foreignObject>
+  <foreignObject x="400" y="240" width="148" height="80"><div xmlns="http://www.w3.org/1999/xhtml"><div class="th">really want Tulum + the dive — the villa's just how I pictured it</div></div></foreignObject>
+  <foreignObject x="566" y="238" width="148" height="86"><div xmlns="http://www.w3.org/1999/xhtml"><div class="th gap">$2,200 is WAY over my budget — but I can't be the difficult one</div></div></foreignObject>
+  <foreignObject x="732" y="240" width="148" height="60"><div xmlns="http://www.w3.org/1999/xhtml"><div class="th gap">honestly it's more than I want to spend</div></div></foreignObject>
+  <foreignObject x="916" y="232" width="300" height="86"><div xmlns="http://www.w3.org/1999/xhtml"><div class="act"><span class="h">Acts — opens the caucus</span>Everyone's agreeing out loud, but Kevin deflects and Maya hedges. Caucus each — on what they actually said.</div></div></foreignObject>
+
+  <!-- caucus sequence arrows (Iris @1066  ↔  K@640 / P@474 / M@806) -->
+  <line x1="1058" y1="322" x2="650" y2="322" stroke="#6b4eb8" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="854" y="316" text-anchor="middle" class="alab">🔒 "whatever works" — real number?</text>
+  <line x1="650" y1="352" x2="1058" y2="352" stroke="#a79f93" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#arg)"/>
+  <text x="854" y="346" text-anchor="middle" class="alab rev">no — $800 is my max</text>
+
+  <line x1="1058" y1="392" x2="484" y2="392" stroke="#6b4eb8" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="771" y="386" text-anchor="middle" class="alab">🔒 set on Tulum + the Cenote dive?</text>
+  <line x1="484" y1="422" x2="1058" y2="422" stroke="#a79f93" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#arg)"/>
+  <text x="771" y="416" text-anchor="middle" class="alab rev">those two yes — flexible on the rest</text>
+
+  <line x1="1058" y1="462" x2="816" y2="462" stroke="#6b4eb8" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="937" y="456" text-anchor="middle" class="alab">🔒 you asked — are you ok with it?</text>
+  <line x1="816" y1="492" x2="1058" y2="492" stroke="#a79f93" stroke-width="1.4" stroke-dasharray="5 3" marker-end="url(#arg)"/>
+  <text x="937" y="486" text-anchor="middle" class="alab rev">honestly, more than I'd like</text>
+
+  <!-- synthesis back to the public channel -->
+  <line x1="1058" y1="524" x2="356" y2="524" stroke="#6b4eb8" stroke-width="2.4" marker-end="url(#ars)"/>
+  <text x="707" y="518" text-anchor="middle" class="alab syn">one de-identified synthesis → posted to the group</text>
+  <foreignObject x="24" y="500" width="324" height="52"><div xmlns="http://www.w3.org/1999/xhtml">
+    <div class="cmsg ir"><span class="nm i">Iris</span>Pulse: $2,200 is over budget for a few of you — ceiling's closer to $800.</div>
+  </div></foreignObject>
+
+  <!-- ===== CONVERGENT ===== -->
+  <rect x="24" y="546" width="176" height="22" rx="6" fill="#2c6a60"/><text x="34" y="561" class="stagepill">③ CONVERGENT</text>
+  <text x="208" y="561" class="stagesub" style="fill:#2c6a60">with the real ceiling on the table, the group narrows fast</text>
+
+  <foreignObject x="24" y="572" width="324" height="80"><div xmlns="http://www.w3.org/1999/xhtml">
+    <div class="cmsg"><span class="nm c">Maya</span>what if we cap ~$800 + keep the cenote day?</div>
+    <div class="cmsg"><span class="nm g">Priya</span>honestly, that works</div>
+  </div></foreignObject>
+  <foreignObject x="400" y="576" width="148" height="44"><div xmlns="http://www.w3.org/1999/xhtml"><div class="th">rather everyone comes</div></div></foreignObject>
+  <foreignObject x="566" y="576" width="148" height="44"><div xmlns="http://www.w3.org/1999/xhtml"><div class="th">oh thank god</div></div></foreignObject>
+  <foreignObject x="732" y="576" width="148" height="44"><div xmlns="http://www.w3.org/1999/xhtml"><div class="th">there's the deal</div></div></foreignObject>
+  <foreignObject x="916" y="570" width="300" height="86"><div xmlns="http://www.w3.org/1999/xhtml"><div class="act"><span class="h">Acts</span>Deal matches the surfaced ceiling. Reflect it back; check the fairness ledger — nobody steamrolled.</div></div></foreignObject>
+
+  <!-- ===== CLOSURE ===== -->
+  <rect x="24" y="664" width="150" height="22" rx="6" fill="#3f7a3a"/><text x="34" y="679" class="stagepill">④ CLOSURE</text>
+  <text x="182" y="679" class="stagesub" style="fill:#3f7a3a">closes only on explicit buy-in — then records it</text>
+
+  <foreignObject x="24" y="690" width="324" height="66"><div xmlns="http://www.w3.org/1999/xhtml">
+    <div class="cmsg ir"><span class="nm i">Iris</span>Everyone in? ✋ (need all 5)</div>
+    <div class="cmsg"><span class="nm y">all</span>in! 🎉</div>
+  </div></foreignObject>
+  <foreignObject x="916" y="688" width="300" height="80"><div xmlns="http://www.w3.org/1999/xhtml"><div class="act"><span class="h">Acts — records</span>Explicit endorsement from all 5 → logs the decision + rationale. It stays settled.</div></div></foreignObject>
+
+</svg>
+</body>
+</html>

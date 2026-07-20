@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Iris — deck</title>
+<style>
+  :root{
+    --bg:#f4f2ee;--panel:#fff;--ink:#1d1b18;--muted:#726c63;--line:#e7e3db;
+    --iris:#6b4eb8;--iris-soft:#efeafc;--iris-ink:#4a2f9e;
+    --teal:#3f9488;--gold:#bf8a2c;--blue:#5b76c4;--coral:#e86a5b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{background:#0c0c0e;color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+
+  /* scale-to-fit: everything lives in a fixed 1280×720 canvas that scales to the window */
+  .viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#0c0c0e}
+  .canvas{position:relative;width:1280px;height:720px;flex:none;transform-origin:center center;overflow:hidden;background:var(--bg)}
+  .stage{position:absolute;inset:0}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;
+    padding:40px 68px 56px;opacity:0;transition:opacity .35s ease}
+  .slide.on{display:flex;opacity:1}
+  .slide.pad-tight{padding:30px 56px 52px}
+
+  .kicker{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--iris);margin-bottom:18px}
+  h2{font-size:42px;line-height:1.12;letter-spacing:-.02em;margin:0 0 20px;max-width:none}
+  h2.sm{font-size:34px;max-width:none}
+  p.lead{font-size:21px;color:#3b362f;max-width:60ch;margin:0 0 14px}
+  .muted{color:var(--muted)}
+  ul.big{list-style:none;padding:0;margin:14px 0 0;max-width:64ch}
+  ul.big li{font-size:20px;padding:9px 0 9px 30px;position:relative;color:#2f2b25}
+  ul.big li::before{content:"";position:absolute;left:0;top:18px;width:11px;height:11px;border-radius:3px;background:var(--iris)}
+  .turn{margin-top:22px;font-size:26px;font-weight:700;color:var(--iris-ink);max-width:none;line-height:1.2}
+  .big-quote{font-size:30px;font-weight:700;line-height:1.3;max-width:22ch}
+  .src{position:absolute;left:68px;right:68px;bottom:54px;font-size:12px;color:#9a9184}
+  .photo{margin:0;display:flex;justify-content:center}
+  .photo .frame{position:relative;aspect-ratio:3/4;max-height:58vh;width:auto;max-width:100%;margin:0 auto;border-radius:14px;overflow:hidden;background:#ece9e2;border:1px solid var(--line);box-shadow:0 8px 26px rgba(30,25,18,.12)}
+  .photo .frame img{width:100%;height:100%;object-fit:cover;display:block}
+  .photo .ph{position:absolute;inset:0;display:none;flex-direction:column;gap:8px;align-items:center;justify-content:center;text-align:center;color:#9a9184;font-size:13px;padding:20px;border:2px dashed #cfc9bd;border-radius:14px}
+  .photo .ph code{background:#fff;padding:3px 7px;border-radius:6px;font-size:12px;color:#5c564c}
+  .photo figcaption{margin-top:10px;font-size:12.5px;color:var(--muted)}
+
+  /* title slide */
+  .title{align-items:flex-start}
+  .brandmark{display:flex;align-items:center;gap:18px;margin-bottom:8px}
+  .brandmark .dot{width:64px;height:64px;border-radius:18px;background:var(--iris);color:#fff;display:grid;place-items:center;font-size:38px;font-weight:700}
+  .brandmark h1{font-size:58px;margin:0;letter-spacing:-.03em}
+  .title .tag{font-size:24px;color:#3b362f;margin:10px 0 0}
+  .title .prompt{margin-top:30px;font-size:17px;color:var(--muted);max-width:58ch;border-left:3px solid var(--iris);padding-left:16px;font-style:italic}
+
+  /* two-col */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;width:100%}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+  .card h3{margin:0 0 8px;font-size:17px}
+  .card p{margin:0;font-size:16px;color:#3b362f}
+  .card.warn{border-color:#e7d6b0;background:#fbf5e8}
+  .card.good{border-color:#c5e3dc;background:#eef7f4}
+  .card .viz{height:210px;display:flex;align-items:center;justify-content:center;margin-top:auto;padding-top:16px;background:transparent;border:0;overflow:hidden}
+  .card .viz > *{background:#faf8f3;border:1px solid var(--line);border-radius:10px;width:100%;height:194px}
+  .card .viz img{object-fit:contain;padding:6px}
+  .card .viz img{max-width:100%;max-height:100%;object-fit:contain}
+  .card .viz svg{width:100%;height:100%}
+  .card p.map{margin-top:10px;color:var(--iris-ink);font-weight:700;font-size:14.5px}
+  .cite{color:var(--muted);font-size:.82em;font-style:italic;white-space:nowrap}
+  .anat{display:flex;flex-direction:column;margin-top:10px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+  .anat .r{display:grid;grid-template-columns:158px 1fr 1.55fr;gap:20px;align-items:center;padding:9px 20px}
+  .anat .r+.r{border-top:1px solid var(--line)}
+  .anat .r.head{background:#faf8f3;font-size:11px;font-weight:800;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;padding:9px 20px}
+  .anat .w{font-size:21px;font-weight:800;letter-spacing:-.01em}
+  .anat .w small{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-top:2px}
+  .anat .comp{font-size:15.5px;font-weight:600}
+  .anat .ans{font-size:15.5px;color:#3b362f}
+  .anat .tag{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.02em;padding:2px 10px;border-radius:99px;background:var(--iris-soft);color:var(--iris-ink);white-space:nowrap}
+  .anat .r.off{opacity:.5}
+  .anat .w.teal{color:#3f9488}.anat .w.gold{color:#bf8a2c}.anat .w.blue{color:#5b76c4}.anat .w.iris{color:var(--iris-ink)}.anat .w.grey{color:#9a9184}
+  .cmp{display:flex;flex-direction:column;margin-top:14px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+  .cmp .r{display:grid;grid-template-columns:140px 1fr 1fr;gap:22px;align-items:start;padding:13px 20px}
+  .cmp .r+.r{border-top:1px solid var(--line)}
+  .cmp .r.head{background:#faf8f3;font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:9px 20px}
+  .cmp .r.head .fixh{color:var(--teal)}
+  .cmp .dim{font-size:16px;font-weight:800}
+  .cmp .lim{font-size:15px;color:#3b362f}
+  .cmp .fix{font-size:15px;color:#2c6a60}
+  .cmp.cmp-tight .r{padding:8px 18px;gap:18px}
+  .cmp.cmp-tight .r.head{padding:6px 18px}
+  .cmp.cmp-tight .lim,.cmp.cmp-tight .fix{font-size:13.5px;line-height:1.4}
+  .cmp.cmp-tight .dim{font-size:15px}
+  .cmp .impl{display:block;margin-top:5px;color:var(--iris-ink);font-weight:700}
+
+  /* timeline */
+  .timeline{display:flex;gap:0;margin-top:26px;width:100%}
+  .tl{flex:1;position:relative;padding:0 14px}
+  .tl::before{content:"";position:absolute;top:9px;left:0;right:0;height:2px;background:var(--line)}
+  .tl .yr{display:inline-block;position:relative;font-weight:800;color:var(--iris);font-size:15px;background:var(--bg);padding-right:8px}
+  .tl .dot{position:absolute;top:3px;left:14px;width:14px;height:14px;border-radius:50%;background:var(--iris);border:3px solid var(--bg)}
+  .tl p{font-size:15px;margin:12px 0 0;color:#2f2b25}
+
+  /* loop chips */
+  .loop{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:20px}
+  .loop .step{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:16px;font-weight:600}
+  .loop .arw{color:var(--muted);font-size:18px}
+
+  /* embed */
+  .embed{flex:1;width:100%;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;margin-top:12px}
+  .embed iframe{width:100%;height:100%;border:0;display:block}
+  .slide.embed-slide{padding:28px 44px 44px}
+  .slide.embed-slide h2{font-size:23px;margin-bottom:8px;max-width:none}
+
+  /* refs */
+  .refs{list-style:none;padding:0;margin:16px 0 0;max-width:80ch}
+  .refs li{font-size:15.5px;padding:8px 0;border-top:1px solid var(--line);color:#3b362f}
+  .refs li:first-child{border-top:0}
+  .refs b{color:var(--ink)}
+
+  /* chrome */
+  .foot{position:absolute;left:0;right:0;bottom:0;height:48px;display:flex;align-items:center;
+    justify-content:space-between;padding:0 100px 0 24px;font-size:12px;color:var(--muted);z-index:5}
+  .foot .brand{display:flex;align-items:center;gap:8px;font-weight:700;color:#4a453c}
+  .foot .brand .d{width:20px;height:20px;border-radius:6px;background:var(--iris);color:#fff;display:grid;place-items:center;font-size:12px}
+  .foot #secLabel{color:var(--muted)}
+  .prog{position:absolute;top:0;left:0;height:3px;background:var(--iris);z-index:6;transition:width .3s}
+  .nav{position:absolute;bottom:10px;right:18px;display:flex;gap:8px;z-index:7}
+  .nav button{width:34px;height:34px;border-radius:9px;border:1px solid var(--line);background:#fff;color:var(--ink);font-size:16px;cursor:pointer}
+  .nav button:hover{border-color:#cfc9bd}
+</style>
+</head>
+<body>
+<div class="viewport">
+<div class="canvas" id="canvas">
+<div class="prog" id="prog"></div>
+<div class="stage" id="stage">
+
+  <!-- 1 TITLE -->
+  <section class="slide title" data-sec="">
+    <div class="brandmark"><span class="dot">&amp;</span><h1>Iris</h1></div>
+    <p class="tag">A facilitator for group decisions.</p>
+    <p class="prompt">"If you were given a model with deep social intelligence that excels at helping people communicate and collaborate — what would you build? Walk us through the rationale, and show us a working prototype."</p>
+  </section>
+
+  <!-- 2 MYTHIC ROOTS -->
+  <section class="slide" data-sec="Background">
+    <h2 class="sm">The oldest form of intelligence is social.</h2>
+    <div class="cols" style="grid-template-columns:.5fr 1.5fr;align-items:center;gap:46px">
+      <figure class="photo">
+        <div class="frame">
+          <img src="assets/zendaya-athena.webp" alt="Zendaya as Athena in Nolan's The Odyssey" onerror="this.style.display='none';this.parentElement.querySelector('.ph').style.display='flex'">
+          <div class="ph">Drop still here →<br><code>presentation/assets/zendaya-athena.webp</code></div>
+        </div>
+      </figure>
+      <div>
+        <p class="lead">To end a cycle of blood-vengeance, Aeschylus didn't reach for a warrior or a king — he reached for <b>Athena, goddess of wisdom</b>. In the <i>Oresteia</i> (458 BCE) she convenes the first trial, replaces private revenge with reasoned judgment, and wins over even the losing side (the vengeful Furies become the <i>Eumenides</i>).</p>
+        <p class="lead">Helping people resolve conflict and reach agreement is a deep form of intelligence — the ancients counted it among the highest. For millennia that wisdom was uniquely human. <b>A model with deep social intelligence is the first non-human that could practice it.</b></p>
+      </div>
+    </div>
+    <p class="src">Aeschylus, <i>Eumenides</i> (the <i>Oresteia</i>), 458 BCE. Image: Zendaya as Athena in Christopher Nolan's <i>The Odyssey</i> (2026) — © Universal Pictures, used for illustration.</p>
+  </section>
+
+  <!-- 3 BACKGROUND + TODAY (merged) -->
+  <section class="slide" data-sec="Background">
+    <h2 class="sm">Facilitation is a structured practice.</h2>
+    <p class="lead">The role is ancient; the profession is young. Over the last ~80 years it's been formalized into a real practice — a neutral <b>process-holder</b> with named, teachable techniques.</p>
+    <div class="timeline">
+      <div class="tl"><span class="dot"></span><span class="yr">1940s</span>
+        <p style="font-size:13px;line-height:1.36"><b>Kurt Lewin</b> · MIT &amp; NTL<br>Founded group dynamics &amp; the T-group.<br><i class="muted">To rebuild democratic groups and ease intergroup conflict after WWII.</i></p></div>
+      <div class="tl"><span class="dot"></span><span class="yr">1970s–80s</span>
+        <p style="font-size:13px;line-height:1.36"><b>Mediation &amp; the caucus</b> · labor &amp; community mediators<br>Codified in Moore's <i>Mediation Process</i>: a private caucus surfaces what won't be said at the table.<br><i class="muted">To settle disputes without the courts — and without wrecking the relationship.</i></p></div>
+      <div class="tl"><span class="dot"></span><span class="yr">1981</span>
+        <p style="font-size:13px;line-height:1.36"><b><i>Getting to Yes</i></b> · Fisher &amp; Ury, Harvard Negotiation Project<br>Principled negotiation: interests, not positions.<br><i class="muted">A fix for win-lose positional bargaining.</i></p></div>
+      <div class="tl"><span class="dot"></span><span class="yr">1996</span>
+        <p style="font-size:13px;line-height:1.36"><b>Kaner's Diamond</b> · Sam Kaner, Community At Work<br>Groups pass through the "groan zone" to reach real buy-in.<br><i class="muted">Genuine consensus over false or imposed agreement.</i></p></div>
+    </div>
+    <div class="turn">If facilitation can be taught, a model can learn it.</div>
+    <p class="src">Lewin &amp; NTL, T-groups (1947); Christopher Moore, <i>The Mediation Process</i> (1986); Fisher &amp; Ury, <i>Getting to Yes</i>, Harvard Negotiation Project (1981); Sam Kaner et al., <i>Facilitator's Guide to Participatory Decision-Making</i>, Community At Work (1996).</p>
+  </section>
+
+  <!-- 4 WHAT IF -->
+  <section class="slide" data-sec="The idea">
+    <h2 class="sm">A human facilitator hits four hard limits.</h2>
+    <div class="cmp">
+      <div class="r head"><div></div><div>Human facilitator</div><div class="fixh">A model with social intelligence</div></div>
+      <div class="r"><div class="dim">Reach</div><div class="lim">Can pull only one person aside at a time — no way to hold everyone's confidence at once.</div><div class="fix">Holds a private 1:1 with every person, simultaneously.</div></div>
+      <div class="r"><div class="dim">Stamina</div><div class="lim">Tires; attention and patience fade over a long, tense discussion.</div><div class="fix">Tireless — tracks every thread without fatigue.</div></div>
+      <div class="r"><div class="dim">Neutrality</div><div class="lim">Has a stake, a relationship, and a reputation in the room.</div><div class="fix">Zero stake — the only participant with nothing to gain.</div></div>
+      <div class="r"><div class="dim">Memory</div><div class="lim">Recency bias — the last argument colors how they read the whole group.</div><div class="fix">Weighs the full history evenly — no recency bias, no grudges.</div></div>
+    </div>
+    <div class="turn">An agent could be an effective facilitator.</div>
+  </section>
+
+  <!-- WHAT IT IS -->
+  <section class="slide" data-sec="The product">
+    <h2 class="sm">Iris is a facilitator that lives inside a group's chat.</h2>
+    <p class="lead">It reads the room, holds a private 1:1 with each person, and brokers a decision everyone endorses.</p>
+    <div style="margin-top:20px;width:100%">
+    <svg viewBox="0 0 1000 282" style="width:100%;max-width:1010px;height:auto;display:block" role="img" aria-label="Two channels feed Iris, which returns a decision everyone endorses">
+      <defs>
+        <marker id="m5i" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#6b4eb8"/></marker>
+        <marker id="m5t" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#3f9488"/></marker>
+        <marker id="m5g" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#3f7a3a"/></marker>
+      </defs>
+      <rect x="12" y="26" width="300" height="92" rx="12" fill="#fff" stroke="#3f9488" stroke-width="2"/>
+      <text x="30" y="52" font-size="12" font-weight="800" letter-spacing="1" fill="#3f9488">PUBLIC CHANNEL</text>
+      <text x="30" y="72" font-size="12.5" fill="#726c63">what everyone says out loud</text>
+      <text x="30" y="100" font-size="13" font-style="italic" fill="#2a2620">“I'm flexible” · “let's go big”</text>
+      <rect x="12" y="164" width="300" height="92" rx="12" fill="#f6f2ff" stroke="#6b4eb8" stroke-width="2" stroke-dasharray="6 5"/>
+      <text x="30" y="190" font-size="12" font-weight="800" letter-spacing="1" fill="#6b4eb8">🔒 PRIVATE CAUCUS · 1:1</text>
+      <text x="30" y="210" font-size="12.5" fill="#726c63">what's actually true</text>
+      <text x="30" y="238" font-size="13" font-style="italic" fill="#4a453c">“$800 is my ceiling” · “we're drifting”</text>
+      <path d="M312,72 C 372,86 396,128 446,146" fill="none" stroke="#3f9488" stroke-width="2.4" marker-end="url(#m5t)"/>
+      <path d="M312,210 C 372,196 396,172 446,172" fill="none" stroke="#6b4eb8" stroke-width="2.4" stroke-dasharray="6 5" marker-end="url(#m5i)"/>
+      <rect x="450" y="116" width="150" height="86" rx="14" fill="#6b4eb8"/>
+      <text x="525" y="150" text-anchor="middle" fill="#fff" font-size="20" font-weight="700">&amp;</text>
+      <text x="525" y="172" text-anchor="middle" fill="#fff" font-size="13" font-weight="600">Iris reconciles</text>
+      <text x="525" y="189" text-anchor="middle" fill="#d8ccf6" font-size="10.5">both voices → one proposal</text>
+      <path d="M600,159 L 684,159" fill="none" stroke="#3f7a3a" stroke-width="2.4" marker-end="url(#m5g)"/>
+      <rect x="688" y="112" width="298" height="94" rx="12" fill="#eef7f1" stroke="#3f7a3a" stroke-width="2"/>
+      <text x="706" y="138" font-size="12" font-weight="800" letter-spacing="1" fill="#3f7a3a">✓ ONE ENDORSED DECISION</text>
+      <text x="706" y="164" font-size="13.5" font-weight="700" fill="#1d1b18">“base $780 + optional add-on”</text>
+      <text x="706" y="188" font-size="11.5" fill="#4a453c">on the record — everyone genuinely in</text>
+      <path d="M760,208 C 700,252 596,252 540,204" fill="none" stroke="#6b4eb8" stroke-width="1.7" stroke-dasharray="5 5" marker-end="url(#m5i)"/>
+      <text x="650" y="272" text-anchor="middle" font-size="11.5" font-weight="700" fill="#6b4eb8">↺ revise until everyone's in</text>
+    </svg>
+    </div>
+  </section>
+
+  <!-- 6 PRODUCT ANATOMY (framework first) -->
+  <section class="slide" data-sec="Foundations">
+    <h2 class="sm">The four components that make Iris a well-designed agent.</h2>
+    <div class="anat">
+      <div class="r head"><div>Axis</div><div>Component</div><div>In Iris — grounded in</div></div>
+      <div class="r"><div class="w teal">Where<small>do Iris's messages go?</small></div><div class="comp">UX — screens &amp; channels</div><div class="ans">Iris speaks in the shared group chat, and holds the mediator's <b>caucus</b> — a private 1:1 sidebar — with each person.</div></div>
+      <div class="r"><div class="w iris">Why<small>does Iris say what it does?</small></div><div class="comp">Agent policy</div><div class="ans">Iris's operating rules: facilitate, never decide, and aim for an agreement that lasts — moving the group <i>through</i> the hard part rather than around it into a brittle consensus.</div></div>
+      <div class="r"><div class="w blue">How<small>does Iris decide to act?</small></div><div class="comp">Agent harness — memory, context, triggers, workflows</div><div class="ans">The runtime that puts the policy to work: memory (a private silo per person), context (where the group is on the decision), triggers (a new message, a nearing deadline, the group circling), and workflows (the caucus loop). Confidentiality is a property of this memory structure: silos are sealed, so only de-identified constraints ever surface.</div></div>
+      <div class="r"><div class="w gold">What<small>does Iris model?</small></div><div class="comp">Memory — a theory of mind per person</div><div class="ans">A private, sealed model of each participant's mind: their interest (the need under the position), their position, their beliefs (what they assume — including what's false), and how they regard the others — tracked over time. Grounded in <b>theory of mind</b> (belief–desire–intention); de-identified at the boundary, so only constraints surface, never a name.</div></div>
+    </div>
+  </section>
+
+  <!-- 5 INSPIRED BY (ordered caucus → kaner → heron, matching Where → Why → What) -->
+  <section class="slide" data-sec="Foundations">
+    <h2 class="sm">Two ideas Iris is built on.</h2>
+    <div class="cols" style="grid-template-columns:1fr 1fr;margin-top:8px;align-items:stretch">
+      <div class="card" style="display:flex;flex-direction:column">
+        <p><b>The caucus</b> is a private conversation a facilitator has with each participant. It surfaces the preferences people won't say publicly — which Iris folds into its public suggestions.</p>
+        <p class="map">→ Iris's private sidebar</p>
+        <div class="viz">
+          <svg viewBox="0 0 380 180" role="img" aria-label="Public and private caucus circles">
+            <text x="112" y="20" text-anchor="middle" font-size="11" font-weight="700" letter-spacing=".5" fill="#8a8478">PUBLIC DISCUSSION</text>
+            <text x="266" y="20" text-anchor="middle" font-size="11" font-weight="700" letter-spacing=".5" fill="#6b4eb8">PRIVATE CAUCUS</text>
+            <text x="266" y="34" text-anchor="middle" font-size="9.5" fill="#9a86d6">with each person</text>
+            <circle cx="125" cy="98" r="64" fill="#edefec" stroke="#c9c3b7" stroke-width="1.6"/>
+            <circle cx="228" cy="98" r="56" fill="#f0ecfa" stroke="#6b4eb8" stroke-width="1.6" stroke-dasharray="6 5"/>
+            <g><circle cx="92" cy="90" r="5.5" fill="#3f9488"/><path d="M83,102 a9 7.5 0 0 1 18 0 z" fill="#3f9488"/></g>
+            <g><circle cx="120" cy="72" r="5.5" fill="#bf8a2c"/><path d="M111,84 a9 7.5 0 0 1 18 0 z" fill="#bf8a2c"/></g>
+            <g><circle cx="102" cy="126" r="5.5" fill="#5b76c4"/><path d="M93,138 a9 7.5 0 0 1 18 0 z" fill="#5b76c4"/></g>
+            <g><circle cx="176" cy="100" r="5.5" fill="#e86a5b"/><path d="M167,112 a9 7.5 0 0 1 18 0 z" fill="#e86a5b"/></g>
+            <rect x="236" y="86" width="30" height="26" rx="8" fill="#6b4eb8"/>
+            <text x="251" y="104" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">&amp;</text>
+            <line x1="185" y1="101" x2="234" y2="99" stroke="#6b4eb8" stroke-width="1.4" stroke-dasharray="3 3"/>
+          </svg>
+        </div>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column">
+        <p><b>Theory of mind.</b> Iris keeps a private model of each participant's mind — grounded in <b>belief–desire–intention</b>. For each person she tracks the interest under their position (desire), what they're advocating (stance), what they <i>assume</i> (beliefs), and how they regard the others — updated as everyone speaks.</p>
+        <p class="map">→ Iris's sealed model of each person</p>
+        <div class="viz">
+          <svg viewBox="0 0 380 180" role="img" aria-label="Theory of mind: one person's mind, modeled as facets">
+            <text x="20" y="22" font-size="11" font-weight="800" letter-spacing=".4" fill="#4a2f9e">MY MODEL OF ONE PERSON'S MIND</text>
+            <g font-size="10.5">
+              <rect x="18" y="34" width="344" height="24" rx="6" fill="#f0ecfa" stroke="#c7b8ef"/>
+              <text x="30" y="50" font-weight="800" fill="#4a2f9e">interest</text><text x="108" y="50" fill="#6a5f8a">the need under the position · desire</text>
+              <rect x="18" y="62" width="344" height="24" rx="6" fill="#eef4f3" stroke="#a9cfc7"/>
+              <text x="30" y="78" font-weight="800" fill="#2c6a60">position</text><text x="108" y="78" fill="#4a6b64">what they're advocating now · stance</text>
+              <rect x="18" y="90" width="344" height="24" rx="6" fill="#fdf7ee" stroke="#e6d3ad"/>
+              <text x="30" y="106" font-weight="800" fill="#a5730f">beliefs</text><text x="108" y="106" fill="#7a5a12">what they assume — including what's false</text>
+              <rect x="18" y="118" width="344" height="24" rx="6" fill="#f6efe8" stroke="#d8c3b0"/>
+              <text x="30" y="134" font-weight="800" fill="#8a5a2b">regards</text><text x="108" y="134" fill="#6a4a2a">how they see each other person</text>
+            </g>
+            <text x="20" y="158" font-size="9.5" fill="#8a8478">held with confidence · updated as they speak · sealed from everyone else</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <p class="src">Caucus — a core mediation technique (ABA; Beyond Intractability). Theory of mind — belief–desire–intention (Bratman 1987; Rao &amp; Georgeff 1995); interests vs. positions (Fisher &amp; Ury, <i>Getting to Yes</i>, 1981).</p>
+  </section>
+
+  <!-- ===== WHERE ===== -->
+  <!-- THE EXPERIENCE — CONSUMER (me-view) -->
+  <section class="slide embed-slide" data-sec="Where · UX — screens &amp; channels">
+    <h2>Where it lives on WhatsApp (consumer)</h2>
+    <div class="embed"><iframe data-src="mockups-me-view.html?v=41" title="Iris me-view mockup"></iframe></div>
+  </section>
+
+  <!-- UX ALTERNATIVES: main chat (moved from appendix) -->
+  <section class="slide embed-slide" data-sec="Where · UX — screens &amp; channels">
+    <h2>How does Iris surface her thoughts?</h2>
+    <div class="embed"><iframe data-src="mockups-mainchat.html?v=41" title="Main chat mockups"></iframe></div>
+  </section>
+
+  <!-- UX DECISION: private line to Iris -->
+  <section class="slide embed-slide" data-sec="Where · UX — screens &amp; channels">
+    <h2>One private line, or a note on every message?</h2>
+    <div class="embed"><iframe data-src="mockups-privateline.html?v=41" title="Private line mockups"></iframe></div>
+  </section>
+
+  <!-- THE EXPERIENCE — ENTERPRISE (Slack) -->
+  <section class="slide embed-slide" data-sec="Where · UX — screens &amp; channels">
+    <h2>Where it lives on Slack (enterprise)</h2>
+    <div class="embed"><iframe data-src="mockups-slack.html?v=41" title="Iris Slack mockup"></iframe></div>
+  </section>
+
+  <!-- UX ALTERNATIVES: private sidebar (moved from appendix) -->
+  <section class="slide embed-slide" data-sec="Where · UX — screens &amp; channels">
+    <h2>Where does the private caucus live?</h2>
+    <div class="embed"><iframe data-src="mockups-sidebar.html?v=41" title="Sidebar mockups"></iframe></div>
+  </section>
+
+  <!-- UX DECISION: decision tracking control -->
+  <section class="slide embed-slide" data-sec="Where · UX — screens &amp; channels">
+    <h2>Should Iris track everything, or ask first?</h2>
+    <div class="embed"><iframe data-src="mockups-tracking.html?v=41" title="Decision tracking mockups"></iframe></div>
+  </section>
+
+  <!-- WHERE: the developer SDK as a third surface -->
+  <section class="slide" data-sec="Where · UX — screens &amp; channels">
+    <h2 class="sm">The SDK is a third surface — for developers.</h2>
+    <p class="lead" style="max-width:none">Iris is a product <b>and</b> a substrate. The same multi-principal engine behind the consumer app and the enterprise bot ships as a <b>developer SDK</b>: embed Iris in your own product, bring your own UI, and build any collaboration agent on its primitives.</p>
+    <div class="cols" style="grid-template-columns:1.05fr 1.35fr;margin-top:14px;align-items:stretch;gap:40px">
+      <div class="card" style="display:flex;flex-direction:column">
+        <h3>Three surfaces, one engine</h3>
+        <p style="margin-top:4px"><b>Consumer</b> — WhatsApp, for friend groups &amp; plans.</p>
+        <p style="margin-top:9px"><b>Enterprise</b> — Slack, for teams putting decisions on the record.</p>
+        <p style="margin-top:9px"><b>Developer</b> — the SDK: embed Iris, bring your own UI, build any collaboration agent.</p>
+        <p class="map" style="margin-top:auto">→ the collaboration engine, exposed</p>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column">
+        <h3>~250 LOC · zero deps · bring your own model</h3>
+        <div style="font-family:ui-monospace,Menlo,monospace;font-size:13.5px;line-height:1.6;background:#faf8f3;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-top:8px;color:#3b362f;overflow:auto">
+          <span style="color:#9a8f7f">// configure the substrate — that's what makes it "Iris"</span><br>
+          <b>const</b> iris = <b>new</b> IrisAgent({<br>
+          &nbsp;&nbsp;participants, <span style="color:#9a8f7f">// the group</span><br>
+          &nbsp;&nbsp;policy, &nbsp; &nbsp; &nbsp;<span style="color:#9a8f7f">// how it thinks (facilitator/coach)</span><br>
+          &nbsp;&nbsp;surface, &nbsp; &nbsp;<span style="color:#9a8f7f">// co-owned artifact (decisions|poll|…)</span><br>
+          &nbsp;&nbsp;model, &nbsp; &nbsp; &nbsp;<span style="color:#9a8f7f">// any ({system,prompt})=&gt;string</span><br>
+          });<br>
+          <b>await</b> iris.<span style="color:#6b4eb8">run</span>({ type:<span style="color:#2c7a6f">'message'</span>, author, text });
+        </div>
+        <p style="color:var(--muted);font-size:13.5px;margin-top:10px">Sealed per-person memory, the de-identified Canvas, and the caucus loop come built in — swap the surface + policy and the same class is a standup bot or a vote.</p>
+      </div>
+    </div>
+    <a href="prototype/SDK.html" target="_blank" rel="noopener" style="display:inline-flex;align-self:flex-start;align-items:center;gap:10px;margin-top:20px;background:var(--iris);color:#fff;text-decoration:none;font-weight:700;font-size:16px;padding:10px 20px;border-radius:12px;box-shadow:0 6px 20px rgba(107,78,184,.28)">▶ Open the SDK docs<span style="opacity:.72;font-weight:500;font-size:13.5px">primitives, the cycle, surfaces</span></a>
+  </section>
+
+  <!-- ===== WHY ===== -->
+  <!-- DESIGN CHOICES / WHY (moved after Where) -->
+  <section class="slide" data-sec="Why · Agent-design philosophy">
+    <h2 class="sm">Iris facilitates — it does not decide.</h2>
+    <p class="lead">A decision Iris handed down would be <b>complied with, not owned</b> — and the moment circumstances shift, it unravels. Facilitation isn't the polite option; it's the mechanism that makes a decision both <b>better</b> and <b>durable</b>. Two separate bodies of research say why.</p>
+    <div class="cols" style="grid-template-columns:1fr 1fr;margin-top:6px">
+      <div class="card"><h3>Better — the group knows more than the room says</h3><p>Groups rehash what everyone already shares and fail to surface what only one person knows. In "hidden-profile" studies, groups are <b>~8× less likely</b> to reach the right answer than if all facts were pooled <span class="cite">(Stasser &amp; Titus, 1985)</span>. Drawing out private information and dissent is what raises quality — precisely the caucus's job.</p></div>
+      <div class="card"><h3>Durable — a fair process is internalized, not enforced</h3><p>Given real <b>voice</b> in a process they trust, people accept and implement an outcome as their own — even an unfavorable one — so compliance is self-regulatory <span class="cite">(procedural justice; Tyler &amp; Lind)</span>. The evidence is longitudinal: at <b>12-year follow-up</b>, mediated agreements show higher compliance and cooperation than litigated ones <span class="cite">(Emery)</span>.</p></div>
+    </div>
+    <p class="lead muted" style="margin-top:16px">So Iris's job is to <b>run the fair process</b> — surface what's unsaid, give everyone voice, broker an option the group can own.</p>
+  </section>
+
+  <!-- ===== HOW ===== -->
+  <!-- HOW: triggers / data flow -->
+  <section class="slide embed-slide" data-sec="How · Agent harness">
+    <h2>How Iris acts — triggers &amp; data flow</h2>
+    <div class="embed"><iframe data-src="diagram-dataflow.html?v=42" title="Triggers and data flow"></iframe></div>
+  </section>
+
+  <!-- HOW: the caucus workflow -->
+  <section class="slide embed-slide" data-sec="How · Agent harness">
+    <h2>The agent harness puts its policy to work</h2>
+    <div class="embed"><iframe data-src="diagram-kaner-sequence.html?v=41" title="Kaner caucus sequence"></iframe></div>
+  </section>
+
+  <!-- ===== WHAT ===== -->
+  <!-- WHAT: THEORY OF MIND (deep dive) -->
+  <section class="slide" data-sec="What · a theory of mind per person">
+    <h2 class="sm">Iris keeps a theory of mind of each person.</h2>
+    <p class="lead" style="max-width:none">For every participant, Iris builds an evolving, sealed model of their mind — grounded in <b>belief–desire–intention</b> — revised each time they speak. It never leaves memory; only de-identified constraints reach the room. And she keeps her <i>read of them</i> separate from her <i>plan for them</i>.</p>
+    <div class="cols" style="grid-template-columns:1.1fr 1fr;margin-top:12px;align-items:stretch;gap:40px">
+      <div class="card" style="display:flex;flex-direction:column">
+        <h3>Three layers — only the first is their mind</h3>
+        <p style="margin-top:2px"><b style="color:#6b4eb8">Theory of mind</b> — my read of <i>their</i> mind:<br><span style="font-size:14.5px;color:#3b362f">interest (desire) · position (stance) · beliefs (what they assume) · arc (disposition) · regards (how they see the others)</span></p>
+        <p style="margin-top:12px"><b style="color:#a5730f">My confidence</b> — how sure I am (hunch → confirmed). Mine, not a fact about them.</p>
+        <p style="margin-top:12px"><b style="color:#2c7a6f">My plan</b> — what I'm watching for + how I can help next. My agency, not their mind.</p>
+        <p class="map" style="margin-top:auto">→ built from scratch, revised as they speak</p>
+      </div>
+      <div class="card" style="display:flex;flex-direction:column;font-size:13.5px">
+        <div style="font-family:ui-monospace,Menlo,monospace;font-weight:700;color:#5c564c">🔒 people/jordan.md</div>
+        <div style="font-weight:800;font-size:9.5px;letter-spacing:.05em;color:#6b4eb8;margin-top:12px">THEORY OF MIND · confidence: forming</div>
+        <div style="margin-top:3px;line-height:1.55"><b>interest:</b> come on the trip without overspending<br><b>position:</b> keeps floating a cheaper week<br><b>beliefs:</b> assumes the others can all afford the villa<br><b>arc:</b> quiet<br><b>regards</b> → Priya: <i>"worried she'll lock the villa first"</i></div>
+        <div style="font-weight:800;font-size:9.5px;letter-spacing:.05em;color:#2c7a6f;margin-top:12px">MY PLAN · not their mind</div>
+        <div style="margin-top:3px;line-height:1.55"><b>watching for:</b> whether budget's the real blocker, and his ceiling<br><b>help next:</b> caucus for the number, then surface it de-identified</div>
+        <div style="font-weight:800;font-size:9.5px;letter-spacing:.05em;color:#8a8478;margin-top:12px">HOW JORDAN'S MOVED</div>
+        <div style="margin-top:3px;color:#5c564c">t4: quiet → "what about a cheaper week?"</div>
+      </div>
+    </div>
+    <p class="src">Theory of mind — belief–desire–intention (Bratman 1987; Rao &amp; Georgeff 1995); interests vs. positions (Fisher &amp; Ury, 1981). Evolving per-peer models inspired by Honcho, Letta, and <i>Generative Agents</i>.</p>
+  </section>
+
+  <!-- 21 COUNCIL OF ELROND -->
+  <section class="slide" data-sec="Fun demo">
+    <h2 class="sm">The mythic cross-team decision.</h2>
+    <div class="cols" style="grid-template-columns:0.8fr 1.55fr;align-items:center;gap:44px">
+      <div>
+        <p class="lead">Elves, dwarves, men — ancient grudges, loud voices, and one small overlooked voice (Frodo). The Council reaches the right answer, but only by luck and exhaustion.</p>
+        <div class="turn" style="font-size:22px">Let's see how Iris could have helped at the Council of Elrond.</div>
+        <a href="prototype/index.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;margin-top:26px;background:var(--iris);color:#fff;text-decoration:none;font-weight:700;font-size:17px;padding:11px 22px;border-radius:12px;box-shadow:0 6px 20px rgba(107,78,184,.28)">▶ Open the working prototype<span style="opacity:.72;font-weight:500;font-size:14px">step Iris through the Council live</span></a>
+      </div>
+      <figure class="photo">
+        <div class="frame" style="aspect-ratio:16/10;max-height:76vh">
+          <img src="assets/council-of-elrond.webp" alt="The Council of Elrond, The Fellowship of the Ring" onerror="this.style.display='none';this.parentElement.querySelector('.ph').style.display='flex'">
+          <div class="ph">Drop still here →<br><code>presentation/assets/council-of-elrond.webp</code></div>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 23 ACKNOWLEDGMENTS -->
+  <section class="slide pad-tight" data-sec="References">
+    <h2 class="sm">Standing on real work.</h2>
+    <ul class="refs">
+      <li><b>Heron's Six Categories of Intervention</b> — John Heron (1975), Human Potential Research Project, University of Surrey. Iris's facilitator↔coach range and non-directive language norms follow the facilitative side of this model.</li>
+      <li><b>Facilitation practice</b> — Kaner et al., <i>Facilitator's Guide to Participatory Decision-Making</i> (the Diamond / Groan Zone); Fisher &amp; Ury, <i>Getting to Yes</i> (interests, not positions); the mediation caucus; Rosenberg, NVC.</li>
+      <li><b>Agent memory &amp; context engineering</b> — Anthropic memory tool; Letta / MemGPT memory blocks &amp; sleep-time compute; Honcho per-peer representations &amp; dialectic; OpenClaw SOUL / HEARTBEAT; Park et al., <i>Generative Agents</i> (reflection).</li>
+      <li><b>Why groups fail</b> — Kuran, preference falsification; Harvey, the Abilene paradox; Janis, groupthink.</li>
+      <li><b>Why facilitation is better &amp; more durable</b> — Stasser &amp; Titus (1985), hidden profiles / information pooling; Tyler &amp; Lind, procedural justice; Coch &amp; French (1948) and Vroom-Yetton, participation → commitment; Emery, divorce-mediation durability (12-year follow-up).</li>
+      <li><b>Social prominence of a group AI</b> — Johnson, Nebeling, et al., "Interface-Driven Social Prominence…", CHI 2026.</li>
+    </ul>
+  </section>
+
+  <!-- ANY QUESTIONS -->
+  <section class="slide" data-sec="">
+    <div class="brandmark" style="margin-bottom:20px"><span class="dot">&amp;</span></div>
+    <p class="big-quote">Any questions?</p>
+    <p class="lead muted" style="margin-top:12px">Appendix follows — backup on memory, agent design, and enterprise.</p>
+  </section>
+
+  <!-- ===== APPENDIX ===== -->
+  <!-- A0 APPENDIX CONTENTS -->
+  <section class="slide pad-tight" data-sec="Appendix">
+    <h2 class="sm">What's in the appendix.</h2>
+    <ul class="refs">
+      <li><b>Trust &amp; confidentiality</b> — how the memory design enforces it, plus the never-persist guardrail.</li>
+      <li><b>Open risks</b> — dependence, and the game-theory of confidentiality.</li>
+      <li><b>The harness's memory</b> — the compartmentalized silo-per-person architecture behind confidentiality.</li>
+      <li><b>How an agent holds its mind</b> — memory approaches compared (Anthropic, Letta, Honcho, OpenClaw, Hermes).</li>
+      <li><b>At work, the group is different</b> — how consumer vs. enterprise dynamics reshape the design.</li>
+      <li><b>Distribution</b> — how Iris embeds where groups already are.</li>
+      <li><b>Facilitation voice</b> — the language norms Iris's phrasing follows.</li>
+      <li><b>Facilitator vs coach</b> — the two stances, side by side.</li>
+    </ul>
+  </section>
+
+  <!-- APPENDIX: facilitation language norms (moved from What) -->
+  <section class="slide" data-sec="Appendix">
+    <h2 class="sm">Iris phrases like a facilitator, not an adviser.</h2>
+    <p class="lead" style="max-width:none">Facilitation has language norms — the craft is to open thinking, never steer it. Iris's words follow them, message by message.</p>
+    <div class="cmp cmp-tight" style="margin-top:8px">
+      <div class="r head"><div>Norm</div><div>Not this</div><div class="fixh">But this</div></div>
+      <div class="r"><div class="dim">Non-directive</div><div class="lim">✗ "You should push back on Nov 3."</div><div class="fix">✓ "Have you considered asking whether Nov 3 is realistic for eng?"</div></div>
+      <div class="r"><div class="dim">Non-evaluative</div><div class="lim">✗ "Great point, Priya!" — reveals a stake</div><div class="fix">✓ "That's on the table — does anyone see it differently?"</div></div>
+      <div class="r"><div class="dim">Mirror, don't add</div><div class="lim">✗ "Here's what you all really mean…"</div><div class="fix">✓ "What I'm hearing is the timeline feels tight — is that right?"</div></div>
+      <div class="r"><div class="dim">Draw out the quiet</div><div class="lim">✗ lets the loudest set the direction</div><div class="fix">✓ "Who hasn't had a chance to weigh in yet?"</div></div>
+      <div class="r"><div class="dim">Name the dynamic, not the person</div><div class="lim">✗ "Kevin's the holdout."</div><div class="fix">✓ "We keep circling the budget — worth a fresh angle?"</div></div>
+    </div>
+    <p class="lead muted" style="margin-top:14px;max-width:none">Non-directive, non-evaluative, reflective — applied to every message, and every phrasing choice is downstream of her <b>theory of mind</b>: she names the dynamic she's tracking, and draws out the person she knows hasn't spoken.</p>
+    <p class="src">Neutral-facilitation practice (MG Rush; MN Management &amp; Budget facilitation guide).</p>
+  </section>
+
+  <!-- APPENDIX: facilitator vs coach (moved from What) -->
+  <section class="slide" data-sec="Appendix">
+    <h2 class="sm">Iris acts for the group, or coaches you to act.</h2>
+    <p class="lead" style="max-width:none">Iris takes on different roles depending on the organization's context and its <b>policy</b>. For a small group of senior executives deciding on layoffs, she <b>pushes them to speak to each other directly</b>, so accountability stays with the people making the call. For a large group of new hires settling on a happy-hour time, she <b>runs the facilitation herself</b>. Either way, the move comes from her <b>theory of mind</b> of each person — who's holding back, and the interest under their position. In every case she's designed to strengthen people's own conflict-resolution skills, <b>not to become a crutch</b>.</p>
+    <div class="cmp cmp-tight" style="margin-top:8px">
+      <div class="r head"><div>Dimension</div><div>Coach · <i>you</i> act</div><div class="fixh">Direct facilitator · <i>Iris</i> acts</div></div>
+      <div class="r"><div class="dim">The words</div><div class="lim"><i>"You've gone quiet on Nov 3. You could ask the channel: is that realistic for eng?"</i></div><div class="fix"><i>"Let me grab quick thoughts, anonymously… a few of you are over budget; the ceiling's ~$800."</i></div></div>
+      <div class="r"><div class="dim">Voice</div><div class="lim">2nd person, spoken to you</div><div class="fix">1st person, spoken for the group</div></div>
+      <div class="r"><div class="dim">Register</div><div class="lim">private, <b>tentative</b>: <i>"I think Kevin might be holding back. Want me to check?"</i></div><div class="fix">public, <b>de-identified</b>: <i>"a few of you have a firm ceiling ~$800"</i></div></div>
+      <div class="r"><div class="dim">The move</div><div class="lim"><b>Catalytic</b>: questions and reflections that draw out your own view, so you reach the move yourself.</div><div class="fix"><b>Informative</b>: states the group's aggregated signal back, de-identified, so it can act on what it couldn't see.</div></div>
+      <div class="r"><div class="dim">Ownership</div><div class="lim">yours, named and on the record</div><div class="fix">the group's, aggregated with no name</div></div>
+      <div class="r"><div class="dim">Best when</div><div class="lim">Small teams with hierarchy, where an objection needs a name behind it and people must own the call on the record.</div><div class="fix">Big or hedging groups, where no one wants to go first; safety comes from the constraint arriving with no name attached.</div></div>
+    </div>
+  </section>
+
+  <!-- A2t TRUST / CONFIDENTIALITY (memory-enforced) -->
+  <section class="slide" data-sec="Appendix">
+    <h2 class="sm">Trust is enforced by the memory design, not promised.</h2>
+    <p class="lead">Iris holds a private line with everyone <i>and</i> speaks in the group. If people suspect a confidence can leak, the caucus dies and everyone hedges again. So confidentiality has to be <b>structural</b>.</p>
+    <div class="cols">
+      <div class="card"><h3>Sealed, per-person memory</h3><p>Each person's file is theirs, sealed from everyone else. Talking to Priya, Kevin's file is simply <b>unreachable</b>, the same root rule from the memory model. Cross-person facts reach the group only <b>de-identified</b>.</p></div>
+      <div class="card"><h3>Only constraints leave a caucus, never names</h3>
+        <p style="margin:0 0 8px"><b style="color:var(--teal)">✓</b> <i>"A few of you have a firm ceiling around $800."</i></p>
+        <p style="margin:0"><b style="color:var(--coral)">✗</b> never <i>who</i>, never an attributable quote. How much Iris reveals is a deliberate boundary, not a slip.</p>
+      </div>
+    </div>
+    <p class="lead muted" style="margin-top:16px">And a <b>never-persist</b> guardrail: anything off-record, or in a sensitive category (health, legal, financial specifics), is never written to memory at all.</p>
+  </section>
+
+  <!-- A2r OPEN RISKS -->
+  <section class="slide" data-sec="Appendix">
+    <h2 class="sm">Open risks we take seriously.</h2>
+    <div class="cols">
+      <div class="card"><h3>Dependence &amp; conflict-avoidance</h3><p>If people lean on Iris for every hard conversation, do they lose the muscle? That's what the <b>coach policy</b> is for: it hands you the words so <i>you</i> speak, building capacity rather than a crutch. Success looks like needing Iris <b>less</b> over time.</p></div>
+      <div class="card"><h3>Confidentiality is game-theoretic</h3><p>Even a tentative private note can leak if it's attributable, and once trust cracks the caucus collapses. So Iris surfaces only <b>de-identified constraints</b>, never a person; how much it reveals stays a hard, deliberate boundary.</p></div>
+    </div>
+    <p class="lead muted" style="margin-top:16px">These are constraints the design is accountable to, not solved problems. A facilitator that claims no failure modes is the least trustworthy kind.</p>
+  </section>
+
+  <!-- A2d MEMORY ARCHITECTURE (moved back from How) -->
+  <section class="slide embed-slide" data-sec="Appendix">
+    <h2>The harness's memory: a private silo per person</h2>
+    <div class="embed"><iframe data-src="diagram-memory.html?v=41" title="Memory architecture"></iframe></div>
+  </section>
+
+  <!-- A2e AGENT-INSTRUCTION APPROACHES (deep dive) -->
+  <section class="slide embed-slide" data-sec="Appendix">
+    <h2>How should an agent hold its own mind?</h2>
+    <div class="embed"><iframe data-src="diagram-instructions.html?v=41" title="Agent instruction approaches compared"></iframe></div>
+  </section>
+
+  <!-- A2c CONSUMER vs ENTERPRISE — DIFFERENCES (moved from Where) -->
+  <section class="slide" data-sec="Appendix">
+    <h2 class="sm">At work, the group itself is different.</h2>
+    <div class="cmp cmp-tight">
+      <div class="r head"><div>Group dynamic</div><div>Consumer · social</div><div class="fixh">Enterprise · work</div></div>
+      <div class="r"><div class="dim">Size &amp; hierarchy</div><div class="lim">Small (under ~10) and flat — everyone's a peer.</div><div class="fix">3 to 100s, layered — managers, reports, cross-team peers.<span class="impl">→ accountability matters — keep anonymization minimal in small groups (everyone owns their view), leaning on it only as the group scales.</span></div></div>
+      <div class="r"><div class="dim">Topics &amp; channels</div><div class="lim">One group, one simple context.</div><div class="fix">Channels overlap in people and topics; a decision in one spills into the next.<span class="impl">→ one Iris <i>per channel</i>, not a single global Iris.</span></div></div>
+      <div class="r"><div class="dim">Screen</div><div class="lim">Mobile — little real estate.</div><div class="fix">Desktop — room to work.<span class="impl">→ first-class surfaces: a shared Canvas, a persistent panel.</span></div></div>
+    </div>
+    <p class="lead muted" style="margin-top:16px">The design follows the <b>group</b>, not the platform — how much Iris anonymizes, how many Iris instances run, and how many surfaces it gets all fall out of these dynamics.</p>
+  </section>
+
+  <!-- A6 DISTRIBUTION (moved from main flow) -->
+  <section class="slide" data-sec="Appendix">
+    <h2 class="sm">Iris embeds where groups already are.</h2>
+    <ul class="big">
+      <li>Not a destination app — a <b>facilitation runtime</b> + a thin adapter per platform (Slack, WhatsApp, Discord, iMessage)</li>
+      <li>Three tiers: no-code install · <b>SDK</b> · MCP / REST</li>
+      <li>Make-or-break primitive: the <b>private channel</b> (the caucus needs 1:1 DMs) — degrades to ephemeral where unsupported</li>
+    </ul>
+    <div class="turn" style="font-size:22px">The model is the moat; the adapters are the reach.</div>
+  </section>
+
+</div>
+
+<div class="foot">
+  <span class="brand"><span class="d">&amp;</span> Iris</span>
+  <span id="secLabel"></span>
+  <span id="counter">1 / 23</span>
+</div>
+<div class="nav"><button id="prev">‹</button><button id="next">›</button></div>
+</div><!-- /canvas -->
+</div><!-- /viewport -->
+
+<script>
+  const canvas=document.getElementById('canvas');
+  function fit(){
+    const s=Math.min(window.innerWidth/1280, window.innerHeight/720);
+    canvas.style.transform='scale('+s+')';
+  }
+  window.addEventListener('resize',fit); fit();
+  const slides=[...document.querySelectorAll('.slide')];
+  let i=0;
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('on',k===i));
+    document.getElementById('counter').textContent=`${i+1} / ${slides.length}`;
+    document.getElementById('prog').style.width=`${(i+1)/slides.length*100}%`;
+    document.getElementById('secLabel').textContent=slides[i].dataset.sec||'';
+    if(location.hash!=='#'+(i+1)) history.replaceState(null,'','#'+(i+1));
+    // lazy-load iframes for current + neighbours
+    [i-1,i,i+1].forEach(k=>{
+      const s=slides[k]; if(!s)return;
+      const f=s.querySelector('iframe[data-src]');
+      if(f && !f.src) f.src=f.dataset.src;
+    });
+  }
+  document.getElementById('next').onclick=()=>show(i+1);
+  document.getElementById('prev').onclick=()=>show(i-1);
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();show(i+1);}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();show(i-1);}
+    else if(e.key==='Home'){show(0);} else if(e.key==='End'){show(slides.length-1);}
+  });
+  window.addEventListener('hashchange',()=>{const n=(parseInt(location.hash.slice(1),10)||1)-1; if(n!==i) show(n);});
+  show((parseInt((location.hash||'').slice(1),10)||1)-1);
+</script>
+</body>
+</html>

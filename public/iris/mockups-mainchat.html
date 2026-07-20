@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>How Iris surfaces her thoughts — mockups</title>
+<style>
+  :root{--bg:#f4f2ee;--ink:#1d1b18;--muted:#726c63;--line:#e7e3db;--iris:#6b4eb8;--iris-soft:#efeafc;
+    --wa:#075e54;--wabg:#ece5dd;--waout:#dcf8c6;--teal:#2c7a6f;--gold:#b07b1e}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:22px 28px}
+  .wrap{max-width:880px;margin:0 auto}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 16px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .opt{border:1px solid var(--line);border-radius:14px;background:#fff;padding:15px 16px}
+  .opt.rec{border-color:#c7b8ef;box-shadow:0 0 0 3px #efeafc}
+  .opt .t{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14.5px;margin-bottom:2px}
+  .opt .tag{margin-left:auto;font-size:9.5px;font-weight:800;letter-spacing:.05em;padding:2px 8px;border-radius:99px}
+  .tag.rec{background:var(--iris);color:#fff}.tag.no{background:#f0eee8;color:#8a8478}
+  .v{font-size:12px;color:var(--muted);margin-top:9px}
+  .v b{color:#2c6a60}.v i{color:#b5602a;font-style:normal}
+
+  /* WhatsApp mini-window */
+  .win{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--wabg);margin-top:11px;height:214px;display:flex;flex-direction:column;font-size:11px}
+  .wahd{background:var(--wa);color:#fff;padding:7px 11px;display:flex;align-items:center;gap:8px;flex:none}
+  .wahd .av{width:24px;height:24px;border-radius:50%;background:#ffffff28;display:grid;place-items:center;font-size:12px;flex:none}
+  .wahd b{font-size:12px;font-weight:600;display:block;line-height:1.1}
+  .wahd small{font-size:9px;color:#cfe7e2}
+  .super{background:#fff;border-bottom:1px solid #d9d4cc;color:#4a2f9e;padding:6px 10px;font-size:10px;font-weight:600;display:flex;align-items:center;gap:5px;flex:none;box-shadow:0 2px 3px rgba(0,0,0,.05)}
+  .super .car{margin-left:auto;opacity:.55}
+  .msgs{padding:11px 10px;display:flex;flex-direction:column;gap:7px;overflow:hidden;justify-content:flex-end;flex:1}
+  .m{display:flex;gap:6px;max-width:92%}
+  .m.out{align-self:flex-end}
+  .av2{width:18px;height:18px;border-radius:50%;flex:none;color:#fff;font-size:9px;font-weight:700;display:grid;place-items:center;align-self:flex-end}
+  .av2.p{background:var(--gold)}.av2.k{background:var(--teal)}.av2.i{background:var(--iris);border-radius:5px}
+  .bub{background:#fff;border-radius:2px 8px 8px 8px;padding:5px 9px;box-shadow:0 1px 1px rgba(0,0,0,.06)}
+  .m.out .bub{background:var(--waout);border-radius:8px 2px 8px 8px}
+  .bub .nm{font-weight:700;font-size:9px;margin-bottom:1px}
+  .nm.p{color:var(--gold)}.nm.k{color:var(--teal)}.nm.i{color:var(--iris)}
+  .m.iris .bub{background:var(--iris-soft);color:#2c2350}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="sub">Iris's read of the room can arrive two ways: as a message <b>in the timeline</b> (a participant), or in an ambient <b>supertitle</b> pinned above it.</p>
+  <div class="grid">
+
+    <!-- A participant in the timeline (recommended) -->
+    <div class="opt rec">
+      <div class="t">A · A participant in the timeline <span class="tag rec">recommended</span></div>
+      <div class="win">
+        <div class="wahd"><span class="av">✈️</span><div><b>the gang</b><small>You, Priya, Kevin · &amp; Iris</small></div></div>
+        <div class="msgs">
+          <div class="m"><div class="av2 p">P</div><div class="bub"><div class="nm p">Priya</div>book the $2,200 airbnb?? 👀</div></div>
+          <div class="m"><div class="av2 k">K</div><div class="bub"><div class="nm k">Kevin</div>i'm flexible!</div></div>
+          <div class="m iris"><div class="av2 i">&amp;</div><div class="bub"><div class="nm i">Iris</div>✦ noticing budget might be the quiet snag. Want me to check in?</div></div>
+        </div>
+      </div>
+      <div class="v"><b>+ her read arrives inline, as one more voice you can reply to; she's a participant, not a narrator</b></div>
+    </div>
+
+    <!-- B supertitle observation -->
+    <div class="opt">
+      <div class="t">B · A supertitle observation <span class="tag no">detached</span></div>
+      <div class="win">
+        <div class="wahd"><span class="av">✈️</span><div><b>the gang</b><small>You, Priya, Kevin</small></div></div>
+        <div class="super">✦ Iris is noticing: budget may be the quiet snag <span class="car">▾</span></div>
+        <div class="msgs">
+          <div class="m"><div class="av2 p">P</div><div class="bub"><div class="nm p">Priya</div>book the $2,200 airbnb?? 👀</div></div>
+          <div class="m"><div class="av2 k">K</div><div class="bub"><div class="nm k">Kevin</div>i'm flexible!</div></div>
+        </div>
+      </div>
+      <div class="v"><i>– an ambient banner above the flow; reads like a system narrating the room, not a voice in it</i></div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

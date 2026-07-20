@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Iris — on WhatsApp (mobile)</title>
+<style>
+  :root{--bg:#f4f2ee;--ink:#1d1b18;--muted:#726c63;--line:#e7e3db;--iris:#6b4eb8;--iris-soft:#efeafc;
+    --wa:#075e54;--wabg:#ece5dd;--waout:#dcf8c6}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:14px 24px}
+  .wrap{max-width:1060px;margin:0 auto}
+  h1{font-size:20px;margin:0 0 3px}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 20px;max-width:88ch}
+  .phones{display:flex;gap:16px;justify-content:center;align-items:flex-start;flex-wrap:nowrap}
+  figure{margin:0;width:258px;display:flex;flex-direction:column-reverse;gap:9px}
+  figcaption{margin:0;height:42px;overflow:hidden;font-size:12px;color:var(--muted);line-height:1.4}
+  figcaption b{color:var(--ink)}
+
+  .phone{width:258px;height:495px;border:6px solid #1d1b18;border-radius:30px;overflow:hidden;
+    background:var(--wabg);box-shadow:0 14px 34px rgba(30,25,18,.18);display:flex;flex-direction:column}
+  .wahd{background:var(--wa);color:#fff;padding:11px 12px 10px;display:flex;align-items:center;gap:9px;flex:none}
+  .wahd .bk{font-size:16px;opacity:.9}
+  .wahd .av{width:32px;height:32px;border-radius:50%;background:#ffffff28;display:grid;place-items:center;font-size:15px;flex:none}
+  .wahd b{font-size:13.5px;font-weight:600;display:block;line-height:1.1}
+  .wahd small{font-size:10.5px;color:#cfe7e2}
+
+  .pin{background:#fff;border-bottom:1px solid #d9d4cc;padding:8px 12px;flex:none;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+  .pin .top{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--wa)}
+  .pin .top .r{margin-left:auto;color:#9a9184;font-weight:600}
+  .pin .row{margin-top:4px;font-size:11.5px;color:#4a453c;display:flex;gap:8px;flex-wrap:wrap}
+
+  .body{flex:1;padding:10px 9px;display:flex;flex-direction:column;gap:6px;overflow-y:auto;overflow-x:hidden;font-size:11.5px;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.22) transparent}
+  .body > *:first-child{margin-top:auto}
+  .body::-webkit-scrollbar{width:4px}
+  .body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.22);border-radius:99px}
+  .body::-webkit-scrollbar-track{background:transparent}
+  .m{display:flex;max-width:86%}
+  .m.out{align-self:flex-end}
+  .bub{background:#fff;border-radius:8px;padding:5px 9px;box-shadow:0 1px 1px rgba(0,0,0,.06)}
+  .m.out .bub{background:var(--waout)}
+  .m.iris .bub{background:var(--iris-soft)}
+  .nm{font-size:9.5px;font-weight:700;margin-bottom:1px}
+  .nm.p{color:#b07b1e}.nm.m2{color:#c0574a}.nm.k{color:#2c7a6f}.nm.j{color:#4a5fa5}.nm.i{color:var(--iris)}
+  .reply{font-size:9.5px;color:var(--iris);font-weight:700;border-left:2px solid var(--iris);padding:0 5px;margin-bottom:3px}
+  .chip{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:99px;background:#eee9e1;color:#8a8478;margin-left:5px}
+
+  .ctx{align-self:center;background:#fff6df;border:1px solid #eadcb4;color:#8a6d1f;font-size:10px;font-weight:700;
+    padding:4px 11px;border-radius:99px;margin:4px 0}
+  .qr{display:flex;gap:5px;flex-wrap:wrap;align-self:flex-start}
+  .qr span{font-size:10px;font-weight:700;padding:4px 9px;border-radius:99px;border:1px solid #cbe3dc;color:var(--wa);background:#fff}
+
+  .composer{background:#f0efe9;padding:8px 9px;display:flex;gap:8px;align-items:center;flex:none}
+  .composer .box{flex:1;background:#fff;border-radius:99px;padding:8px 13px;color:#9a9184;font-size:11.5px}
+  .composer .send{width:32px;height:32px;border-radius:50%;background:var(--wa);color:#fff;display:grid;place-items:center;font-size:15px;flex:none}
+
+  /* expanded decisions view */
+  .trk{flex:1;padding:12px 11px;display:flex;flex-direction:column;gap:10px;overflow:hidden;background:#f4f2ee}
+  .tc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 12px}
+  .tc .h{display:flex;align-items:center;gap:8px}
+  .tc .em{font-size:17px}
+  .tc .tt{font-weight:700;font-size:13px;flex:1}
+  .tc .pill{font-size:8.5px;font-weight:800;letter-spacing:.03em;padding:3px 8px;border-radius:99px}
+  .pill.ok{background:#e2f0ed;color:#2c6a60}.pill.warn{background:#fbf1dc;color:#96690f}.pill.stop{background:#f7e4e0;color:#a5423a}
+  .tc .d{font-size:11px;color:#4a453c;margin-top:5px}
+  .tc .wait{font-size:10.5px;color:#9a6a52;margin-top:5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="phones">
+
+    <!-- PHONE 1: the group -->
+    <figure>
+      <div class="phone">
+        <div class="wahd"><span class="bk">‹</span><span class="av">✈️</span><div><b>the gang</b><small>You, Maya, Kevin, Priya, Jordan · &amp; Iris</small></div></div>
+        <div class="pin">
+          <div class="top">📌 Iris — 3 decisions open <span class="r">tap ⌄</span></div>
+          <div class="row"><span>🍝 Dinner ✅</span><span>🏝️ Trip ⏳</span><span>🎁 Gift 🔴</span></div>
+        </div>
+        <div class="body">
+          <div class="m"><div class="bub"><div class="nm p">Priya</div>TULUM 🌴 4 days, cenote diving! <span class="chip">trip</span></div></div>
+          <div class="m"><div class="bub"><div class="nm j">Jordan</div>omg yes 🙌</div></div>
+          <div class="m"><div class="bub"><div class="nm m2">Maya</div>are we still doing dinner friday too? <span class="chip">dinner</span></div></div>
+          <div class="m out"><div class="bub">friday yes 🙌 sichuan</div></div>
+          <div class="m iris"><div class="bub"><div class="reply">↩ Dinner</div>Settled: Sichuan, Fri, table for 5. ✅</div></div>
+          <div class="m"><div class="bub"><div class="nm p">Priya</div>ok back to tulum — book the $2,200 airbnb?? 👀 <span class="chip">trip</span></div></div>
+          <div class="m"><div class="bub"><div class="nm k">Kevin</div>i'm flexible! whatever works 😅</div></div>
+          <div class="m out"><div class="bub">oof $2,200 😅</div></div>
+          <div class="m"><div class="bub"><div class="nm m2">Maya</div>is $2,200 ok for everyone though? <span class="chip">trip</span></div></div>
+          <div class="m"><div class="bub"><div class="nm p">Priya</div>so are we booking the $2,200 place or nah 😅 <span class="chip">trip</span></div></div>
+          <div class="m iris"><div class="bub"><div class="reply">↩ Group trip</div>Sounds like there's still some deliberation. Let me check with each of you privately and come back.</div></div>
+        </div>
+        <div class="composer"><div class="box">Message the gang…</div><div class="send">↑</div></div>
+      </div>
+      <figcaption><b>Iris is a participant in the group.</b> She synthesizes and records its decisions.</figcaption>
+    </figure>
+
+    <!-- PHONE 2: tapped -> decisions view -->
+    <figure>
+      <div class="phone">
+        <div class="wahd"><span class="bk">‹</span><span class="av">📌</span><div><b>Open decisions</b><small>the gang · tracked by Iris</small></div></div>
+        <div class="trk">
+          <div class="tc">
+            <div class="h"><span class="em">🍝</span><span class="tt">Dinner Friday</span><span class="pill ok">READY</span></div>
+            <div class="d">Sichuan · Fri 8pm · table for 5.</div>
+            <div class="wait" style="color:#2c6a60">All 5 in — just needs a "go".</div>
+          </div>
+          <div class="tc">
+            <div class="h"><span class="em">🏝️</span><span class="tt">Group trip</span><span class="pill warn">IN PROGRESS</span></div>
+            <div class="d">Budget is the sticking point. A quiet ceiling is forming ~$800.</div>
+            <div class="wait">Still to weigh in privately: You, Kevin</div>
+          </div>
+          <div class="tc">
+            <div class="h"><span class="em">🎁</span><span class="tt">Sam's gift</span><span class="pill stop">NEEDS INPUT</span></div>
+            <div class="d">No budget agreed yet · Sam's birthday in 5 days.</div>
+            <div class="wait">Waiting on: everyone</div>
+          </div>
+        </div>
+      </div>
+      <figcaption><b>Tapping the pin</b> opens the group's decisions: status, blockers, who's next.</figcaption>
+    </figure>
+
+    <!-- PHONE 3: the Iris DM -->
+    <figure>
+      <div class="phone">
+        <div class="wahd"><span class="bk">‹</span><span class="av" style="background:#6b4eb8">&amp;</span><div><b>Iris</b><small>only you · never shared</small></div></div>
+        <div class="body">
+          <div class="ctx">🏝️ the gang · Trip budget</div>
+          <div class="m iris"><div class="bub"><div class="nm i">Iris</div>You said "oof" at $2,200 — over your comfort? I can raise a ceiling for the group without your name.</div></div>
+          <div class="m out"><div class="bub">yeah honestly 😅 $800 is my max rn</div></div>
+          <div class="m iris"><div class="bub"><div class="nm i">Iris</div>Got it — I'll float a firm ceiling near $800, no name attached. You're not the only one, promise.</div></div>
+          <div class="m out"><div class="bub">ok thank you 🙏</div></div>
+          <div class="ctx">🎁 the gang · Sam's gift</div>
+          <div class="m iris"><div class="bub"><div class="nm i">Iris</div>Also — what's your ceiling for Sam's gift? Just between us.</div></div>
+          <div class="m out"><div class="bub">like $40</div></div>
+          <div class="m iris"><div class="bub"><div class="nm i">Iris</div>Perfect — that lines up with most of the group.</div></div>
+          <div class="ctx">🦃 family chat · Thanksgiving</div>
+          <div class="m iris"><div class="bub"><div class="nm i">Iris</div>Different group — but are you actually ok hosting again this year?</div></div>
+          <div class="m out"><div class="bub">ugh no 😅 can we rotate?</div></div>
+          <div class="m iris"><div class="bub"><div class="nm i">Iris</div>Noted. I'll float rotating it, no name attached.</div></div>
+        </div>
+        <div class="composer"><div class="box">Message Iris privately…</div><div class="send">↑</div></div>
+      </div>
+      <figcaption><b>A private line, just me and Iris.</b> She surfaces my threads from every group.</figcaption>
+    </figure>
+
+  </div>
+</div>
+<script>
+  // open each chat scrolled to the latest message (scroll up for history)
+  function toBottom(){document.querySelectorAll('.body').forEach(function(b){b.scrollTop=b.scrollHeight;});}
+  window.addEventListener('load',toBottom); toBottom();
+</script>
+</body>
+</html>

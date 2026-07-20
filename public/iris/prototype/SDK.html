@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Iris SDK — developer docs</title>
+<style>
+  :root{--bg:#fbfaf8;--panel:#fff;--ink:#1d1b18;--muted:#6b655c;--line:#e7e3db;--iris:#6b4eb8;--iris-ink:#4a2f9e;--teal:#2c7a6f;--gold:#b07b1e;--code:#1a1820;--code-ink:#e6e2f0}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:var(--iris-ink);text-decoration:none}
+  code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,"Cascadia Code",monospace}
+  .layout{display:grid;grid-template-columns:248px 1fr;max-width:1180px;margin:0 auto;min-height:100vh}
+  /* sidebar */
+  aside{border-right:1px solid var(--line);padding:26px 20px;position:sticky;top:0;height:100vh;overflow:auto}
+  aside .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.01em;margin-bottom:2px}
+  aside .brand .dot{width:30px;height:30px;border-radius:9px;background:var(--iris);color:#fff;display:grid;place-items:center;font-size:17px}
+  aside .tag{color:var(--muted);font-size:12.5px;margin:0 0 20px 0}
+  aside nav a{display:block;color:var(--muted);font-size:13.5px;padding:5px 9px;border-radius:7px}
+  aside nav a:hover{background:#f1eef7;color:var(--iris-ink)}
+  aside nav .grouplabel{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#a49d92;margin:16px 0 4px 9px}
+  /* content */
+  main{padding:40px 52px 100px;max-width:820px}
+  h1{font-size:34px;letter-spacing:-.02em;margin:0 0 6px}
+  .lede{font-size:18px;color:#3b362f;margin:0 0 8px}
+  .kick{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--iris);margin-bottom:14px}
+  h2{font-size:23px;letter-spacing:-.01em;margin:44px 0 10px;padding-top:8px}
+  h3{font-size:16.5px;margin:26px 0 6px}
+  p{margin:10px 0}
+  hr{border:0;border-top:1px solid var(--line);margin:34px 0}
+  ul{margin:10px 0;padding-left:22px}li{margin:5px 0}
+  code.i{background:#efeafc;color:var(--iris-ink);border-radius:5px;padding:1px 6px;font-size:13.5px}
+  pre{background:var(--code);color:var(--code-ink);border-radius:12px;padding:16px 18px;overflow:auto;font-size:13px;line-height:1.6;margin:14px 0;box-shadow:0 8px 26px rgba(30,25,18,.12)}
+  pre .c{color:#8a83a6}.pre .k{color:#c9b8f5}
+  pre .cm{color:#7d7796}pre .st{color:#a3d8c0}pre .kw{color:#c9b8f5}pre .fn{color:#e6b96a}
+  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  th{background:#f4f1ea;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+  td code,th code{background:#efeafc;color:var(--iris-ink);border-radius:4px;padding:1px 5px;font-size:12.5px}
+  .note{border:1px solid #ddd2f7;background:#f6f2ff;border-radius:11px;padding:12px 15px;margin:16px 0;font-size:14px;color:#3a2c66}
+  .note b{color:var(--iris-ink)}
+  .warn{border-color:#ecd9a6;background:#fdf7e8;color:#5c4a12}.warn b{color:#8a6510}
+  .pillrow{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+  .pill{font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:99px;padding:3px 11px;background:#fff;color:#5c564c}
+  .flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0;font-size:13.5px}
+  .flow .b{background:#fff;border:1px solid var(--line);border-radius:9px;padding:7px 11px;font-weight:700}
+  .flow .b.iris{background:var(--iris-ink);color:#fff;border-color:var(--iris-ink)}
+  .flow .ar{color:var(--muted)}
+  .foot{color:var(--muted);font-size:13px;margin-top:40px;border-top:1px solid var(--line);padding-top:16px}
+  @media(max-width:820px){.layout{grid-template-columns:1fr}aside{display:none}main{padding:28px 20px}}
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brand"><span class="dot">&amp;</span> Iris SDK</div>
+    <p class="tag">A collaboration-agent runtime.</p>
+    <nav>
+      <a href="#overview">Overview</a>
+      <a href="#quickstart">Quickstart</a>
+      <div class="grouplabel">Core concepts</div>
+      <a href="#loop">The loop</a>
+      <a href="#memory">Memory</a>
+      <a href="#policy">Policy &amp; presets</a>
+      <a href="#surfaces">Surfaces</a>
+      <a href="#tools">Tools</a>
+      <a href="#models">Models</a>
+      <div class="grouplabel">Reference</div>
+      <a href="#api">IrisAgent API</a>
+      <a href="#stepper">Stepper (debug)</a>
+      <a href="#shapes">Data shapes</a>
+      <div class="grouplabel">Guides</div>
+      <a href="#extend">Extending</a>
+    </nav>
+  </aside>
+
+  <main>
+    <span class="kick">Prototype SDK</span>
+    <h1>Iris SDK</h1>
+    <p class="lede">A tiny runtime for a facilitation agent. Iris reads a group chat, keeps a sealed private read of every participant, and decides <em>when</em>&mdash;and <em>how</em>&mdash;to intervene. It never decides <em>for</em> the group.</p>
+
+    <h2 id="overview">Overview</h2>
+    <p>The runtime is one class, <code class="i">IrisAgent</code>, in <code class="i">iris-sdk.js</code> &mdash; a <b>collaboration agent</b>. Configuring it with a facilitation <code class="i">policy</code> and the <code>decisions</code> <a href="#surfaces">surface</a> is what makes it &ldquo;Iris&rdquo;; swap those and the same class is a standup bot or a vote. It's UI-agnostic&mdash;the display layer only calls into it.</p>
+    <div class="note"><b>What a single-principal SDK can't do:</b> it holds a <em>group</em> &mdash; a shared channel plus a private line to each participant, memory partitioned per person, and a de-identified boundary between them. That multi-principal substrate is the SDK; <code class="i">policy</code> + <code class="i">surface</code> are the configuration.</div>
+    <p>The loop, tools, and model are a generic agent &mdash; deliberately, we don't reinvent them. Everything that makes Iris <em>Iris</em> is the multi-principal substrate a single-principal SDK can't express:</p>
+    <table>
+      <tr><th>&nbsp;</th><th>A generic agent</th><th>Iris &mdash; a collaboration agent</th></tr>
+      <tr><td><b>Principal</b></td><td>one user</td><td>a group &mdash; <code>participants</code></td></tr>
+      <tr><td><b>Channels</b></td><td>one conversation</td><td>a shared <code>room</code> + a private <code>caucus(id)</code> per participant</td></tr>
+      <tr><td><b>Memory</b></td><td>one pool it fully sees</td><td><code>memory.private[id]</code> &mdash; sealed per participant</td></tr>
+      <tr><td><b>What it may say</b></td><td>anything it knows</td><td>scoped by <code>context({ audience })</code> &mdash; can't leak what it can't see</td></tr>
+      <tr><td><b>Shared artifact</b></td><td>none (just the transcript)</td><td>a co-owned <code>surface</code> &rarr; <code>room.canvas</code></td></tr>
+    </table>
+
+    <h2 id="quickstart">Quickstart</h2>
+    <p>Construct the agent with a policy, the <code class="i">participants</code>, a <code class="i">surface</code>, the seed <code class="i">room</code>, and a <code class="i">model</code>. Configuring it with the facilitation policy + <code>decisions</code> surface is what makes it &ldquo;Iris&rdquo;. Then drive it: <code class="i">run(event)</code> handles one turn.</p>
+<pre><span class="cm">// 1 — construct the agent</span>
+<span class="kw">import</span> { IrisAgent } <span class="kw">from</span> <span class="st">'./iris-sdk.js'</span>;
+<span class="kw">import</span> { openrouter } <span class="kw">from</span> <span class="st">'./models.js'</span>;
+<span class="kw">import</span> { decisions } <span class="kw">from</span> <span class="st">'./surfaces.js'</span>;
+<span class="kw">import</span> { PARTICIPANTS, ROOM } <span class="kw">from</span> <span class="st">'./scenario-elrond.js'</span>;
+
+<span class="kw">const</span> iris = <span class="kw">new</span> <span class="fn">IrisAgent</span>({
+  policy: <span class="kw">await</span> (<span class="kw">await</span> <span class="fn">fetch</span>(<span class="st">'./policy-facilitator.md'</span>)).<span class="fn">text</span>(),  <span class="cm">// a default policy (or your own)</span>
+  participants: PARTICIPANTS,    <span class="cm">// [{ id, name, role, read }] — read seeds a sealed file each</span>
+  surface: decisions,           <span class="cm">// the co-owned artifact schema (default)</span>
+  room:    ROOM,                <span class="cm">// seed { topic, items }</span>
+  model:   <span class="fn">openrouter</span>({ apiKey: MY_KEY, model: <span class="st">'anthropic/claude-opus-4'</span> }),
+});                             <span class="cm">// omit `model` → offline mocks</span>
+
+<span class="cm">// 2 — drive it: a trigger fires one turn. Effects (post / caucus / canvas) are delivered;</span>
+<span class="cm">//     run() returns the acts Iris took this turn.</span>
+<span class="kw">const</span> acts = <span class="kw">await</span> iris.<span class="fn">run</span>({ type: <span class="st">'message'</span>, author: <span class="st">'boromir'</span>, text: <span class="st">'Why not use the Ring against him?'</span> });
+
+<span class="cm">// read state directly for your UI</span>
+iris.room.items;                <span class="cm">// items on the surface — the state (each is a Decision here); own heartbeat + read</span>
+iris.room.canvas;               <span class="cm">// ↳ a de-identified projection of them, for the group</span>
+iris.caucus(<span class="st">'boromir'</span>);         <span class="cm">// a sealed 1:1 thread (= iris.memory.private.boromir.caucus)</span></pre>
+    <div class="note">Want to walk the beats one at a time (for a prev/next UI, or to inspect each model call)? That's a <b>debug</b> affordance, not the default &mdash; see <a href="#stepper">Stepper</a>.</div>
+
+    <h2 id="loop">The cycle</h2>
+    <p>A trigger fires a turn. <code class="i">run(event)</code> takes an event &mdash; <code>{ type:'message', author, text }</code> today, a timer or webhook later &mdash; and handles one turn. Iris's outputs (a room post, a caucus DM, a Canvas change) are delivered as side effects and stream through <code class="i">onEvent</code>; <code class="i">run</code> returns the acts it took this turn.</p>
+    <table>
+      <tr><th>beat</th><th>Trigger / method</th><th>Model?</th><th>What it does</th></tr>
+      <tr><td>① <b>human event</b></td><td><code>ingest(author, text)</code></td><td>no</td><td>a line enters the room &mdash; appended to the log; this starts the turn</td></tr>
+      <tr><td>② <b>update memory</b></td><td><code>updateMemory()</code></td><td>yes</td><td>open / advance / close any surface items this line moves; re-derive their <code>heartbeat</code> + <code>read</code></td></tr>
+      <tr><td>③ <b>introspect &amp; act</b></td><td><code>decide()</code> + <code>act()</code></td><td>yes</td><td>reason privately (<code>decide()</code> logs a first-person note to introspection), then act on it &mdash; <code>post</code>, <code>caucus</code>, or <code>none</code> (hold) &mdash; writing the message in the same beat</td></tr>
+    </table>
+    <p><b>Introspection and action are one beat.</b> <code>decide()</code> is the introspection half &mdash; it logs <em>why</em> she's about to act (or hold) to <code>iris/introspection/log.md</code> &mdash; and <code>act()</code> is the doing half. A decision without its message is half an action, so the debugger stops <em>after</em> the message is written, not between the reasoning and the words. A <code>none</code> choice is <b>hold</b>: she reasoned and chose to stay peripheral. <code class="i">maxSteps</code> bounds actions per turn (the app sets <code>1</code>, so one action ends the turn). <code>decide</code> picks a registered <a href="#tools">tool</a>; the built-in defaults are <b><code>post</code></b> and <b><code>caucus</code></b>. Coaching and facilitating both use <code>caucus</code>; the <a href="#policy">policy stance</a> shapes what gets written.</p>
+
+    <h2 id="memory">Memory &amp; the collaboration primitives</h2>
+    <p>The agent is built around a <em>group</em>, not one user. That's what a single-principal SDK can't express, and it's why memory is partitioned:</p>
+    <ul>
+      <li><b><code>participants</code></b> &mdash; the group: <code>[{ id, name, role }]</code>. First-class, in the constructor.</li>
+      <li><b><code>policy</code></b> &middot; <span style="color:var(--muted)">global</span> &mdash; the system prompt. Passed in, mutable, injected on every model call.</li>
+      <li><b><code>room</code></b> &middot; <span style="color:var(--muted)">the shared channel</span> &mdash; <code>{ topic, log[], messages[], items{} }</code> &mdash; the transcript plus the <a href="#surfaces">surface</a> items (all of them; no privileged &ldquo;active&rdquo; one).</li>
+      <li><b><code>memory</code></b> &middot; <span style="color:var(--muted)">partitioned</span> &mdash; <code>{ shared, private{ [id]: { mind, confidence, plan, shifts[], caucus[] } }, introspection[] }</code>. Everything Iris privately holds about a person, in <em>her</em> voice, never shown to anyone &mdash; in three honest layers so only the first is truly a theory of mind: <b><code>mind</code></b> (the ToM, BDI: <code>interest</code> desire, <code>position</code> intention, <code>beliefs</code> what they assume, <code>arc</code> disposition, <code>regards</code> how they see the others); <b><code>confidence</code></b> (how sure <em>she</em> is &mdash; meta, not a fact about them); <b><code>plan</code></b> (<code>watchingFor</code> the open question she's tracking, <code>helpNext</code> how she can help them next &mdash; her agency, <em>not</em> their mind); and <b><code>shifts[]</code></b> (append-only log of how their mind moved). She patches facets and appends shifts, never rewrites. <code>private[id].caucus</code> is the 1:1 thread (also <code class="i">iris.caucus(id)</code>).</li>
+      <li><b><code>introspection</code></b> &middot; <span style="color:var(--muted)">Iris's own</span> &mdash; a first-person log of what she decided each act beat, and why (<code>iris/introspection/log.md</code>). Written every beat, hold included. Private; it never leaves memory.</li>
+    </ul>
+    <p>A surface <b>item</b> carries three layers: public <code>shared</code> fields (title, status, resolution), the agent's private <code>notes</code> (heartbeat, read), and sealed per-participant <b>contributions</b>. See <a href="#surfaces">Surfaces</a>.</p>
+    <h3>Canvas</h3>
+    <p><code class="i">iris.room.canvas</code> is the surface items projected for the group, de-identified: the item's <code>shared</code> fields + an aggregate of the sealed contributions. Notes and raw contributions are <em>not</em> included. It's a live getter on <code>room</code> (the items are the source of truth). Render it as a Slack Canvas, a pinned summary, or a task list.</p>
+    <h3 id="confidentiality">Confidentiality — <code>context({ audience })</code></h3>
+    <p>Confidentiality isn't a line in the prompt; it's a property of what each model call is <em>allowed to see</em>. One primitive, <code class="i">context({ audience })</code>, assembles exactly that:</p>
+    <ul>
+      <li><b><code>'self'</code></b> &mdash; everything, incl. every sealed read. Used only for the agent's own private beats (<code>reflect</code>, <code>decide</code>), whose output stays in memory.</li>
+      <li><b>a participant id</b> &mdash; the transcript, the public board, and only <em>that one</em> person's sealed file + your 1:1. Used when writing a <code>caucus</code>.</li>
+      <li><b><code>'room'</code></b> &mdash; transcript + the public board only, <em>no</em> sealed anything. Used when writing a <code>post</code>.</li>
+    </ul>
+    <p>So when Iris composes a room post, the model never receives anyone's sealed read &mdash; it can't leak what it can't see. The acting tool's <a href="#tools"><code>audience</code></a> selects which one. (A poll's votes are sealed contributions; the board only ever shows the tally, so the boundary holds mechanically, not by prompt.)</p>
+
+    <h2 id="policy">Policy &amp; presets</h2>
+    <p>The <code class="i">policy</code> is the system prompt (an <code>AGENTS.md</code>-style file). The coach/facilitator stance is written into it &mdash; there is no separate <code>mode</code> setting. Two presets ship:</p>
+    <table>
+      <tr><th>Preset</th><th>Iris acts…</th><th>Concretely</th></tr>
+      <tr><td><code>policy-facilitator.md</code></td><td><b>for</b> the group</td><td>caucuses people herself, then posts a de-identified synthesis in her own voice</td></tr>
+      <tr><td><code>policy-coach.md</code></td><td><b>through</b> a person</td><td>privately hands one named person the words; lets <em>them</em> speak; posts nothing herself</td></tr>
+    </table>
+    <p>Both share the same facilitation core and differ only in a <em>Your stance</em> section. To switch stance, load the other policy:</p>
+<pre>iris.policy = <span class="kw">await</span> (<span class="kw">await</span> <span class="fn">fetch</span>(<span class="st">'./policy-coach.md'</span>)).<span class="fn">text</span>();</pre>
+
+    <h2 id="surfaces">Surfaces</h2>
+    <p>The <b>surface</b> is the co-owned artifact the group builds &mdash; and it's what turns this from &ldquo;Iris&rdquo; into a substrate. Iris uses <code>decisions</code>; swap the surface (and policy) and the same runtime is a standup bot or a vote. A surface is a schema; the substrate does items, participation, projection, and confidentiality generically.</p>
+<pre>{
+  name,
+  shared:  [<span class="st">'title'</span>, <span class="st">'options'</span>, <span class="st">'status'</span>, <span class="st">'resolution'</span>],  <span class="cm">// public fields</span>
+  notes:   [<span class="st">'heartbeat'</span>, <span class="st">'read'</span>],              <span class="cm">// the agent's private working notes</span>
+  contribution: { stance: <span class="st">''</span> },              <span class="cm">// a per-participant SEALED contribution</span>
+  statuses: [<span class="st">'gathering'</span>, <span class="st">'groan'</span>, <span class="st">'converging'</span>, <span class="st">'decided'</span>],
+  fields: { options: { type: <span class="st">'array'</span>, items: { … } } },   <span class="cm">// per-field JSON Schema; string by default</span>
+  aggregate: (contribs) => ({ weighedIn: contribs.length }),  <span class="cm">// sealed → de-identified public</span>
+}</pre>
+    <p>An item's public projection is its <code>shared</code> fields + <code>aggregate(contributions)</code>. <code>notes</code> and the raw contributions never cross to the room &mdash; that's where the surface meets the <a href="#confidentiality">confidentiality boundary</a>.</p>
+    <p><b>A shared field can be richer than a string.</b> <code>fields</code> gives the model a JSON Schema per field (fields not listed default to a string; <code>status</code> to an enum of <code>statuses</code>) — and it's enforced at the model call. The <code>decisions</code> surface uses it for <code>options</code>: the courses of action on the table, each <code>{ label, by }</code>. A proposal stated openly in the room is a <b>public position</b>, so it's <em>attributed</em> and shows on the Canvas — unlike the private <code>read</code> (the interest underneath), which stays de-identified. Positions are named; interests are not. Two surfaces ship in <code class="i">surfaces.js</code>:</p>
+    <table>
+      <tr><th>Surface</th><th>Items</th><th>Sealed per participant</th><th>Public projection</th></tr>
+      <tr><td><code>decisions</code></td><td>things to decide</td><td>a stance (presence)</td><td>status + resolution + weighed-in count</td></tr>
+      <tr><td><code>poll</code></td><td>options to choose</td><td>a <b>vote</b></td><td><b>tallies only</b> — a secret ballot</td></tr>
+    </table>
+    <p>The <code>poll</code> case is the sharp one: individual votes are sealed contributions, so <code>aggregate</code> can only ever expose a tally. The runtime <em>cannot</em> surface who voted what &mdash; confidentiality falls out of the data model, not the prompt. Others follow the same shape: <code>tasks</code> (assignee/done), <code>availability</code> (&ldquo;N of M free&rdquo;), <code>concerns</code> (de-identified), <code>terms</code> (agreed clauses).</p>
+
+    <h2 id="tools">Tools</h2>
+    <p>Iris's action space is a <b>registry</b>, not a fixed set. A tool is:</p>
+<pre>{ name, audience: <span class="st">'room'|'person'</span>, description, run(agent, args) }</pre>
+    <p>The defaults live in <code class="i">tools.js</code> &mdash; <code>post</code> and <code>caucus</code>, provided like a hosted <code>web_search</code> and fully swappable. Pass your own via the <code class="i">tools</code> option to extend the action space (<code>react</code>, <code>nudge</code>, <code>escalate</code>, &hellip;).</p>
+    <table>
+      <tr><th>Tool</th><th>Audience</th><th>What it does</th></tr>
+      <tr><td><code>post</code></td><td><code>room</code></td><td>speak to the whole room</td></tr>
+      <tr><td><code>caucus</code></td><td><code>person</code></td><td>private 1:1 DM to one person</td></tr>
+    </table>
+    <p><code class="i">audience</code> is load-bearing: it selects the <a href="#memory">confidentiality tier</a> the act may draw on. A <code>room</code> tool is composed with no sealed reads in context; a <code>person</code> tool sees only that person's file. Add a tool, and its audience decides what it can and can't see &mdash; confidentiality extends for free.</p>
+
+    <h2 id="models">Models</h2>
+    <p>A <code class="i">model</code> is an injected function &mdash; the agent never sees keys or endpoints. Its signature:</p>
+<pre><span class="kw">type</span> Model = (input: { system: string, prompt: string }) => <span class="kw">Promise</span>&lt;string&gt;;</pre>
+    <p>Bring your own, or use a built-in adapter from <code class="i">models.js</code>. Each is a small factory that closes over its config and returns that function &mdash; the same shape whether it's OpenRouter, Anthropic direct, or a local proxy.</p>
+<pre><span class="kw">import</span> { openrouter, anthropic, proxy } <span class="kw">from</span> <span class="st">'./models.js'</span>;
+
+<span class="cm">// OpenRouter — one key, any vendor. Route with a "vendor/model" id.</span>
+<span class="fn">openrouter</span>({ apiKey, model: <span class="st">'anthropic/claude-opus-4'</span> })   <span class="cm">// or 'openai/gpt-5', 'google/gemini-2.5-pro'</span>
+
+<span class="cm">// Anthropic, direct (browser-direct in the prototype)</span>
+<span class="fn">anthropic</span>({ apiKey, model: <span class="st">'claude-opus-4-8'</span> })
+
+<span class="cm">// Local proxy — key stays server-side (.env). Pair with serve.py.</span>
+<span class="fn">proxy</span>({ model: <span class="st">'claude-opus-4-8'</span> })
+
+<span class="cm">// no adapter → offline mocks (the scenario's mock* fns; still stance-aware)</span>
+<span class="kw">new</span> <span class="fn">IrisAgent</span>({ policy, participants, room });   <span class="cm">// model omitted</span></pre>
+    <table>
+      <tr><th>Adapter</th><th>Config</th><th>When</th></tr>
+      <tr><td><code>openrouter</code></td><td><code>{ apiKey, model }</code></td><td>one key across vendors; swap models by string</td></tr>
+      <tr><td><code>anthropic</code></td><td><code>{ apiKey, model }</code></td><td>Claude direct, no router in the middle</td></tr>
+      <tr><td><code>proxy</code></td><td><code>{ url?, model }</code></td><td>keep the key off the page (server reads <code>.env</code>)</td></tr>
+      <tr><td><span style="color:var(--muted)">(omit)</span></td><td>&mdash;</td><td>offline demo; deterministic mocks</td></tr>
+    </table>
+    <div class="note warn"><b>Not for production.</b> The <code>openrouter</code> and <code>anthropic</code> adapters call the vendor from the browser, so the key is exposed to the page. Fine for a local prototype; use <code>proxy</code> (or your own backend) otherwise.</div>
+
+    <h2 id="api">IrisAgent API</h2>
+    <h3>Constructor</h3>
+<pre><span class="kw">new</span> <span class="fn">IrisAgent</span>({ participants, policy, surface?, room, model, tools?, maxSteps?, onEvent?, store? })</pre>
+    <p><code class="i">participants</code> is the group; <code class="i">surface</code> defaults to <code>decisions</code> (see <a href="#surfaces">Surfaces</a>). <code class="i">policy</code> and <code class="i">model</code> are plain fields &mdash; mutate them live (<code class="i">iris.model = anthropic({…})</code>) and the change takes effect on the next beat, no rebuild. There is no <code>mode</code> field &mdash; the stance is just which <code class="i">policy</code> you load. <code class="i">tools</code> defaults to <code>[post, caucus]</code>; <code class="i">maxSteps</code> (default 6) bounds actions per turn; <code class="i">onEvent(type, payload)</code> streams <code>memory</code> / <code>decide</code> / <code>act</code> events; <code class="i">store</code> is a reserved memory-I/O adapter.</p>
+    <h3>Methods</h3>
+    <table>
+      <tr><th>Method</th><th>Returns</th><th>Notes</th></tr>
+      <tr><td><code>run(event)</code></td><td><code>Promise&lt;action[]&gt;</code></td><td><b>default drive</b> &mdash; one turn per trigger; reflects, then loops the act beat to completion</td></tr>
+      <tr><td><code>ingest(author, text)</code></td><td><code>message</code></td><td>① sync; appends the line to the room</td></tr>
+      <tr><td><code>updateMemory()</code></td><td><code>Promise&lt;delta&gt;</code></td><td>② reflect &mdash; re-derives surface items + participant memory</td></tr>
+      <tr><td><code>decide()</code></td><td><code>Promise&lt;choice&gt;</code></td><td>③ act, first half &mdash; chooses a tool; also stored on <code>iris.decision</code></td></tr>
+      <tr><td><code>act()</code></td><td><code>Promise&lt;action&gt;</code></td><td>③ act, second half &mdash; writes the message and calls the tool</td></tr>
+      <tr><td><code>caucus(id)</code></td><td><code>message[]</code></td><td>the 1:1 thread with a participant</td></tr>
+      <tr><td><code>addCaucusReply(id, text)</code></td><td>&mdash;</td><td>a participant replies inside their caucus</td></tr>
+      <tr><td><code>context({ audience })</code></td><td><code>string</code></td><td>the assembled, audience-scoped context (the confidentiality primitive)</td></tr>
+      <tr><td><code>stepper(queue?)</code></td><td><code>Stepper</code></td><td>debug harness (see below)</td></tr>
+    </table>
+    <h3>State &amp; projections</h3>
+    <p><code class="i">iris.room</code> (incl. <code class="i">room.items</code>), <code class="i">iris.memory</code> (<code>.shared</code> / <code>.private[id]</code>), <code class="i">iris.participants</code>, <code class="i">iris.lastMessage</code>, <code class="i">iris.decision</code>, <code class="i">iris.isLive</code> &mdash; plus <code class="i">iris.room.canvas</code>, the de-identified projection of the surface items for the group. Read them directly to render a UI.</p>
+
+    <h2 id="stepper">Stepper &mdash; debug drive</h2>
+    <p>Run-to-completion is the default. When you want to advance <em>one beat at a time</em> &mdash; a prev/next UI, or inspecting each model call &mdash; ask the agent for a <code class="i">Stepper</code>. Each <code class="i">next()</code> is one <em>observable transition</em>: a line was said, Iris reflected, or Iris did one thing (decide + write together). It keeps a snapshot history so <code class="i">prev()</code> is real undo.</p>
+<pre><span class="kw">const</span> step = iris.<span class="fn">stepper</span>(MESSAGE_QUEUE);   <span class="cm">// optional scripted queue</span>
+
+<span class="kw">await</span> step.<span class="fn">next</span>();       <span class="cm">// ① a line enters the room (or pass { author, text } to inject)</span>
+<span class="kw">await</span> step.<span class="fn">next</span>();       <span class="cm">// ② Iris reflects  → step.changed = Set of changed files</span>
+<span class="kw">await</span> step.<span class="fn">next</span>();       <span class="cm">// ③ Iris acts: decide + write → step.decision, step.lastAction (repeats; ends on hold)</span>
+step.<span class="fn">prev</span>();             <span class="cm">// undo — restores the previous snapshot</span></pre>
+    <table>
+      <tr><th>Member</th><th>Notes</th></tr>
+      <tr><td><code>next(inject?)</code></td><td>advance one beat; at ① pulls from the queue or injects <code>{author, text}</code>. After the end, redoes forward through undone steps.</td></tr>
+      <tr><td><code>prev()</code></td><td>step back one snapshot</td></tr>
+      <tr><td><code>phase</code> / <code>nextLabel</code></td><td><code>'msg'|'reflect'|'act'</code>, and a human label for what <code>next()</code> will do</td></tr>
+      <tr><td><code>changed</code></td><td><code>Set</code> of memory keys touched by the last ② reflect (e.g. <code>'canvas'</code>, <code>'item/ring'</code>, <code>'user/boromir'</code>) &mdash; drive change highlights off this</td></tr>
+      <tr><td><code>decision</code> / <code>lastAction</code></td><td>the ③ act beat's choice + written action (<code>lastAction</code> carries the <code>rationale</code>)</td></tr>
+      <tr><td><code>canPrev</code> / <code>canRedo</code></td><td>guard your prev/next buttons</td></tr>
+    </table>
+
+    <h2 id="shapes">Data shapes</h2>
+    <p>Every model-backed beat is bound to a <b>JSON Schema</b> (<code>items[]</code> requires a non-empty <code>title</code>, <code>tool</code> is an enum, <code>text</code> is non-empty). A wired model returns it via forced tool-calling, so output can't come back malformed; a bad response still degrades to <code>{}</code> rather than throwing.</p>
+<pre>message = { author: id, text: string }
+item    = { id, ...surface.shared, ...surface.notes, contributions: { [id]: contribution } }  <span class="cm">// a surface item (state)</span>
+record  = { mind: { interest, position, beliefs, arc, regards: [{ toward, note }] }, confidence, plan: { watchingFor, helpNext }, shifts: [{ turn, observed, from, to }] }  <span class="cm">// Iris's per-person record</span>
+delta   = { items: <span class="kw">Partial</span>&lt;item&gt;[], contribution?: { item: id, value: object }, privateNotes: [{ id, interest?, position?, beliefs?, arc?, confidence?, watchingFor?, helpNext?, regards?, shift? }] }  <span class="cm">// ② reflect — flat patch, routed into the layers</span>
+choice  = { tool: <span class="st">'none'|'post'|'caucus'</span>, target: id|null, rationale: string }  <span class="cm">// ③ act · decide</span>
+action  = { tool: <span class="st">'none'|'post'|'caucus'</span>, target: id|null, text: string }       <span class="cm">// ③ act · write</span></pre>
+    <p style="color:var(--muted);font-size:13.5px">The item's fields come from the <a href="#surfaces">surface</a> schema (<code>shared</code> + <code>notes</code>); <code>contribution</code> carries an explicit sealed value like a vote. <code>item</code> (durable state) and <code>choice</code> (what <code>decide()</code> returns) are different things.</p>
+    <h2 id="extend">Extending</h2>
+    <ul>
+      <li><b>A new surface</b> &mdash; the co-owned artifact is a plug-in schema, and it's the real extension point. Beyond <code>decisions</code> and <code>poll</code>, author one for whatever a group builds together: <code>tasks</code> (assignee / done), <code>availability</code> (&ldquo;N of M free&rdquo;), <code>concerns</code> (de-identified), <code>terms</code> (agreed clauses). Declare <code>{ shared, notes, contribution, statuses, fields, seedItem, aggregate }</code> and the substrate gives you items, participation, projection, and confidentiality for free &mdash; <code>aggregate</code> is where you decide what stays sealed and what reaches the room.</li>
+      <li><b>A different agent</b> &mdash; swap the <code>surface</code> + <code>policy</code> (+ any custom <code>tools</code>) and the same class is a different collaboration agent: a standup bot (<code>tasks</code> + a nudging policy), a neutral vote-teller (<code>poll</code> + a neutral policy). The <b>policy</b> is how it thinks, the <b>surface</b> is what it builds, the <b>tools</b> are what it can do &mdash; and the multi-principal plumbing (channels, sealed memory, de-identified projection) never changes. To retune wording without a new policy, edit the per-beat task strings in <code>_modelUpdateMemory / _modelDecide / _modelAct</code>.</li>
+    </ul>
+    <p style="color:var(--muted);font-size:13px">The demo is driven by <code class="i">scenario-elrond.js</code> (<code>participants</code>, <code>room</code>, <code>MESSAGE_QUEUE</code>, <code>mock*</code> fns); a live model is any <code>({ system, prompt, schema? }) =&gt; Promise&lt;string&gt;</code> you inject.</p>
+
+    <p class="foot">Iris SDK · prototype. Two layers: this runtime (<code>iris-sdk.js</code>) + a display layer (<code>index.html</code>). See the running prototype at <a href="./index.html">/prototype/</a>.</p>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>How an agent holds its own mind — approaches compared</title>
+<style>
+  :root{--bg:#f4f2ee;--ink:#1d1b18;--muted:#726c63;--line:#e7e3db;--iris:#6b4eb8;--iris-soft:#efeafc;
+    --teal:#2c6a60;--gold:#b07b1e;--coral:#c0574a}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:14px 22px;display:flex;flex-direction:column}
+  .wrap{max-width:1140px;margin:0 auto;width:100%;flex:1;display:flex;flex-direction:column;min-height:0}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 10px}
+  .sub b{color:#3b362f;font-weight:700}
+
+  .grid{flex:1;display:flex;flex-direction:column;min-height:0;
+    border:1px solid var(--line);border-radius:13px;overflow:hidden;background:#fff}
+  .r{display:grid;grid-template-columns:0.92fr 1.1fr 1.28fr 1.8fr;align-items:stretch}
+  .r + .r{border-top:1px solid var(--line)}
+  .r.head{background:#faf8f3}
+  .r.body{flex:1}
+  .c{padding:10px 15px;display:flex;flex-direction:column;justify-content:center;font-size:12.5px;line-height:1.35;color:#3b362f}
+  .c + .c{border-left:1px solid var(--line)}
+  .head .c{font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);
+    padding:9px 15px;justify-content:center}
+  .nm{font-weight:800;font-size:13.5px;color:#2a2620}
+  .c.take{background:#faf8ff}
+  .c.take b{color:var(--iris)}
+
+  .foot{margin-top:10px;background:var(--iris-soft);border:1px solid #ddd2f7;border-radius:11px;
+    padding:10px 15px;font-size:13px;color:#3a2c66}
+  .foot b{color:var(--iris)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="sub">Five shipping systems, one question: how does an agent hold its own instructions and state? They converge on <b>prose the model reads and rewrites</b>, and differ on the unit and how it updates.</p>
+
+  <div class="grid">
+    <div class="r head">
+      <div class="c">Approach</div>
+      <div class="c">Unit of memory</div>
+      <div class="c">How it updates</div>
+      <div class="c">What Iris takes</div>
+    </div>
+
+    <div class="r body">
+      <div class="c"><span class="nm">Anthropic memory tool</span></div>
+      <div class="c">A file in a directory</div>
+      <div class="c">The model edits files itself; read just-in-time</div>
+      <div class="c take">Per-person silos as files, loaded just-in-time so they stay private.</div>
+    </div>
+
+    <div class="r body">
+      <div class="c"><span class="nm">Letta / MemGPT</span></div>
+      <div class="c">A labeled prose block, always in context</div>
+      <div class="c">Self-edited in context; sleep-time consolidation when idle</div>
+      <div class="c take">Sleep-time consolidation while idle, plus a read-only policy block.</div>
+    </div>
+
+    <div class="r body">
+      <div class="c"><span class="nm">Honcho</span></div>
+      <div class="c">A per-peer representation</div>
+      <div class="c">Derived asynchronously after each message</div>
+      <div class="c take">Per-peer keying, observer to observed: each person's second-order read.</div>
+    </div>
+
+    <div class="r body">
+      <div class="c"><span class="nm">OpenClaw</span></div>
+      <div class="c">Markdown files: SOUL, AGENTS, HEARTBEAT</div>
+      <div class="c">Split by function; HEARTBEAT fires on a timer</div>
+      <div class="c take">SOUL as the policy; HEARTBEAT as the self-review trigger.</div>
+    </div>
+
+    <div class="r body">
+      <div class="c"><span class="nm">Hermes Agent</span></div>
+      <div class="c">A prompt tier</div>
+      <div class="c">Assembled by volatility, stable to volatile</div>
+      <div class="c take">Context ordered stable to volatile: policy, room, then reads.</div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>Iris blends them:</b> prose files the model reads and rewrites, scoped per person and per channel, updated reactively, on a timer, and in the background. The names aren't ours; they're the field's.
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Iris — on Slack (enterprise)</title>
+<style>
+  :root{--bg:#f4f2ee;--ink:#1d1b18;--muted:#726c63;--line:#e7e3db;--iris:#6b4eb8;--iris-soft:#efeafc;
+    --aub:#3f0e40;--aub2:#b49db4;--active:#1164a3;--teal:#2c6a60}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:12px 24px}
+  .wrap{max-width:1080px;margin:0 auto}
+  h1{font-size:20px;margin:0 0 3px}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 18px;max-width:94ch}
+
+  .slack{border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 14px 34px rgba(30,25,18,.16);display:flex;flex-direction:column;background:#fff}
+  .titlebar{height:30px;background:#efeaef;display:flex;align-items:center;gap:7px;padding:0 12px;flex:none;border-bottom:1px solid #e0dce0}
+  .titlebar .dot{width:11px;height:11px;border-radius:50%}
+  .titlebar .r{background:#ff5f57}.titlebar .y{background:#febc2e}.titlebar .g{background:#28c840}
+  .titlebar span{margin-left:8px;font-size:11.5px;color:#8a8478;font-weight:600}
+  .main{display:flex;height:498px}
+
+  /* left nav */
+  .nav{width:180px;background:var(--aub);color:#d7c9d7;flex:none;padding:10px 0;font-size:12.5px;overflow:hidden}
+  .nav .ws{color:#fff;font-weight:700;padding:2px 14px 10px;font-size:15px;border-bottom:1px solid #ffffff1f;margin-bottom:8px}
+  .nav .sec{font-size:11px;color:var(--aub2);padding:9px 14px 3px}
+  .nav .ch{padding:4px 14px;display:flex;align-items:center;gap:7px;color:#d7c9d7}
+  .nav .ch.on{background:var(--active);color:#fff;font-weight:600}
+  .nav .ch .badge{margin-left:auto;background:var(--iris);color:#fff;font-size:9px;font-weight:800;border-radius:99px;padding:1px 6px}
+  .nav .ch .hash{opacity:.6}
+
+  /* center channel */
+  .chan{flex:1;display:flex;flex-direction:column;min-width:0;background:#fff}
+  .chhd{border-bottom:1px solid var(--line);padding:11px 15px;flex:none;display:flex;align-items:center;gap:8px}
+  .chhd b{font-size:15px}
+  .chhd .facil{margin-left:auto;font-size:11px;font-weight:700;color:var(--iris);background:var(--iris-soft);padding:3px 9px;border-radius:99px}
+  .chbody{flex:1;overflow:hidden;padding:12px 15px;display:flex;flex-direction:column;gap:11px;justify-content:flex-end;font-size:13px}
+  .msg{display:flex;gap:9px}
+  .msg .av{width:30px;height:30px;border-radius:6px;flex:none;color:#fff;font-size:13px;font-weight:700;display:grid;place-items:center}
+  .msg .nm{font-weight:700;font-size:13px}.msg .nm small{font-weight:400;color:#9a9184;font-size:10.5px;margin-left:5px}
+  .msg .tx{font-size:13px;color:#2a2620;margin-top:1px}
+  .av.m{background:#c0574a}.av.d{background:#2c7a6f}.av.p{background:#b07b1e}
+
+  /* autonomous detection card (in-channel) */
+  .detect{margin-left:39px;border:1px solid #ddd2f7;background:#f7f4fd;border-radius:8px;padding:9px 12px}
+  .detect .hd{font-size:12px;font-weight:700;color:var(--iris);display:flex;align-items:center;gap:6px}
+  .detect .tx{font-size:12.5px;color:#2a2620;margin:3px 0 8px}
+  .detect .btns{display:flex;gap:7px}
+  .detect .btns span{font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:6px;border:1px solid #ddd2f7;color:var(--iris);background:#fff}
+  .detect .btns span.solid{background:var(--iris);color:#fff;border-color:var(--iris)}
+
+  .scomposer{border-top:1px solid var(--line);padding:10px 15px;flex:none}
+  .scomposer .box{border:1px solid #d9d4cc;border-radius:8px;padding:9px 12px;color:#9a9184;font-size:13px}
+
+  /* right: shared Canvas (top) + permanent private Iris panel (bottom) */
+  .right{width:300px;flex:none;border-left:1px solid var(--line);display:flex;flex-direction:column;background:#fbfbfa}
+  .panelhd{padding:10px 13px;font-weight:700;font-size:12.5px;display:flex;align-items:center;gap:7px;border-bottom:1px solid var(--line);flex:none}
+  .panelhd small{margin-left:auto;font-weight:600;color:#9a9184;font-size:10px}
+
+  .canvas{flex:1;display:flex;flex-direction:column;min-height:0;border-bottom:2px solid #e4dfd8}
+  .canvas .cbody{flex:1;min-height:0;padding:10px;display:flex;flex-direction:column;gap:9px;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.2) transparent}
+  .canvas .cbody::-webkit-scrollbar{width:4px}
+  .canvas .cbody::-webkit-scrollbar-thumb{background:rgba(0,0,0,.2);border-radius:99px}
+  .dcard{border:1px solid var(--line);border-radius:9px;padding:9px 10px;background:#fff}
+  .dcard .t{font-weight:700;font-size:12px;display:flex;align-items:center;gap:5px}
+  .dcard .t .st{margin-left:auto;font-size:8px;font-weight:800;letter-spacing:.03em;padding:2px 6px;border-radius:99px}
+  .st.warn{background:#fbf1dc;color:#96690f}.st.ok{background:#e2f0ed;color:#2c6a60}.st.stop{background:#f7e4e0;color:#a5423a}
+  .dcard .meta{font-size:10px;color:#726c63;margin-top:3px}
+  .dcard .rat{font-size:10.5px;color:var(--teal);margin-top:5px;background:#eef7f4;border:1px solid #d5e8e2;border-radius:6px;padding:4px 6px}
+
+  /* permanent per-channel private Iris panel */
+  .irispanel{flex:none;height:246px;display:flex;flex-direction:column;background:#faf8ff}
+  .irispanel .panelhd{background:#f3eefc;color:#4a2f9e;border-bottom:1px solid #e2d9f5}
+  .irispanel .panelhd .lock{color:var(--iris)}
+  .irispanel .pbody{flex:1;padding:10px;display:flex;flex-direction:column;gap:8px;overflow:hidden;justify-content:flex-end}
+  .irispanel .ib{background:#fff;border:1px solid #e2d9f5;border-radius:8px;padding:7px 9px;font-size:11.5px;color:#2a2620}
+  .irispanel .ib .who{font-size:9.5px;font-weight:700;color:var(--iris);margin-bottom:1px}
+  .irispanel .qr{display:flex;gap:6px;flex-wrap:wrap}
+  .irispanel .qr span{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:99px;border:1px solid #cbb8ee;color:var(--iris);background:#fff}
+  .irispanel .qr span.solid{background:var(--iris);color:#fff;border-color:var(--iris)}
+  .irispanel .pcomp{border-top:1px solid #e2d9f5;padding:8px 10px;flex:none}
+  .irispanel .pcomp .box{border:1px solid #ddd2f7;border-radius:99px;padding:6px 11px;color:#9a86d6;font-size:11px;background:#fff}
+
+  .notes{display:flex;gap:26px;margin:0 2px 14px;flex-wrap:wrap}
+  .notes div{flex:1;min-width:220px;font-size:12.5px;color:var(--muted);line-height:1.45}
+  .notes b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="notes">
+    <div><b>🔒 A more complex role at work.</b> Enterprise dynamics are more tangled, so in her private lane Iris chooses between <i>direct facilitation</i> and <i>indirect coaching</i>, depending on the context.</div>
+    <div><b>📋 A shared decisions Canvas.</b> Persistent, team-visible — status, owner, deadline, and the recorded rationale. Visible tracking reassures a team; it would smother friends.</div>
+    <div><b>🧵 In-context, one Iris per channel.</b> Work is far more contextual than social: decisions are spread across hundreds of separate conversations, so a single shared Iris DM would just blur them together.</div>
+  </div>
+
+  <div class="slack">
+    <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span>Acme — Slack</span></div>
+    <div class="main">
+
+      <!-- left nav -->
+      <div class="nav">
+        <div class="ws">Acme ▾</div>
+        <div class="sec">Channels</div>
+        <div class="ch"><span class="hash">#</span> general</div>
+        <div class="ch on"><span class="hash">#</span> q3-launch <span class="badge">3</span></div>
+        <div class="ch"><span class="hash">#</span> design-review <span class="badge">1</span></div>
+        <div class="ch"><span class="hash">#</span> eng-standup</div>
+        <div class="ch"><span class="hash">#</span> okr-planning <span class="badge">2</span></div>
+        <div class="sec">Direct messages</div>
+        <div class="ch">🟢 Maya</div>
+        <div class="ch">⚪ Devon</div>
+      </div>
+
+      <!-- center channel (public) -->
+      <div class="chan">
+        <div class="chhd"><b># q3-launch</b><span style="color:#9a9184;font-size:12px">14 members</span><span class="facil">&amp; Iris facilitating</span></div>
+        <div class="chbody">
+          <div class="msg"><div class="av m">M</div><div><div class="nm">Maya <small>PM · 10:12</small></div><div class="tx">ok we need to lock the launch date. I'm leaning Nov 3.</div></div></div>
+          <div class="msg"><div class="av d">D</div><div><div class="nm">Devon <small>Eng · 10:13</small></div><div class="tx">nov 3 is tight with the API work tbh 😬</div></div></div>
+          <div class="msg"><div class="av p">P</div><div><div class="nm">Priya <small>Design · 10:13</small></div><div class="tx">works for us either way</div></div></div>
+          <div class="detect">
+            <div class="hd">🤖 Iris <span style="font-weight:400;color:#9a86d6">· detected a decision</span></div>
+            <div class="tx">Looks like you're deciding the <b>launch date</b>. Want me to track it and check in with everyone?</div>
+            <div class="btns"><span class="solid">Track it</span><span>Not a decision</span></div>
+          </div>
+        </div>
+        <div class="scomposer"><div class="box">Message #q3-launch</div></div>
+      </div>
+
+      <!-- right: shared Canvas + permanent private lane -->
+      <div class="right">
+        <div class="canvas">
+          <div class="panelhd">📋 Decisions <small>Canvas · shared</small></div>
+          <div class="cbody">
+            <div class="dcard">
+              <div class="t">📅 Launch date <span class="st warn">GATHERING</span></div>
+              <div class="meta">Owner @maya · due Fri · 3 of 5 weighed in</div>
+            </div>
+            <div class="dcard">
+              <div class="t">🧩 Beta scope <span class="st ok">DECIDED</span></div>
+              <div class="rat">✓ "Ship A + B, defer C." All 5 endorsed. — on the record.</div>
+            </div>
+            <div class="dcard">
+              <div class="t">🎯 Q3 metric <span class="st stop">NEEDS OWNER</span></div>
+              <div class="meta">No owner · due in 3 days · flagged stalled</div>
+            </div>
+            <div class="dcard">
+              <div class="t">💰 Pricing tier <span class="st warn">GATHERING</span></div>
+              <div class="meta">Owner @devon · 2 of 5 weighed in</div>
+            </div>
+            <div class="dcard">
+              <div class="t">📣 Launch channels <span class="st ok">DECIDED</span></div>
+              <div class="rat">✓ "Blog + email + one webinar." All 5 endorsed.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="irispanel">
+          <div class="panelhd"><span class="lock">🔒</span> Iris <small>only you · #q3-launch</small></div>
+          <div class="pbody">
+            <div class="ib"><div class="who">Iris</div>You've gone quiet since Nov 3 came up, and the team's starting to coalesce around it. If you have thoughts on the timeline, now's a good moment to raise them.</div>
+            <div class="qr"><span class="solid">Help me phrase it</span><span>Not now</span></div>
+          </div>
+          <div class="pcomp"><div class="box">Message Iris privately…</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

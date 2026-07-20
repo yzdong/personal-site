@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Iris — memory architecture</title>
+<style>
+  :root{--bg:#f4f2ee;--ink:#1d1b18;--muted:#726c63;--line:#e7e3db;--iris:#6b4eb8;
+    --teal:#3f9488;--red:#e2483a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:32px}
+  .wrap{max-width:1020px;margin:0 auto}
+  h1{font-size:22px;letter-spacing:-.01em;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 22px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;
+    box-shadow:0 1px 2px rgba(0,0,0,.04),0 10px 30px rgba(30,25,18,.06);padding:12px}
+  svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;margin:18px 2px 0;font-size:13px;color:#3b362f}
+  .legend span{display:flex;align-items:center;gap:8px}
+  .sw{width:24px;border-top-width:3px;border-top-style:solid}
+  .caption{margin:20px 2px 0;font-size:13.5px;color:var(--muted);max-width:900px}
+  .caption b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Memory architecture — confidentiality by construction</h1>
+  <p class="sub">Discretion isn't a choice Iris makes in the moment; it's what memory is even reachable when composing a message.</p>
+
+  <div class="card">
+  <svg viewBox="0 0 1040 600" role="img" aria-label="Memory architecture">
+    <defs>
+      <marker id="g" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#3f9488"/></marker>
+      <marker id="r" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#e2483a"/></marker>
+      <marker id="k" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#a29b8f"/></marker>
+    </defs>
+
+    <!-- IRIS -->
+    <rect x="410" y="26" width="220" height="60" rx="14" fill="#6b4eb8"/>
+    <text x="520" y="54" text-anchor="middle" fill="#fff" font-size="16" font-weight="700">&amp; Iris — the reasoner</text>
+    <text x="520" y="72" text-anchor="middle" fill="#d8ccf6" font-size="11">composing a reply to April</text>
+
+    <line x1="520" y1="86" x2="520" y2="122" stroke="#a29b8f" stroke-width="2" marker-end="url(#k)"/>
+
+    <!-- ACCESS LAYER -->
+    <rect x="120" y="124" width="800" height="56" rx="12" fill="#efeafc" stroke="#ddd2f7" stroke-width="1.5"/>
+    <text x="520" y="150" text-anchor="middle" font-size="14.5" font-weight="700" fill="#4a2f9e">Provenance-scoped retrieval · access control</text>
+    <text x="520" y="168" text-anchor="middle" font-size="11.5" fill="#8a7fb0">returns only what April is allowed to see</text>
+
+    <!-- gate -> stores -->
+    <line x1="250" y1="180" x2="250" y2="236" stroke="#3f9488" stroke-width="2.4" marker-end="url(#g)"/>
+    <line x1="520" y1="180" x2="520" y2="236" stroke="#a29b8f" stroke-width="2" marker-end="url(#k)"/>
+    <line x1="800" y1="180" x2="800" y2="236" stroke="#3f9488" stroke-width="2.4" marker-end="url(#g)"/>
+    <text x="264" y="214" font-size="13" font-weight="800" fill="#2c6a60">✓</text>
+    <text x="814" y="214" font-size="13" font-weight="800" fill="#2c6a60">✓</text>
+
+    <!-- STORE: public -->
+    <rect x="120" y="238" width="260" height="160" rx="12" fill="#eef7f4" stroke="#c5e3dc" stroke-width="1.5"/>
+    <text x="140" y="266" font-size="15" font-weight="700" fill="#2c6a60">Public memory</text>
+    <text x="140" y="292" font-size="12.5" fill="#2a2620">the group channel</text>
+    <text x="140" y="311" font-size="12.5" fill="#2a2620">visible to everyone</text>
+    <text x="140" y="376" font-size="11" fill="#6b8a83">provenance: public</text>
+
+    <!-- STORE: private silos -->
+    <rect x="392" y="238" width="256" height="160" rx="12" fill="#faf8f3" stroke="#e7e3db" stroke-width="1.5"/>
+    <text x="410" y="266" font-size="14.5" font-weight="700" fill="#1d1b18">Private silos — one per person</text>
+    <rect x="410" y="282" width="220" height="30" rx="7" fill="#eef7f4" stroke="#3f9488" stroke-width="1.4"/>
+    <text x="422" y="301" font-size="12" font-weight="600" fill="#2c6a60">🔓 April's silo · ✓ her own</text>
+    <rect x="410" y="320" width="220" height="30" rx="7" fill="#fdeeec" stroke="#e2483a" stroke-width="1.4"/>
+    <text x="422" y="339" font-size="12" font-weight="600" fill="#b5271b">🔒 John's silo · ✗ blocked</text>
+    <text x="410" y="378" font-size="11" fill="#9a9184">each isolated · tagged private:X</text>
+
+    <!-- STORE: synthesis -->
+    <rect x="660" y="238" width="260" height="160" rx="12" fill="#efeafc" stroke="#ddd2f7" stroke-width="1.5"/>
+    <text x="680" y="266" font-size="14.5" font-weight="700" fill="#4a2f9e">De-identified synthesis</text>
+    <text x="680" y="292" font-size="12.5" fill="#2a2620">aggregates across silos</text>
+    <text x="680" y="311" font-size="12.5" fill="#2a2620">identity stripped</text>
+    <text x="680" y="330" font-size="12.5" fill="#2a2620">suppressed if group too small</text>
+    <text x="680" y="378" font-size="11" fill="#8a7fb0">e.g. "3 of you are over budget"</text>
+
+    <!-- silos -> synthesis (anonymized) -->
+    <path d="M648,318 C666,318 668,318 660,318" fill="none"/>
+    <line x1="650" y1="330" x2="658" y2="330" stroke="#a29b8f" stroke-width="1.8" stroke-dasharray="4 4" marker-end="url(#k)"/>
+    <text x="654" y="420" text-anchor="middle" font-size="11" fill="#9a9184">anonymized aggregate only ↑</text>
+
+    <!-- bottom callout -->
+    <rect x="120" y="444" width="800" height="120" rx="12" fill="#fff" stroke="#e7e3db" stroke-width="1.5"/>
+    <text x="140" y="474" font-size="13.5" font-weight="700" fill="#1d1b18">When Iris composes to April, retrieval returns:</text>
+    <text x="140" y="500" font-size="13" font-weight="700" fill="#2c6a60">✓ public memory     ✓ April's own silo     ✓ de-identified synthesis</text>
+    <text x="140" y="524" font-size="13" font-weight="700" fill="#b5271b">✗ John's silo — unreachable by construction</text>
+    <text x="140" y="548" font-size="12" font-style="italic" fill="#726c63">So John's private "I was just diagnosed with cancer" can never reach April — not even as a hint.</text>
+  </svg>
+  </div>
+
+  <div class="legend">
+    <span><span class="sw" style="border-color:#3f9488"></span> returned to Iris for this message</span>
+    <span><span class="sw" style="border-color:#e2483a"></span> withheld</span>
+    <span><span class="sw" style="border-color:#a29b8f;border-top-style:dashed"></span> anonymized aggregate</span>
+  </div>
+
+  <p class="caption"><b>Confidentiality by construction, not by promise.</b> Each private
+  caucus is its own store; a de-identified synthesis layer can read across them but only
+  emits anonymized aggregates. Every item is tagged by provenance, and the access layer
+  scopes each retrieval to the person Iris is talking to — so another person's private
+  silo is simply not reachable. Iris can't "decide" to snitch, because it can't see it.</p>
+</div>
+</body>
+</html>

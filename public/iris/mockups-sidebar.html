@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Private sidebar — mockups</title>
+<style>
+  :root{--bg:#f4f2ee;--ink:#1d1b18;--muted:#726c63;--line:#e7e3db;--iris:#6b4eb8;--iris-soft:#efeafc;
+    --aub:#3f0e40;--active:#1164a3;--teal:#2c6a60;--gold:#b07b1e;--coral:#c0574a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:28px}
+  .wrap{max-width:1040px;margin:0 auto}
+  h1{font-size:20px;margin:0 0 3px}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+  .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+  .opt{border:1px solid var(--line);border-radius:14px;background:#fff;padding:14px 15px}
+  .opt.rec{border-color:#c7b8ef;box-shadow:0 0 0 3px #efeafc}
+  .opt .t{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px;margin-bottom:2px}
+  .opt .tag{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 7px;border-radius:99px}
+  .tag.rec{background:var(--iris);color:#fff}
+  .tag.no{background:#f0eee8;color:#8a8478}
+  .v{font-size:11.5px;color:var(--muted);margin-top:8px}
+  .v b{color:#2c6a60}.v i{color:#b5602a;font-style:normal}
+
+  /* Slack mini-window */
+  .win{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;margin-top:10px;height:200px;display:flex;font-size:10px;position:relative}
+  .col{flex:1;display:flex;flex-direction:column;min-width:0}
+  .chhd{background:#fbfafb;border-bottom:1px solid var(--line);padding:5px 9px;font-weight:700;color:#4a453c;font-size:9.5px;display:flex;align-items:center;gap:5px;flex:none}
+  .chhd .facil{margin-left:auto;font-size:7.5px;font-weight:700;color:var(--iris);background:var(--iris-soft);padding:2px 5px;border-radius:99px}
+  .msgs{padding:8px 9px;display:flex;flex-direction:column;gap:7px;overflow:hidden;flex:1}
+  .m{display:flex;gap:5px}
+  .av{width:16px;height:16px;border-radius:4px;flex:none;color:#fff;font-size:8px;font-weight:700;display:grid;place-items:center}
+  .av.p{background:var(--gold)}.av.k{background:var(--teal)}.av.i{background:var(--iris)}
+  .m .nm{font-weight:700;font-size:9px}.m .tx{font-size:9.5px;color:#2a2620}
+
+  /* A: permanent right rail with deep-link */
+  .rail{width:52%;border-left:1px solid var(--line);background:#faf8ff;display:flex;flex-direction:column;flex:none}
+  .railhd{background:#f3eefc;color:#4a2f9e;padding:5px 8px;font-weight:700;font-size:8.5px;display:flex;align-items:center;gap:4px;border-bottom:1px solid #e2d9f5;flex:none}
+  .railhd small{margin-left:auto;font-weight:600;color:#9a86d6;font-size:7px}
+  .quote{margin:7px 7px 0;padding:4px 6px;border-left:2px solid #cbb8ee;background:#f0eafc;border-radius:0 6px 6px 0;color:#6b4eb8;font-size:8.5px}
+  .ib{margin:6px 7px;background:#fff;border:1px solid #e2d9f5;border-radius:8px;padding:6px 8px;color:#2a2620;font-size:9.5px}
+  .ib .who{font-size:8px;font-weight:700;color:var(--iris);margin-bottom:1px}
+  .link{margin:0 9px 8px;font-size:8.5px;color:#9a86d6}
+
+  /* B: inline ephemeral note */
+  .eph{margin:1px 0;padding:5px 7px;background:#f5f0ff;border:1px solid #ddd2f7;border-radius:7px;color:#4a2f9e;font-size:9px}
+  .eph b{display:block;font-size:7px;letter-spacing:.05em;color:#9a86d6;margin-bottom:1px}
+
+  /* C: separate DM tab */
+  .dmhd{background:var(--aub);color:#fff;padding:6px 9px;font-weight:700;font-size:9.5px;display:flex;align-items:center;gap:5px;flex:none}
+  .b{max-width:92%;padding:5px 8px;border-radius:8px;background:#f3f0ec;font-size:9.5px}
+  .b.iris{background:var(--iris-soft)}
+  .b.me{align-self:flex-end;background:#e7edf5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="sub">Where should the private caucus live on Slack? Three candidate placements. The tension: <b>persistent</b> vs. <b>situated</b> vs. a real <b>conversation</b>.</p>
+
+  <div class="grid">
+
+    <!-- A permanent right-rail panel with deep-link (recommended) -->
+    <div class="opt rec">
+      <div class="t">A · Permanent panel <span class="tag rec">recommended</span></div>
+      <div class="win">
+        <div class="col">
+          <div class="chhd"># q3-launch <span class="facil">&amp; Iris</span></div>
+          <div class="msgs">
+            <div class="m"><div class="av p">M</div><div><div class="nm">Maya</div><div class="tx">leaning Nov 3.</div></div></div>
+            <div class="m"><div class="av k">D</div><div><div class="nm">Devon</div><div class="tx">tight w/ the API 😬</div></div></div>
+          </div>
+        </div>
+        <div class="rail">
+          <div class="railhd">🔒 Iris <small>only you</small></div>
+          <div class="quote">↳ re: Devon — "tight w/ the API"</div>
+          <div class="ib"><div class="who">Iris</div>You've gone quiet on Nov 3, and the team's coalescing. Good moment to raise it. Want help phrasing?</div>
+          <div class="link">↳ deep-linked from Devon's message</div>
+        </div>
+      </div>
+      <div class="v"><b>+ always docked to the channel AND situated — a message can deep-link straight into the panel, carrying its context</b></div>
+    </div>
+
+    <!-- B inline ephemeral note -->
+    <div class="opt">
+      <div class="t">B · Inline note on the message <span class="tag no">gets buried</span></div>
+      <div class="win">
+        <div class="col">
+          <div class="chhd"># q3-launch</div>
+          <div class="msgs">
+            <div class="m"><div class="av k">D</div><div><div class="nm">Devon</div><div class="tx">nov 3 works, whatever 😬</div></div></div>
+            <div class="eph"><b>🔒 ONLY YOU</b>Iris: that reads as a hedge. Comfortable with Nov 3?</div>
+            <div class="m"><div class="av p">M</div><div><div class="nm">Maya</div><div class="tx">so, locking it?</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="v"><b>+ perfectly situated to the message</b> · <i>– gets lost in a long channel, and can't hold a back-and-forth</i></div>
+    </div>
+
+    <!-- C separate Iris DM -->
+    <div class="opt">
+      <div class="t">C · Separate Iris DM <span class="tag no">detached</span></div>
+      <div class="win">
+        <div class="col">
+          <div class="dmhd">🔒 Iris <span style="font-weight:400;opacity:.8;font-size:8.5px">· direct message</span></div>
+          <div class="msgs">
+            <div class="b iris">Every time Nov 3 comes up you go quiet. Want help raising it yourself?</div>
+            <div class="b me">…yeah. the API work won't make it 🙏</div>
+          </div>
+        </div>
+      </div>
+      <div class="v"><b>+ most natural conversation + full history</b> · <i>– one global Iris DM can't tell which channel you mean; you leave the room</i></div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

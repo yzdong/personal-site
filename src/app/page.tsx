@@ -24,6 +24,19 @@ export default async function Home() {
       </section>
 
       <section>
+        <h2 className="mb-3 font-semibold">Projects</h2>
+        <ul className="space-y-1">
+          <li>
+            <a href="/iris/deck.html">Iris</a>{" "}
+            <span className="text-[color:var(--muted)]">
+              — a facilitation agent for group decisions; interactive deck and
+              working prototype.
+            </span>
+          </li>
+        </ul>
+      </section>
+
+      <section>
         <h2 className="mb-3 font-semibold">About</h2>
         <p>
           Hi, I&apos;m Zi. I&apos;ve been building software primarily for
